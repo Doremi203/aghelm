@@ -109,6 +109,7 @@ type Event struct {
 	UseConversation bool
 	// NotifyEnv is AM_NOTIFY_KIND, AM_TITLE and AM_BODY when the change is
 	// a banner trigger, even with banners off. A notify hook runs only then.
+	// A notify hook and an all hook get these variables.
 	NotifyEnv   []string
 	Task        *TaskInfo
 	Reservation *ReservationInfo

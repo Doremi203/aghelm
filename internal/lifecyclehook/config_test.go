@@ -3,6 +3,7 @@ package lifecyclehook
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -82,6 +83,10 @@ func TestLoadRejectsUnknownKeysEventsAndTimeouts(t *testing.T) {
 		"schema_version = 1\n[hooks.session_start]\ncommand = [\"echo\"]\nevents = [\"waiting\"]\n",
 		"schema_version = 1\n[hooks.session_start]\ncommand = [\"echo\"]\nnotify = true\n",
 		"schema_version = 1\n[hooks.session_state]\ncommand = [\"echo\"]\nevents = [\"asleep\"]\n",
+		"schema_version = 1\n[hooks.all]\ncommand = [\"echo\"]\nevents = [\"waiting\"]\n",
+		"schema_version = 1\n[hooks.all]\ncommand = [\"echo\"]\nnotify = true\n",
+		"schema_version = 1\n[hooks.all]\ncommand = [\"echo\"]\nextra = true\n",
+		"schema_version = 1\n[hooks.every]\ncommand = [\"echo\"]\n",
 		"schema_version = 2\n",
 	}
 	for _, text := range cases {
@@ -106,6 +111,36 @@ timeout = "15s"
 	hook := file.Hooks[0]
 	if !hook.Notify || hook.Timeout != 15*time.Second || len(hook.Events) != 3 {
 		t.Fatalf("hook = %+v", hook)
+	}
+}
+
+func TestLoadPutsAllHooksAfterTheEventHooks(t *testing.T) {
+	file, err := loadText(t, `
+schema_version = 1
+
+[[hooks.all]]
+command = ["echo", "first-all"]
+
+[[hooks.session_kill]]
+command = ["echo", "kill"]
+
+[[hooks.all]]
+command = ["echo", "second-all"]
+timeout = "10s"
+`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	for _, hook := range file.Hooks {
+		got = append(got, hook.Event+" "+hook.Command[1])
+	}
+	want := []string{"session_kill kill", "all first-all", "all second-all"}
+	if !slices.Equal(got, want) {
+		t.Fatalf("hooks = %q, want %q", got, want)
+	}
+	if file.Hooks[2].Timeout != 10*time.Second {
+		t.Fatalf("timeout = %s", file.Hooks[2].Timeout)
 	}
 }
 

@@ -17,6 +17,8 @@ const (
 	DefaultTimeout = 5 * time.Second
 	MinTimeout     = time.Second
 	MaxTimeout     = 30 * time.Second
+	// AllEvents runs for every event, after that event's own hooks.
+	AllEvents = "all"
 )
 
 // Hook is one command bound to an event, in file order within that event.
@@ -90,12 +92,12 @@ func hooksPath(dir string) string {
 
 func decodeHooks(meta *toml.MetaData, raw map[string]toml.Primitive) ([]Hook, error) {
 	for _, name := range slices.Sorted(maps.Keys(raw)) {
-		if !slices.Contains(EventNames(), name) {
+		if name != AllEvents && !slices.Contains(EventNames(), name) {
 			return nil, fmt.Errorf("hooks.toml: unknown event %q", name)
 		}
 	}
 	var hooks []Hook
-	for _, name := range EventNames() {
+	for _, name := range append(EventNames(), AllEvents) {
 		prim, ok := raw[name]
 		if !ok {
 			continue
@@ -172,6 +174,9 @@ func decodeCommand(meta *toml.MetaData, event string, prim toml.Primitive) ([]st
 }
 
 func match(hook Hook, ev Event) bool {
+	if hook.Event == AllEvents {
+		return true
+	}
 	if hook.Event != ev.Name {
 		return false
 	}

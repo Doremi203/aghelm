@@ -244,6 +244,44 @@ func TestDispatcherGatesNotifyAndStatus(t *testing.T) {
 	}
 }
 
+func TestDispatcherRunsAllHooksForEveryEventAfterTheEventHooks(t *testing.T) {
+	dir := t.TempDir()
+	logPath := filepath.Join(dir, "log")
+	allHook := script(t, `event=$(sed -n 's/^{"v":1,"event":"\([a-z_]*\)".*/\1/p')
+printf 'all %s stdin=%s banner=%s\n' "$AM_EVENT" "$event" "${AM_NOTIFY_KIND:-}${AM_TITLE:-}${AM_BODY:-}" >> `+quote(logPath)+"\n")
+	killHook := script(t, `printf 'kill %s\n' "$AM_EVENT" >> `+quote(logPath)+"\n")
+	stateHook := script(t, `printf 'state banner=%s\n' "${AM_NOTIFY_KIND:-}" >> `+quote(logPath)+"\n")
+	text := "schema_version = 1\n" +
+		"[[hooks.all]]\ncommand = [" + strconv.Quote(allHook) + "]\n" +
+		"[[hooks.session_kill]]\ncommand = [" + strconv.Quote(killHook) + "]\n" +
+		"[[hooks.session_state]]\ncommand = [" + strconv.Quote(stateHook) + "]\n"
+	if err := os.WriteFile(filepath.Join(dir, HooksFile), []byte(text), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	d, _ := openDispatcher(t, dir)
+	var want []string
+	for _, name := range EventNames() {
+		d.Emit(Event{Name: name, Session: store.Session{ID: "s", Status: status.Working}})
+		switch name {
+		case EventSessionKill:
+			want = append(want, "kill session_kill")
+		case EventSessionState:
+			want = append(want, "state banner=")
+		}
+		want = append(want, "all "+name+" stdin="+name+" banner=")
+	}
+	banner := sessionEvent("s", status.Waiting)
+	banner.NotifyEnv = []string{"AM_NOTIFY_KIND=waiting", "AM_TITLE=Hello", "AM_BODY=Need you"}
+	d.Emit(banner)
+	want = append(want, "state banner=", "all session_state stdin=session_state banner=waitingHelloNeed you")
+	waitUntil(t, func() bool { return countLines(logPath) >= len(want) })
+	closeDispatcher(d, 3*time.Second)
+	got := strings.Split(strings.TrimSuffix(readFile(t, logPath), "\n"), "\n")
+	if !slices.Equal(got, want) {
+		t.Fatalf("log:\n%s\nwant:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+}
+
 func TestDispatcherPassesLiteralArgumentsAndStdin(t *testing.T) {
 	dir := t.TempDir()
 	out := filepath.Join(dir, "out")

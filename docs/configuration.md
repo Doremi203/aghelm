@@ -16,11 +16,16 @@ command = ["sh", "-c", "curl -fsS -H \"Title: $AM_TITLE\" -d \"$AM_BODY\" https:
 events = ["waiting", "errored", "finished"]
 notify = true
 timeout = "15s"
+
+[[hooks.all]]
+command = ["/usr/local/bin/agent-events"]
 ```
 
 `schema_version` is required and must be `1`. An empty file, a missing version, or a version this manager does not read refuses the whole file. The manager posts that reason in Messages and writes it to `hooks_config_error`. A good load clears it.
 
 Each `[[hooks.<event>]]` block names one command. The events are `session_start`, `session_state`, `session_archive`, `session_restore`, `session_kill`, `task_claim`, `task_finish`, `review_round` and `reservation_set`. `command` is an argv, with no shell unless you put one there. `command[0]` is looked up on `PATH`. On Windows a PowerShell script runs through PowerShell, for example `command = ["pwsh", "-NoProfile", "-File", 'C:\Users\me\hook.ps1']`. `timeout` defaults to 5s and must sit between 1s and 30s. `events` filters `session_state` by the new status. Empty or omitted means every status. A `notify` hook runs on every change that triggers the native banner, and receives `AM_NOTIFY_KIND`, `AM_TITLE` and `AM_BODY`. That is `waiting`, `errored`, and `finished` while `notify on finish` is on. The `notifications` row in Settings only shows or hides the banner. A `notify` hook still runs on its triggers with banners off. A hook without `notify` runs on every stored change that its `events` list allows, whatever the banner settings say.
+
+`[[hooks.all]]` runs for every event above, so one script can handle all of them. It gets the same JSON line and `AM_*` variables, with `AM_EVENT` set to the event that fired. On a banner trigger it also gets `AM_NOTIFY_KIND`, `AM_TITLE` and `AM_BODY`, so a script can check `AM_NOTIFY_KIND` to send a push. It takes `command` and `timeout`. `events` and `notify` belong to `session_state`, and an `all` block that sets them refuses the file. The script reads `AM_EVENT` and the status on stdin to pick what it handles. For each event the manager runs that event's own hooks first and the `all` hooks after them, each in file order. A command listed in both places runs twice.
 
 The manager writes one compact JSON line to the command's stdin.
 
@@ -39,7 +44,7 @@ The manager writes one compact JSON line to the command's stdin.
 
 `directory` is the repository checkout when the session has a worktree, and the session directory otherwise. `worktree` is the worktree checkout when one exists, and empty otherwise. `AM_CWD` is always the session directory, which is the worktree checkout when the manager made one. A hook that `cd`s to `directory` lands in the main checkout of a worktree session. A hook that `cd`s to `AM_CWD` lands in the checkout the agent is using.
 
-The environment always carries `AM_EVENT`, `AM_SESSION_ID`, `AM_MANAGER_PID`, `AM_GROUP`, `AM_SPAWNED_BY`, `AM_SESSION_NAME`, `AM_TOOL`, `AM_CWD` and `AM_BRANCH`. The three banner variables are added only for a `notify` hook, which runs only on a banner trigger.
+The environment always carries `AM_EVENT`, `AM_SESSION_ID`, `AM_MANAGER_PID`, `AM_GROUP`, `AM_SPAWNED_BY`, `AM_SESSION_NAME`, `AM_TOOL`, `AM_CWD` and `AM_BRANCH`. The three banner variables are added on a banner trigger, for a `notify` hook and an `all` hook.
 
 `session_start` reasons are `spawn` (the picker or `Sessions.Create`), `fork`, `revive`, `restart` and `restore`. `spawned_by` is set only when another session created this one through the CLI or MCP. A picker launch and a fork leave it empty. `session_kill` reasons are `kill`, `archive`, `after_turn`, `restart`, `delete` and `rollback`. A kill also emits `session_state` with status `dead`. A hook that stops a container has to treat that pair as one stop, because the poller can write `dead` as well. `restart` emits `session_kill` only when a pane was there to kill, and its `session_start` carries the new conversation id. `delete` emits `session_kill` after the row is gone, and does not emit `session_state`. `rollback` is a launch that was announced and then stopped. A launch that fails before it is announced emits nothing. Archive and restore reasons are `user` from the manager and `agent` from the CLI or MCP. `after_turn` is the reason when the session asked to be archived or killed at the end of its turn.
 

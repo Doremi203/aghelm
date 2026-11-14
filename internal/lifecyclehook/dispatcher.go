@@ -238,7 +238,7 @@ func (d *Dispatcher) dispatch(ev Event) {
 		}
 		d.announce(hook)
 		env := slices.Clone(base)
-		if hook.Notify {
+		if hook.Notify || hook.Event == AllEvents {
 			env = append(env, ev.NotifyEnv...)
 		}
 		ctx, cancel := context.WithTimeout(d.root, hook.Timeout)
