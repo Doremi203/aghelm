@@ -26,6 +26,8 @@ type KeyHost interface {
 	// the saved prompts list over it.
 	Editor() (tea.Model, tea.Cmd)
 	Review(id string) (tea.Model, tea.Cmd)
+	// Resize arms the split's divider gesture over the focused pane.
+	Resize() tea.Cmd
 	Saved() tea.Cmd
 	Leave() tea.Cmd
 	LeaveMode() tea.Cmd
@@ -43,6 +45,7 @@ type MouseHost interface {
 
 type Bindings struct {
 	Detach      bool
+	Resize      bool
 	Editor      bool
 	Review      bool
 	Saved       bool
@@ -93,6 +96,7 @@ func (s *Model) KeyPress(h KeyHost, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		SessionID:   id,
 		Rows:        h.PaneRows(),
 		Detach:      keys.Detach,
+		Resize:      keys.Resize,
 		Editor:      keys.Editor,
 		Review:      keys.Review,
 		ArrowStep:   keys.ArrowStep,
@@ -110,6 +114,8 @@ func (s *Model) KeyPress(h KeyHost, msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return h.Editor()
 	case OpenReview:
 		return h.Review(id)
+	case OpenResize:
+		return nil, h.Resize()
 	}
 	var resume tea.Cmd
 	if result.Region != nil {
@@ -133,9 +139,8 @@ func (s *Model) ExtendedKeyPress(h KeyHost, msg ExtendedKeyMsg) tea.Cmd {
 	if !ok {
 		return h.Leave()
 	}
-	if keyType, ok := bindableExtendedKeys[msg.Name]; ok {
-		key := tea.KeyMsg{Type: keyType}
-		if keys := h.Bindings(key.String()); keys.Saved || keys.Detach || keys.Editor || keys.Review {
+	if key, ok := BindableKey(msg.Name); ok {
+		if keys := h.Bindings(key.String()); keys.Saved || keys.Detach || keys.Editor || keys.Review || keys.Resize {
 			_, cmd := s.KeyPress(h, key)
 			return cmd
 		}

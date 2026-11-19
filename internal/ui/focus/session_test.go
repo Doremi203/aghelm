@@ -19,6 +19,7 @@ type fakeKeyHost struct {
 	left     bool
 	mode     bool
 	editor   bool
+	resize   bool
 	review   string
 	saved    bool
 	openURL  string
@@ -41,6 +42,11 @@ func (h *fakeKeyHost) Queued(id string, write Write) tea.Cmd {
 func (h *fakeKeyHost) Region(*RegionRequest) tea.Cmd { return nil }
 
 func (h *fakeKeyHost) Reported(report string, echo bool) { h.reports = append(h.reports, report) }
+
+func (h *fakeKeyHost) Resize() tea.Cmd {
+	h.resize = true
+	return nil
+}
 
 func (h *fakeKeyHost) Editor() (tea.Model, tea.Cmd) {
 	h.editor = true
@@ -264,5 +270,22 @@ func TestExtendedKeyPressRunsABoundManagerKey(t *testing.T) {
 		if len(host.pressed) == 0 || host.pressed[0] != pressed {
 			t.Errorf("%s: bindings read %q, want %q", name, host.pressed, pressed)
 		}
+	}
+}
+
+// A resize binding on the session table arms the divider from the focus
+// layer instead of forwarding the key.
+func TestKeyPressArmsTheDividerOnTheSessionBinding(t *testing.T) {
+	host := &fakeKeyHost{id: "s", selected: true, keys: Bindings{Resize: true}}
+	focused := &Model{}
+	focused.Enter(EnterContext{SessionID: "s"})
+	if _, cmd := focused.KeyPress(host, tea.KeyMsg{Type: tea.KeyCtrlCloseBracket}); cmd != nil {
+		t.Fatal("arming the divider returned a command")
+	}
+	if !host.resize {
+		t.Fatal("the resize binding did not reach the root")
+	}
+	if len(host.writes) != 0 {
+		t.Fatalf("the resize key was written to the pane: %#v", host.writes)
 	}
 }
