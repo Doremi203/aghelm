@@ -230,6 +230,7 @@ func runServe(out, errs io.Writer, args []string, dir string, start app.Starter)
 func withBackend(configDir, commandName string, command func(*sessioncmd.Backend) error) (err error) {
 	backend := sessioncmd.OpenBackend(configDir)
 	backend.SetVersion(version)
+	backend.SetShow(notify.ShowCommand)
 	switch commandName {
 	case "spawn":
 		backend.SetDrain(lifecyclehook.DrainCreate)

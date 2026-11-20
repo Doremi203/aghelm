@@ -10,7 +10,6 @@ import (
 	"github.com/YoanWai/agent-manager/internal/git"
 	"github.com/YoanWai/agent-manager/internal/hooks"
 	"github.com/YoanWai/agent-manager/internal/lifecyclehook"
-	"github.com/YoanWai/agent-manager/internal/notify"
 	"github.com/YoanWai/agent-manager/internal/store"
 	"github.com/YoanWai/agent-manager/internal/tmux"
 )
@@ -38,6 +37,7 @@ type Backend struct {
 	owned     bool
 	closed    bool
 	version   string
+	show      func(command string)
 	drain     time.Duration
 }
 
@@ -50,6 +50,14 @@ func OpenBackend(configDir string) *Backend {
 func (b *Backend) SetVersion(version string) {
 	b.mu.Lock()
 	b.version = version
+	b.mu.Unlock()
+}
+
+// SetShow is how a hook command shows the first time it runs. Set it before
+// the first command opens the runtime.
+func (b *Backend) SetShow(show func(command string)) {
+	b.mu.Lock()
+	b.show = show
 	b.mu.Unlock()
 }
 
@@ -91,7 +99,7 @@ func (b *Backend) resolve() (Runtime, error) {
 		return Runtime{}, errors.New("session command backend is closed")
 	}
 	if !b.opened {
-		runtime, err := openRuntime(b.configDir, b.version)
+		runtime, err := openRuntime(b.configDir, b.version, b.show)
 		if err != nil {
 			return Runtime{}, err
 		}
@@ -107,7 +115,7 @@ func (b *Backend) resolve() (Runtime, error) {
 	return b.runtime, nil
 }
 
-func openRuntime(configDir, version string) (Runtime, error) {
+func openRuntime(configDir, version string, show func(command string)) (Runtime, error) {
 	cfg, err := config.Default()
 	if err != nil {
 		return Runtime{}, err
@@ -129,7 +137,7 @@ func openRuntime(configDir, version string) (Runtime, error) {
 		ConfigDir: configDir,
 		Store:     st,
 		Version:   version,
-		Show:      notify.ShowCommand,
+		Show:      show,
 	})
 	return Runtime{
 		Config:   cfg,
