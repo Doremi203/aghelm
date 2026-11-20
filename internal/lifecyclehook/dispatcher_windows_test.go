@@ -68,6 +68,27 @@ func TestDispatcherRunsACmdHookAndRecordsItsExit(t *testing.T) {
 	}
 }
 
+func TestDispatcherRunsAnAllHookForEveryEvent(t *testing.T) {
+	dir := t.TempDir()
+	out := filepath.Join(dir, "out")
+	hook := filepath.Join(t.TempDir(), "all.cmd")
+	body := "@echo off\r\n>>\"" + out + "\" echo %AM_EVENT%,%AM_NOTIFY_KIND%\r\n"
+	if err := os.WriteFile(hook, []byte(body), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	writeHooks(t, dir, AllEvents, []string{hook}, "timeout = \"30s\"\n")
+	d, st := openDispatcher(t, dir)
+	d.Emit(Event{Name: EventSessionStart, Reason: ReasonSpawn, Session: store.Session{ID: "s", Status: status.Starting}})
+	d.Emit(sessionEvent("s", status.Waiting))
+	d.Emit(notificationEvent("s"))
+	closeDispatcher(d, windowsHookWait)
+	got := strings.Fields(readFile(t, out))
+	want := []string{"session_start,", "session_state,", "notification,waiting"}
+	if strings.Join(got, " ") != strings.Join(want, " ") {
+		t.Fatalf("all hook saw %q, want %q\n%s", got, want, hookFailureReport(t, st, dir))
+	}
+}
+
 func TestDispatcherKillsTheHookTreeAtTheTimeout(t *testing.T) {
 	dir := t.TempDir()
 	pidFile := filepath.Join(dir, "child.pid")
