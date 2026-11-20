@@ -61,8 +61,9 @@ func (b *Backend) SetShow(show func(command string)) {
 	b.mu.Unlock()
 }
 
-// SetDrain is how long Close waits for hooks. A short command stays under
-// the remote call timeout. Spawn stays under the create timeout.
+// SetDrain is how long Close waits for hooks. A remote client allows a
+// short command DrainCall on top of its own limit. Spawn stays under the
+// create timeout.
 func (b *Backend) SetDrain(limit time.Duration) {
 	b.mu.Lock()
 	b.drain = limit
