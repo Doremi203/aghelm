@@ -120,7 +120,7 @@ func migratedDocument(command string) ([]byte, []string, error) {
 		return nil, nil, err
 	}
 	doc := migratedFile{
-		SchemaVersion: EnvelopeVersion,
+		SchemaVersion: SchemaVersion,
 		Hooks: migratedHooks{SessionState: []migratedHook{{
 			Command: argv,
 			Events:  []string{status.Waiting, status.Errored, status.Finished},

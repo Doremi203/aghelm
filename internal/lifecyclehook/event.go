@@ -98,15 +98,13 @@ type ReviewInfo struct {
 // Event is one stored lifecycle change. Emit copies what it needs; the
 // caller can reuse the session afterward.
 type Event struct {
-	Name            string
-	At              time.Time
-	Session         store.Session
-	PreviousStatus  string
-	Reason          string
-	Model           string
-	Effort          string
-	Conversation    string
-	UseConversation bool
+	Name           string
+	At             time.Time
+	Session        store.Session
+	PreviousStatus string
+	Reason         string
+	Model          string
+	Effort         string
 	// NotifyEnv is AM_NOTIFY_KIND, AM_TITLE and AM_BODY when the change is
 	// a banner trigger, even with banners off. A notify hook runs only then.
 	// A notify hook and an all hook get these variables.
@@ -203,10 +201,6 @@ func Line(ev Event, version string) []byte {
 		directory = ev.Session.WorktreeRepo
 		worktree = ev.Session.Cwd
 	}
-	conversation := ev.Session.AgentSessionID
-	if ev.UseConversation {
-		conversation = ev.Conversation
-	}
 	payload := envelope{
 		V:     EnvelopeVersion,
 		Event: ev.Name,
@@ -221,7 +215,7 @@ func Line(ev Event, version string) []byte {
 			Branch:         ev.Session.WorktreeBranch,
 			Status:         ev.Session.Status,
 			PreviousStatus: ev.PreviousStatus,
-			Conversation:   conversation,
+			Conversation:   ev.Session.AgentSessionID,
 			SpawnedBy:      ev.Session.SpawnedBy,
 		},
 		Manager: managerJSON{PID: os.Getpid(), Version: version},

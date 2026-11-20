@@ -131,8 +131,8 @@ func TestLifecycleHooksCoverReviveRestartArchiveRestoreDeleteAndAfterTurn(t *tes
 	if len(got) != 3 || got[0].Reason != lifecyclehook.ReasonRestart || got[0].Name != lifecyclehook.EventSessionKill || got[1].Name != lifecyclehook.EventSessionState || got[2].Name != lifecyclehook.EventSessionStart || got[2].Reason != lifecyclehook.ReasonRestart {
 		t.Fatalf("restart events = %v", eventNames(got))
 	}
-	if !got[2].UseConversation || got[2].Conversation == "" || got[2].Conversation == "old-conv" || got[2].Conversation != restarted.Conversation {
-		t.Fatalf("restart conversation = %q, result %q", got[2].Conversation, restarted.Conversation)
+	if started := got[2].Session.AgentSessionID; started == "" || started == "old-conv" || started != restarted.Conversation {
+		t.Fatalf("restart conversation = %q, result %q", started, restarted.Conversation)
 	}
 
 	rec.Reset()

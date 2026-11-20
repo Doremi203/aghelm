@@ -44,16 +44,6 @@ func TestLineKeepsThePromptOutAndSplitsWorktreePaths(t *testing.T) {
 	}
 }
 
-func TestLineUsesTheReplacementConversation(t *testing.T) {
-	ev := Event{
-		Name: EventSessionStart, UseConversation: true, Conversation: "conv-new",
-		Session: store.Session{ID: "s1", AgentSessionID: "conv-old"},
-	}
-	if !strings.Contains(string(Line(ev, "")), `"conversation":"conv-new"`) {
-		t.Fatalf("line = %s", Line(ev, ""))
-	}
-}
-
 func TestLineOmitsTaskBodyAndReservationNote(t *testing.T) {
 	ev := Event{
 		Name:        EventTaskClaim,

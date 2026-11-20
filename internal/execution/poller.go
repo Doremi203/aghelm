@@ -656,8 +656,7 @@ func (p *Runner) step(ctx context.Context) Result {
 			msg.FocusID = id
 		}
 	}
-	// A hook record the worker is still writing, or a store that cannot
-	// answer this pass, leaves the previous panel contents in place.
+	// A store that cannot answer leaves the hook notices out of this pass.
 	if failures, err := p.store.HookFailures(); err == nil {
 		msg.HookFailures = failures
 	}

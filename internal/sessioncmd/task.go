@@ -168,10 +168,7 @@ func (s *Sessions) ClaimTask(sessionID, taskID string) (Task, error) {
 	}
 	task, err := runtime.task(caller.ID, taskID)
 	runtime.emitTask(caller, lifecyclehook.EventTaskClaim, taskID, task.Title)
-	if err != nil {
-		return Task{}, err
-	}
-	return task, nil
+	return task, err
 }
 
 func holderOf(task Task) string {
@@ -245,10 +242,7 @@ func (s *Sessions) settleTask(sessionID, taskID string, done bool) (Task, error)
 	if done {
 		runtime.emitTask(caller, lifecyclehook.EventTaskFinish, taskID, task.Title)
 	}
-	if err != nil {
-		return Task{}, err
-	}
-	return task, nil
+	return task, err
 }
 
 func (s *Sessions) DeleteTask(sessionID, taskID string) error {

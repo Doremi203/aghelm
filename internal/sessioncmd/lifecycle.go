@@ -266,12 +266,12 @@ func (l *Lifecycle) Launch(request LaunchRequest) (LaunchResult, error) {
 	if request.BesideSessionID != "" {
 		stored, err := l.runtime.Store.Get(sess.ID)
 		if err != nil {
-			l.emitStart(sess, request.Reason, "", false)
+			l.emitStart(sess, request.Reason)
 			return LaunchResult{}, err
 		}
 		sess = stored
 	}
-	l.emitStart(sess, request.Reason, "", false)
+	l.emitStart(sess, request.Reason)
 	return LaunchResult{
 		Session:    sess,
 		LabelError: l.setLabel(sess.ID, SessionLabel(sess.Group, sess.Name)),
@@ -362,7 +362,7 @@ func (l *Lifecycle) revive(sess store.Session, pane PaneSize, reason string) (Re
 	if err := SnapshotRelaunch(l.runtime.Store, sess, tool, sess.AgentSessionID); err != nil {
 		return RelaunchResult{}, err
 	}
-	return l.launchExisting(sess, tool, launch.ReviveCommand(tool, sess.AgentSessionID), pane, degraded(sess), true, reason, "", false, func(at time.Time) error {
+	return l.launchExisting(sess, tool, launch.ReviveCommand(tool, sess.AgentSessionID), pane, degraded(sess), true, reason, sess.AgentSessionID, func(at time.Time) error {
 		return l.runtime.Store.SetAgentLaunchedAt(sess.ID, at)
 	})
 }
@@ -399,7 +399,7 @@ func (l *Lifecycle) Restart(listed store.Session, pane PaneSize) (RelaunchResult
 	if err := SnapshotRelaunch(l.runtime.Store, sess, tool, agentSessionID); err != nil {
 		return RelaunchResult{}, err
 	}
-	result, err := l.launchExisting(sess, tool, baseCommand, pane, false, false, lifecyclehook.ReasonRestart, agentSessionID, true, func(at time.Time) error {
+	result, err := l.launchExisting(sess, tool, baseCommand, pane, false, false, lifecyclehook.ReasonRestart, agentSessionID, func(at time.Time) error {
 		return l.runtime.Store.RestartAgent(sess.ID, agentSessionID, at)
 	})
 	if err == nil {
@@ -412,7 +412,7 @@ func (l *Lifecycle) Restart(listed store.Session, pane PaneSize) (RelaunchResult
 	return result, err
 }
 
-func (l *Lifecycle) launchExisting(sess store.Session, tool config.Tool, baseCommand string, pane PaneSize, degraded, injectPicker bool, reason, conversation string, replaceConversation bool, bind func(time.Time) error) (result RelaunchResult, launchErr error) {
+func (l *Lifecycle) launchExisting(sess store.Session, tool config.Tool, baseCommand string, pane PaneSize, degraded, injectPicker bool, reason, conversation string, bind func(time.Time) error) (result RelaunchResult, launchErr error) {
 	launchedAt := time.Now()
 	profile, err := l.runtime.Store.LaunchEnv(sess.Environment)
 	if err != nil {
@@ -450,7 +450,9 @@ func (l *Lifecycle) launchExisting(sess store.Session, tool config.Tool, baseCom
 	}
 	sess.Status = status.Starting
 	sess.AgentLaunchedAt = launchedAt
-	l.emitStart(sess, reason, conversation, replaceConversation)
+	started := sess
+	started.AgentSessionID = conversation
+	l.emitStart(started, reason)
 	announced = true
 	if err := l.runtime.Store.SetAcked(sess.ID, false); err != nil {
 		return RelaunchResult{}, err

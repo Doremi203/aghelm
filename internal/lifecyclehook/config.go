@@ -14,6 +14,7 @@ import (
 
 const (
 	HooksFile      = "hooks.toml"
+	SchemaVersion  = 1
 	DefaultTimeout = 5 * time.Second
 	MinTimeout     = time.Second
 	MaxTimeout     = 30 * time.Second
@@ -71,8 +72,8 @@ func Load(dir string) (File, error) {
 	if doc.SchemaVersion == 0 {
 		return file, errors.New("hooks.toml: schema_version is required")
 	}
-	if doc.SchemaVersion != EnvelopeVersion {
-		return file, fmt.Errorf("hooks.toml: schema_version %d is not supported; this manager reads %d", doc.SchemaVersion, EnvelopeVersion)
+	if doc.SchemaVersion != SchemaVersion {
+		return file, fmt.Errorf("hooks.toml: schema_version %d is not supported; this manager reads %d", doc.SchemaVersion, SchemaVersion)
 	}
 	file.SchemaVersion = doc.SchemaVersion
 	hooks, err := decodeHooks(&meta, doc.Hooks)

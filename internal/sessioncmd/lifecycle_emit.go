@@ -32,10 +32,8 @@ func startEvent(sess store.Session, reason string) lifecyclehook.Event {
 	}
 }
 
-func (l *Lifecycle) emitStart(sess store.Session, reason, conversation string, replaceConversation bool) {
-	ev := startEvent(sess, reason)
-	ev.Conversation, ev.UseConversation = conversation, replaceConversation
-	l.emit(ev)
+func (l *Lifecycle) emitStart(sess store.Session, reason string) {
+	l.emit(startEvent(sess, reason))
 }
 
 // emitKilled reports the stop twice, once as session_kill and once as a
