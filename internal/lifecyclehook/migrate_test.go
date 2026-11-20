@@ -108,6 +108,30 @@ func TestMigrateLeavesTheMarkerUnsetWhenTheWriteFails(t *testing.T) {
 	}
 }
 
+func TestCarryNotifyCommandStoresTheFailureUntilARunSucceeds(t *testing.T) {
+	dir := t.TempDir()
+	st := openStore(t)
+	if err := st.SetSetting(store.NotifyCommandKey, "echo hi"); err != nil {
+		t.Fatal(err)
+	}
+	previous := writeHooksFile
+	writeHooksFile = func(string, []byte, os.FileMode) error { return os.ErrPermission }
+	t.Cleanup(func() { writeHooksFile = previous })
+	CarryNotifyCommand(dir, st)
+	reason, err := st.Setting(store.NotifyCommandFailedKey)
+	if err != nil || reason != os.ErrPermission.Error() {
+		t.Fatalf("stored failure = %q, %v", reason, err)
+	}
+	writeHooksFile = previous
+	CarryNotifyCommand(dir, st)
+	if reason, err := st.Setting(store.NotifyCommandFailedKey); err != nil || reason != "" {
+		t.Fatalf("failure after a good run = %q, %v", reason, err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, HooksFile)); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestMigrateNoticesAnExistingFile(t *testing.T) {
 	dir := t.TempDir()
 	st := openStore(t)

@@ -37,6 +37,7 @@ type Sources struct {
 	HookFailures      []HookFailure
 	HooksConfigError  string
 	NotifyNotCarried  string
+	NotifyFailed      string
 	HooksLog          string
 }
 
@@ -210,6 +211,23 @@ func hookNotices(src Sources) []Notice {
 			Body:     strings.Split(src.NotifyNotCarried, "\n"),
 			URL:      RepoURL + "/blob/main/docs/configuration.md",
 			Action:   "Read how hooks.toml replaces it",
+		})
+	}
+	if src.NotifyFailed != "" {
+		sum := sha256.Sum256([]byte(src.NotifyFailed))
+		notices = append(notices, Notice{
+			ID:       "notify-command-failed-" + hex.EncodeToString(sum[:6]),
+			Kind:     KindHeadsUp,
+			Title:    "Your notify command was not carried over",
+			Subtitle: src.NotifyFailed,
+			Body: []string{
+				"Your notify_command could not be written into hooks.toml, so it",
+				"does not run. The manager tries again on its next start.",
+				"",
+				src.NotifyFailed,
+			},
+			URL:    RepoURL + "/blob/main/docs/configuration.md",
+			Action: "Read how hooks.toml replaces it",
 		})
 	}
 	return notices

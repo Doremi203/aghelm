@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/YoanWai/agent-manager/internal/atomicfile"
@@ -32,6 +34,20 @@ type migratedHooks struct {
 type migratedHook struct {
 	Command []string `toml:"command"`
 	Timeout string   `toml:"timeout"`
+}
+
+// CarryNotifyCommand runs MigrateNotifyCommand and stores its error for the
+// Messages panel, or clears it once a run succeeds. A store that cannot hold
+// the error gets it in hooks.log.
+func CarryNotifyCommand(dir string, st *store.Store) {
+	reason := ""
+	if err := MigrateNotifyCommand(dir, st); err != nil {
+		reason = err.Error()
+	}
+	if _, err := st.SetSettingIfChanged(store.NotifyCommandFailedKey, reason); err != nil && reason != "" {
+		line := fmt.Sprintf("%s notify_command carry-over: %s\n", time.Now().UTC().Format(time.RFC3339), reason)
+		_ = appendLog(filepath.Join(dir, LogFile), line)
+	}
 }
 
 // MigrateNotifyCommand carries a stored notify_command into hooks.toml.

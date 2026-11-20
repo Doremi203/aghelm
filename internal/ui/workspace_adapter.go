@@ -109,7 +109,7 @@ func pollMessage(result execution.Result) tea.Msg {
 		proc: s.Proc, procFor: s.ProcFor, preview: s.Preview, agents: agentStats{count: s.Agents.Count, cpu: s.Agents.CPU, ram: s.Agents.RAM, rss: s.Agents.RSS},
 		queuedMessages: s.QueuedMessages, paneLines: s.PaneLines, panePrompts: s.PanePrompts, panes: s.Panes,
 		tmuxSocket: s.TmuxSocket, leadingManager: s.LeadingManager, focusID: s.FocusID, turnsEnded: s.TurnsEnded, followWarning: s.FollowWarning,
-		hookFailures: s.HookFailures, hooksConfigError: s.HooksConfigError, notifyNotCarried: s.NotifyNotCarried}
+		hookFailures: s.HookFailures, hooksConfigError: s.HooksConfigError, notifyNotCarried: s.NotifyNotCarried, notifyFailed: s.NotifyFailed}
 }
 
 func (p *poller) refreshOnce() tea.Msg                                { return pollMessage(p.runner.Step()) }
@@ -188,6 +188,7 @@ type refreshMsg struct {
 	hookFailures     []store.HookFailure
 	hooksConfigError string
 	notifyNotCarried string
+	notifyFailed     string
 }
 
 // StartPoller launches the background polling loop. It runs outside the
@@ -293,6 +294,7 @@ func (m *Model) routeRefreshMsg(msg tea.Msg) (tea.Model, tea.Cmd, bool) {
 		m.notices.HookFailures = hookFailuresFrom(msg.hookFailures)
 		m.notices.HooksConfigError = msg.hooksConfigError
 		m.notices.NotifyNotCarried = msg.notifyNotCarried
+		m.notices.NotifyFailed = msg.notifyFailed
 		// A listing older than a committed mutation or a newer listing keeps
 		// its rows out, but still carries focus consumed from a notification,
 		// the turns it saw end and its pane facts.

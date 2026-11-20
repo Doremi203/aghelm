@@ -16,12 +16,13 @@ func TestPollMessageCopiesHookNotices(t *testing.T) {
 		HookFailures:     []store.HookFailure{{At: at, Event: "session_state", Command: "sh", Reason: "exit status 1"}},
 		HooksConfigError: "hooks.toml: schema_version is required",
 		NotifyNotCarried: "paste me",
+		NotifyFailed:     "permission denied",
 	}})
 	refresh, ok := msg.(refreshMsg)
 	if !ok {
 		t.Fatalf("message = %T", msg)
 	}
-	if refresh.hooksConfigError == "" || refresh.notifyNotCarried != "paste me" || len(refresh.hookFailures) != 1 || refresh.hookFailures[0].Command != "sh" {
+	if refresh.hooksConfigError == "" || refresh.notifyNotCarried != "paste me" || refresh.notifyFailed != "permission denied" || len(refresh.hookFailures) != 1 || refresh.hookFailures[0].Command != "sh" {
 		t.Fatalf("refresh = %+v", refresh)
 	}
 }
@@ -34,12 +35,13 @@ func TestRefreshStoresHookNoticesBeforeItDropsAStaleListing(t *testing.T) {
 		hookFailures:     []store.HookFailure{{At: at, Event: "session_kill", Command: "stop", Reason: "killed"}},
 		hooksConfigError: "hooks.toml: refused",
 		notifyNotCarried: "paste me",
+		notifyFailed:     "permission denied",
 	})
-	if m.notices.HooksConfigError != "hooks.toml: refused" || m.notices.NotifyNotCarried != "paste me" || len(m.notices.HookFailures) != 1 {
+	if m.notices.HooksConfigError != "hooks.toml: refused" || m.notices.NotifyNotCarried != "paste me" || m.notices.NotifyFailed != "permission denied" || len(m.notices.HookFailures) != 1 {
 		t.Fatalf("log = %+v", m.notices.Log)
 	}
 	sources := m.noticeSources()
-	if sources.HooksConfigError != m.notices.HooksConfigError || len(sources.HookFailures) != 1 || filepath.Base(sources.HooksLog) != lifecyclehook.LogFile {
+	if sources.HooksConfigError != m.notices.HooksConfigError || sources.NotifyFailed != "permission denied" || len(sources.HookFailures) != 1 || filepath.Base(sources.HooksLog) != lifecyclehook.LogFile {
 		t.Fatalf("sources = %+v", sources)
 	}
 }

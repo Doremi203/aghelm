@@ -142,7 +142,8 @@ func TestActiveHookNoticesNameTheFailureAndANewOneChangesTheID(t *testing.T) {
 	src := Sources{
 		Store:            true,
 		HooksConfigError: "hooks.toml: schema_version is required",
-		NotifyNotCarried: "schema_version = 1\n\n[[hooks.session_state]]",
+		NotifyNotCarried: "schema_version = 1\n\n[[hooks.notification]]",
+		NotifyFailed:     "permission denied",
 		HooksLog:         "/tmp/am/hooks.log",
 		HookFailures: []HookFailure{
 			{At: older, Event: "session_state", Command: "notify-state", Reason: "exit status 1"},
@@ -163,6 +164,15 @@ func TestActiveHookNoticesNameTheFailureAndANewOneChangesTheID(t *testing.T) {
 	}
 	if _, ok := byID["notify-command-not-carried"]; !ok {
 		t.Fatal("the carry-over notice is missing")
+	}
+	var failedCarry Notice
+	for id, notice := range byID {
+		if strings.HasPrefix(id, "notify-command-failed-") {
+			failedCarry = notice
+		}
+	}
+	if failedCarry.Subtitle != "permission denied" || failedCarry.Body[len(failedCarry.Body)-1] != "permission denied" {
+		t.Fatalf("failed carry-over notice = %+v", failedCarry)
 	}
 	var configID string
 	for id, notice := range byID {

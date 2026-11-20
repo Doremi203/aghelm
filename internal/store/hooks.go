@@ -13,6 +13,7 @@ const (
 	NotifyCommandShownKey      = "notify_command_shown"
 	NotifyCommandMigratedKey   = "notify_command_migrated"
 	NotifyCommandNotCarriedKey = "notify_command_not_carried"
+	NotifyCommandFailedKey     = "notify_command_failed"
 	HookFailuresKey            = "hook_failures"
 	HooksConfigErrorKey        = "hooks_config_error"
 	HooksShownKey              = "hooks_shown"

@@ -79,6 +79,7 @@ type Snapshot struct {
 	HookFailures     []store.HookFailure
 	HooksConfigError string
 	NotifyNotCarried string
+	NotifyFailed     string
 }
 
 type Result struct {

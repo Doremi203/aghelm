@@ -666,6 +666,9 @@ func (p *Runner) step(ctx context.Context) Result {
 	if text, err := p.store.Setting(store.NotifyCommandNotCarriedKey); err == nil {
 		msg.NotifyNotCarried = text
 	}
+	if text, err := p.store.Setting(store.NotifyCommandFailedKey); err == nil {
+		msg.NotifyFailed = text
+	}
 	if sampleStats {
 		p.statsSampledAt = sampledAt
 		msg.Snap = sysstat.Sample("/")

@@ -20,6 +20,7 @@ type Log struct {
 	HookFailures     []HookFailure
 	HooksConfigError string
 	NotifyNotCarried string
+	NotifyFailed     string
 }
 
 // Stage says what a change in the active notices asks the root to do: open

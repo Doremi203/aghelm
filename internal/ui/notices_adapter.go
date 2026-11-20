@@ -37,6 +37,7 @@ func (m *Model) noticeSources() uinotices.Sources {
 	sources.HookFailures = m.notices.HookFailures
 	sources.HooksConfigError = m.notices.HooksConfigError
 	sources.NotifyNotCarried = m.notices.NotifyNotCarried
+	sources.NotifyFailed = m.notices.NotifyFailed
 	sources.HooksLog = filepath.Join(m.services.configDir, lifecyclehook.LogFile)
 	return sources
 }

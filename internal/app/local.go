@@ -57,7 +57,7 @@ func OpenLocal(profileDir, version string, driver *tmux.Driver) (*Local, error) 
 	// A notify_command from an older release is carried into hooks.toml
 	// here, on the profile this process already chose. A short command
 	// and the MCP server leave that to the next manager start.
-	_ = lifecyclehook.MigrateNotifyCommand(profileDir, st)
+	lifecyclehook.CarryNotifyCommand(profileDir, st)
 	events := lifecyclehook.New(lifecyclehook.Options{
 		ConfigDir: profileDir,
 		Store:     st,
