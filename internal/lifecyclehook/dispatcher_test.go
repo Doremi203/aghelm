@@ -207,7 +207,7 @@ func TestDispatcherFailureIsOnceAndPrivate(t *testing.T) {
 	}
 }
 
-func TestDispatcherGatesNotifyAndStatus(t *testing.T) {
+func TestDispatcherFiltersStatusAndRunsNotificationHooksOnlyOnNotifications(t *testing.T) {
 	dir := t.TempDir()
 	gate := filepath.Join(dir, "gate")
 	notified := filepath.Join(dir, "notified")
@@ -219,7 +219,7 @@ func TestDispatcherGatesNotifyAndStatus(t *testing.T) {
 	barrierHook := script(t, "printf 'barrier\\n' > "+quote(barrier)+"\n")
 	text := "schema_version = 1\n" +
 		"[[hooks.session_state]]\ncommand = [" + strconv.Quote(gateHook) + "]\nevents = [\"waiting\"]\n" +
-		"[[hooks.session_state]]\ncommand = [" + strconv.Quote(notifyHook) + "]\nnotify = true\n" +
+		"[[hooks.notification]]\ncommand = [" + strconv.Quote(notifyHook) + "]\n" +
 		"[[hooks.session_state]]\ncommand = [" + strconv.Quote(changeHook) + "]\n" +
 		"[hooks.session_kill]\ncommand = [" + strconv.Quote(barrierHook) + "]\n"
 	if err := os.WriteFile(filepath.Join(dir, HooksFile), []byte(text), 0o600); err != nil {
@@ -228,19 +228,17 @@ func TestDispatcherGatesNotifyAndStatus(t *testing.T) {
 	d, _ := openDispatcher(t, dir)
 	d.Emit(sessionEvent("s", status.Working))
 	d.Emit(sessionEvent("s", status.Waiting))
-	ev := sessionEvent("s", status.Waiting)
-	ev.NotifyEnv = []string{"AM_NOTIFY_KIND=waiting", "AM_TITLE=Hello", "AM_BODY=Need you"}
-	d.Emit(ev)
+	d.Emit(notificationEvent("s"))
 	d.Emit(Event{Name: EventSessionKill, Session: store.Session{ID: "s", Status: status.Dead}})
 	waitUntil(t, func() bool { return readFile(t, barrier) != "" })
 	if !fileExists(gate) {
 		t.Fatal("the events filter dropped a waiting transition")
 	}
 	if got := readFile(t, notified); got != "Need you\n" {
-		t.Fatalf("a notify hook runs only on a banner trigger, got %q", got)
+		t.Fatalf("a notification hook runs only on a notification, got %q", got)
 	}
-	if got := readFile(t, changes); got != "\n\n\n" {
-		t.Fatalf("a hook without notify runs on every change with no banner text, got %q", got)
+	if got := readFile(t, changes); got != "\n\n" {
+		t.Fatalf("a session_state hook runs on every change with no banner text, got %q", got)
 	}
 }
 
@@ -270,10 +268,8 @@ printf 'all %s stdin=%s banner=%s\n' "$AM_EVENT" "$event" "${AM_NOTIFY_KIND:-}${
 		}
 		want = append(want, "all "+name+" stdin="+name+" banner=")
 	}
-	banner := sessionEvent("s", status.Waiting)
-	banner.NotifyEnv = []string{"AM_NOTIFY_KIND=waiting", "AM_TITLE=Hello", "AM_BODY=Need you"}
-	d.Emit(banner)
-	want = append(want, "state banner=", "all session_state stdin=session_state banner=waitingHelloNeed you")
+	d.Emit(notificationEvent("s"))
+	want = append(want, "all notification stdin=notification banner=waitingHelloNeed you")
 	waitUntil(t, func() bool { return countLines(logPath) >= len(want) })
 	closeDispatcher(d, 3*time.Second)
 	got := strings.Split(strings.TrimSuffix(readFile(t, logPath), "\n"), "\n")
@@ -443,6 +439,14 @@ func writeHooks(t *testing.T, dir, event string, argv []string, extra string) {
 
 func sessionEvent(id, sessionStatus string) Event {
 	return Event{Name: EventSessionState, Session: store.Session{ID: id, Status: sessionStatus}}
+}
+
+func notificationEvent(id string) Event {
+	return Event{
+		Name:         EventNotification,
+		Session:      store.Session{ID: id, Status: status.Waiting},
+		Notification: &NotificationInfo{Kind: "waiting", Title: "Hello", Body: "Need you"},
+	}
 }
 
 func quote(path string) string {

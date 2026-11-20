@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"os"
-	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -231,16 +230,12 @@ func (d *Dispatcher) dispatch(ev Event) {
 		return
 	}
 	line := Line(ev, d.version)
-	base := Env(ev)
+	env := Env(ev)
 	for _, hook := range file.Hooks {
 		if !match(hook, ev) {
 			continue
 		}
 		d.announce(hook)
-		env := slices.Clone(base)
-		if hook.Notify || hook.Event == AllEvents {
-			env = append(env, ev.NotifyEnv...)
-		}
 		ctx, cancel := context.WithTimeout(d.root, hook.Timeout)
 		output, runErr := run(ctx, hook.Command, env, line)
 		timedOut := errors.Is(ctx.Err(), context.DeadlineExceeded)

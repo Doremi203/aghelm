@@ -81,10 +81,10 @@ func TestLoadRejectsUnknownKeysEventsAndTimeouts(t *testing.T) {
 		"schema_version = 1\n[hooks.session_start]\ncommand = [\"echo\"]\ntimeout = \"50ms\"\n",
 		"schema_version = 1\n[hooks.session_start]\ncommand = [\"echo\"]\ntimeout = \"1m\"\n",
 		"schema_version = 1\n[hooks.session_start]\ncommand = [\"echo\"]\nevents = [\"waiting\"]\n",
-		"schema_version = 1\n[hooks.session_start]\ncommand = [\"echo\"]\nnotify = true\n",
+		"schema_version = 1\n[hooks.session_state]\ncommand = [\"echo\"]\nnotify = true\n",
+		"schema_version = 1\n[hooks.notification]\ncommand = [\"echo\"]\nevents = [\"waiting\"]\n",
 		"schema_version = 1\n[hooks.session_state]\ncommand = [\"echo\"]\nevents = [\"asleep\"]\n",
 		"schema_version = 1\n[hooks.all]\ncommand = [\"echo\"]\nevents = [\"waiting\"]\n",
-		"schema_version = 1\n[hooks.all]\ncommand = [\"echo\"]\nnotify = true\n",
 		"schema_version = 1\n[hooks.all]\ncommand = [\"echo\"]\nextra = true\n",
 		"schema_version = 1\n[hooks.every]\ncommand = [\"echo\"]\n",
 		"schema_version = 2\n",
@@ -102,14 +102,13 @@ schema_version = 1
 [hooks.session_state]
 command = ["echo", "hi"]
 events = ["waiting", "errored", "finished"]
-notify = true
 timeout = "15s"
 `)
 	if err != nil {
 		t.Fatal(err)
 	}
 	hook := file.Hooks[0]
-	if !hook.Notify || hook.Timeout != 15*time.Second || len(hook.Events) != 3 {
+	if hook.Timeout != 15*time.Second || len(hook.Events) != 3 {
 		t.Fatalf("hook = %+v", hook)
 	}
 }

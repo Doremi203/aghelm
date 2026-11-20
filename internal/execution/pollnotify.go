@@ -20,7 +20,7 @@ import (
 // at the manager, and the session they are watching is precisely the one
 // whose ping they must not miss. The banner quotes what the row shows:
 // a waiting session's question, a finished session's prompt. It reports
-// the banner the transition triggers even with banners off, so notify
+// the banner the transition triggers even with banners off, so notification
 // hooks run on the same trigger whether or not a banner shows.
 func (p *Runner) notifyTransition(sess store.Session, newStatus, prompt, quote string) (notify.Event, bool) {
 	event, triggered := p.attention(sess, newStatus, prompt, quote)
@@ -35,23 +35,35 @@ func (p *Runner) notifyTransition(sess store.Session, newStatus, prompt, quote s
 	return event, true
 }
 
-// emitSessionState reports one stored status change. NotifyEnv is set only
-// when the change is a banner trigger, and notify hooks run only then.
+// emitSessionState reports one stored status change, then a notification
+// event when the change is a banner trigger.
 func (p *Runner) emitSessionState(sess store.Session, newStatus, previous string, banner notify.Event, triggered bool) {
 	if p.shellTools[sess.Tool] {
 		return
 	}
 	sess.Status = newStatus
-	ev := lifecyclehook.Event{
+	at := time.Now().UTC()
+	events := lifecyclehook.Or(p.events)
+	events.Emit(lifecyclehook.Event{
 		Name:           lifecyclehook.EventSessionState,
-		At:             time.Now().UTC(),
+		At:             at,
 		Session:        sess,
 		PreviousStatus: previous,
+	})
+	if !triggered {
+		return
 	}
-	if triggered {
-		ev.NotifyEnv = notify.CommandEnv(banner)
+	kind, title, body, ok := notify.Banner(banner)
+	if !ok {
+		return
 	}
-	lifecyclehook.Or(p.events).Emit(ev)
+	events.Emit(lifecyclehook.Event{
+		Name:           lifecyclehook.EventNotification,
+		At:             at,
+		Session:        sess,
+		PreviousStatus: previous,
+		Notification:   &lifecyclehook.NotificationInfo{Kind: kind, Title: title, Body: body},
+	})
 }
 
 func (p *Runner) attention(sess store.Session, newStatus, prompt, quote string) (notify.Event, bool) {

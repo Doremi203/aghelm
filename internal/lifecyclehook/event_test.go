@@ -60,6 +60,24 @@ func TestLineOmitsTaskBodyAndReservationNote(t *testing.T) {
 	}
 }
 
+func TestLineCarriesTheNotificationTitleAndBody(t *testing.T) {
+	ev := Event{
+		Name:         EventNotification,
+		Session:      store.Session{ID: "s1", Status: "waiting"},
+		Notification: &NotificationInfo{Kind: "waiting", Title: "deploy · api · claude", Body: "◆ Waiting: ship it?"},
+	}
+	var payload envelope
+	if err := json.Unmarshal(Line(ev, "dev"), &payload); err != nil {
+		t.Fatal(err)
+	}
+	if payload.Event != EventNotification || payload.Notification == nil || *payload.Notification != (notificationJSON{Kind: "waiting", Title: "deploy · api · claude", Body: "◆ Waiting: ship it?"}) {
+		t.Fatalf("payload = %+v", payload)
+	}
+	if raw := string(Line(sessionEvent("s1", "waiting"), "dev")); strings.Contains(raw, `"notification"`) {
+		t.Fatalf("session_state line = %s", raw)
+	}
+}
+
 func TestFingerprintSeparatesArguments(t *testing.T) {
 	if Fingerprint("session_start", []string{"ab", "c"}) == Fingerprint("session_start", []string{"a", "bc"}) {
 		t.Fatal("different argv lists hashed the same")

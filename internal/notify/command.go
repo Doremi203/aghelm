@@ -1,19 +1,14 @@
 package notify
 
-// CommandEnv is the banner's kind, title and body for a notify hook, on top
-// of the hook envelope's own variables. Values carry agent-written text, so
-// they travel as variables and never as part of the command line.
-func CommandEnv(event Event) []string {
+// Banner is the kind name, title and body the native banner for event
+// shows. ok is false for a kind that has no banner.
+func Banner(event Event) (kind, title, body string, ok bool) {
 	detail, ok := describe(event.Kind)
 	if !ok {
-		return nil
+		return "", "", "", false
 	}
-	title, body := content(event, detail)
-	return []string{
-		"AM_NOTIFY_KIND=" + kindName(event.Kind),
-		"AM_TITLE=" + title,
-		"AM_BODY=" + body,
-	}
+	title, body = content(event, detail)
+	return kindName(event.Kind), title, body, true
 }
 
 func kindName(kind Kind) string {

@@ -20,6 +20,7 @@ import (
 const (
 	EventSessionStart   = "session_start"
 	EventSessionState   = "session_state"
+	EventNotification   = "notification"
 	EventSessionArchive = "session_archive"
 	EventSessionRestore = "session_restore"
 	EventSessionKill    = "session_kill"
@@ -49,6 +50,7 @@ func EventNames() []string {
 	return []string{
 		EventSessionStart,
 		EventSessionState,
+		EventNotification,
 		EventSessionArchive,
 		EventSessionRestore,
 		EventSessionKill,
@@ -88,6 +90,14 @@ type ReservationInfo struct {
 	Released  bool
 }
 
+// NotificationInfo is the native banner a status change triggers, sent
+// even with banners off.
+type NotificationInfo struct {
+	Kind  string
+	Title string
+	Body  string
+}
+
 // ReviewInfo is one confirmed review send.
 type ReviewInfo struct {
 	CommentCount int
@@ -105,13 +115,10 @@ type Event struct {
 	Reason         string
 	Model          string
 	Effort         string
-	// NotifyEnv is AM_NOTIFY_KIND, AM_TITLE and AM_BODY when the change is
-	// a banner trigger, even with banners off. A notify hook runs only then.
-	// A notify hook and an all hook get these variables.
-	NotifyEnv   []string
-	Task        *TaskInfo
-	Reservation *ReservationInfo
-	Review      *ReviewInfo
+	Notification   *NotificationInfo
+	Task           *TaskInfo
+	Reservation    *ReservationInfo
+	Review         *ReviewInfo
 }
 
 // Emitter accepts one event. Emit must not block on the hook itself.
@@ -175,9 +182,10 @@ func Fingerprint(event string, argv []string) string {
 // Env is the AM_* variables set for every hook, on top of the process
 // environment. AM_CWD is the session checkout, which is the worktree path
 // when the session has one. The JSON directory field is the main checkout
-// in that case.
+// in that case. A notification adds its kind, title and body, which carry
+// agent-written text, so they travel as variables and never in the argv.
 func Env(ev Event) []string {
-	return []string{
+	env := []string{
 		"AM_EVENT=" + ev.Name,
 		"AM_SESSION_ID=" + ev.Session.ID,
 		"AM_MANAGER_PID=" + strconv.Itoa(os.Getpid()),
@@ -188,6 +196,14 @@ func Env(ev Event) []string {
 		"AM_CWD=" + ev.Session.Cwd,
 		"AM_BRANCH=" + ev.Session.WorktreeBranch,
 	}
+	if ev.Notification != nil {
+		env = append(env,
+			"AM_NOTIFY_KIND="+ev.Notification.Kind,
+			"AM_TITLE="+ev.Notification.Title,
+			"AM_BODY="+ev.Notification.Body,
+		)
+	}
+	return env
 }
 
 // Line is one JSON object and a newline, then the caller closes stdin.
@@ -223,6 +239,9 @@ func Line(ev Event, version string) []byte {
 		Model:   ev.Model,
 		Effort:  ev.Effort,
 	}
+	if ev.Notification != nil {
+		payload.Notification = &notificationJSON{Kind: ev.Notification.Kind, Title: ev.Notification.Title, Body: ev.Notification.Body}
+	}
 	if ev.Task != nil {
 		payload.Task = &taskJSON{ID: ev.Task.ID, Title: ev.Task.Title, Owner: ev.Task.Owner}
 	}
@@ -244,17 +263,18 @@ func Line(ev Event, version string) []byte {
 }
 
 type envelope struct {
-	V           int              `json:"v"`
-	Event       string           `json:"event"`
-	At          string           `json:"ts"`
-	Session     sessionJSON      `json:"session"`
-	Manager     managerJSON      `json:"manager"`
-	Reason      string           `json:"reason,omitempty"`
-	Model       string           `json:"model,omitempty"`
-	Effort      string           `json:"effort,omitempty"`
-	Task        *taskJSON        `json:"task,omitempty"`
-	Reservation *reservationJSON `json:"reservation,omitempty"`
-	Review      *reviewJSON      `json:"review,omitempty"`
+	V            int               `json:"v"`
+	Event        string            `json:"event"`
+	At           string            `json:"ts"`
+	Session      sessionJSON       `json:"session"`
+	Manager      managerJSON       `json:"manager"`
+	Reason       string            `json:"reason,omitempty"`
+	Model        string            `json:"model,omitempty"`
+	Effort       string            `json:"effort,omitempty"`
+	Notification *notificationJSON `json:"notification,omitempty"`
+	Task         *taskJSON         `json:"task,omitempty"`
+	Reservation  *reservationJSON  `json:"reservation,omitempty"`
+	Review       *reviewJSON       `json:"review,omitempty"`
 }
 
 type sessionJSON struct {
@@ -274,6 +294,12 @@ type sessionJSON struct {
 type managerJSON struct {
 	PID     int    `json:"pid"`
 	Version string `json:"version"`
+}
+
+type notificationJSON struct {
+	Kind  string `json:"kind"`
+	Title string `json:"title"`
+	Body  string `json:"body"`
 }
 
 type taskJSON struct {

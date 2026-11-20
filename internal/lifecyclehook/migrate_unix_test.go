@@ -12,7 +12,7 @@ import (
 	"github.com/YoanWai/agent-manager/internal/testenv"
 )
 
-func TestMigratedCommandReadsStdinAndTheBannerVariables(t *testing.T) {
+func TestMigratedCommandRunsOnANotificationWithStdinAndTheBannerVariables(t *testing.T) {
 	testenv.SkipPOSIXShell(t)
 	dir := t.TempDir()
 	st := openStore(t)
@@ -26,13 +26,13 @@ func TestMigratedCommandReadsStdinAndTheBannerVariables(t *testing.T) {
 	}
 	d, _ := openDispatcher(t, dir)
 	d.Emit(Event{
-		Name:      EventSessionState,
-		Session:   store.Session{ID: "s1", Name: "deploy", Tool: "claude", Status: status.Waiting, Cwd: dir},
-		NotifyEnv: []string{"AM_NOTIFY_KIND=waiting", "AM_TITLE=Hello", "AM_BODY=Need you"},
+		Name:         EventNotification,
+		Session:      store.Session{ID: "s1", Name: "deploy", Tool: "claude", Status: status.Waiting, Cwd: dir},
+		Notification: &NotificationInfo{Kind: "waiting", Title: "Hello", Body: "Need you"},
 	})
 	waitUntil(t, func() bool { return strings.Contains(readFile(t, out), "Need you\n") })
 	got := readFile(t, out)
-	if !strings.Contains(got, `"event":"session_state"`) || !strings.Contains(got, "Hello") || !strings.Contains(got, "Need you") {
+	if !strings.Contains(got, `"event":"notification"`) || !strings.Contains(got, "Hello") || !strings.Contains(got, "Need you") {
 		t.Fatalf("migrated command saw %q", got)
 	}
 	if strings.Count(strings.Split(got, "\n")[0], "\n") != 0 {

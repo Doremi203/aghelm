@@ -8,7 +8,6 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/YoanWai/agent-manager/internal/atomicfile"
-	"github.com/YoanWai/agent-manager/internal/status"
 	"github.com/YoanWai/agent-manager/internal/store"
 )
 
@@ -27,13 +26,11 @@ type migratedFile struct {
 }
 
 type migratedHooks struct {
-	SessionState []migratedHook `toml:"session_state"`
+	Notification []migratedHook `toml:"notification"`
 }
 
 type migratedHook struct {
 	Command []string `toml:"command"`
-	Events  []string `toml:"events"`
-	Notify  bool     `toml:"notify"`
 	Timeout string   `toml:"timeout"`
 }
 
@@ -93,7 +90,7 @@ func MigrateNotifyCommand(dir string, st *store.Store) error {
 		return err
 	}
 	if shown == command {
-		if _, err := st.ClaimHookShown(Fingerprint(EventSessionState, argv)); err != nil {
+		if _, err := st.ClaimHookShown(Fingerprint(EventNotification, argv)); err != nil {
 			return err
 		}
 	}
@@ -121,10 +118,8 @@ func migratedDocument(command string) ([]byte, []string, error) {
 	}
 	doc := migratedFile{
 		SchemaVersion: SchemaVersion,
-		Hooks: migratedHooks{SessionState: []migratedHook{{
+		Hooks: migratedHooks{Notification: []migratedHook{{
 			Command: argv,
-			Events:  []string{status.Waiting, status.Errored, status.Finished},
-			Notify:  true,
 			Timeout: "15s",
 		}}},
 	}
@@ -138,7 +133,7 @@ func migratedDocument(command string) ([]byte, []string, error) {
 func commentLines(command string) string {
 	var b strings.Builder
 	b.WriteString("# Carried over from notify_command by agent-manager.\n")
-	b.WriteString("# notify = true runs it on every banner trigger, now also with banners off.\n")
+	b.WriteString("# hooks.notification runs it on every banner trigger, now also with banners off.\n")
 	for _, line := range strings.Split(command, "\n") {
 		b.WriteString("# ")
 		b.WriteString(line)

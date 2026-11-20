@@ -27,7 +27,6 @@ type Hook struct {
 	Event   string
 	Command []string
 	Events  []string
-	Notify  bool
 	Timeout time.Duration
 }
 
@@ -49,7 +48,6 @@ type rawHook struct {
 	Command toml.Primitive `toml:"command"`
 	Timeout string         `toml:"timeout"`
 	Events  []string       `toml:"events"`
-	Notify  bool           `toml:"notify"`
 }
 
 // Load reads hooks.toml. A missing file returns a zero File and a nil
@@ -137,8 +135,8 @@ func (raw rawHook) toHook(meta *toml.MetaData, event string) (Hook, error) {
 	if err != nil {
 		return Hook{}, err
 	}
-	if event != EventSessionState && (len(raw.Events) > 0 || raw.Notify) {
-		return Hook{}, fmt.Errorf("hooks.toml: hooks.%s: events and notify are only valid on session_state", event)
+	if event != EventSessionState && len(raw.Events) > 0 {
+		return Hook{}, fmt.Errorf("hooks.toml: hooks.%s: events is only valid on session_state", event)
 	}
 	for _, name := range raw.Events {
 		if !slices.Contains(StatusNames(), name) {
@@ -156,7 +154,7 @@ func (raw rawHook) toHook(meta *toml.MetaData, event string) (Hook, error) {
 		}
 		timeout = parsed
 	}
-	return Hook{Event: event, Command: command, Events: raw.Events, Notify: raw.Notify, Timeout: timeout}, nil
+	return Hook{Event: event, Command: command, Events: raw.Events, Timeout: timeout}, nil
 }
 
 func decodeCommand(meta *toml.MetaData, event string, prim toml.Primitive) ([]string, error) {
@@ -181,8 +179,5 @@ func match(hook Hook, ev Event) bool {
 	if hook.Event != ev.Name {
 		return false
 	}
-	if len(hook.Events) > 0 && !slices.Contains(hook.Events, ev.Session.Status) {
-		return false
-	}
-	return !hook.Notify || ev.NotifyEnv != nil
+	return len(hook.Events) == 0 || slices.Contains(hook.Events, ev.Session.Status)
 }

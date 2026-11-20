@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestCommandEnvContract(t *testing.T) {
+func TestBannerContract(t *testing.T) {
 	event := Event{ID: "sess-1", Session: "deploy", Tool: "claude", Dir: "/src/api-worktrees/am-x", Branch: "am/fix-login"}
 	for kind, want := range map[Kind][2]string{
 		Waiting:  {"waiting", "◆ Waiting for your input"},
@@ -14,18 +14,15 @@ func TestCommandEnvContract(t *testing.T) {
 		Errored:  {"errored", "✕ Errored"},
 	} {
 		event.Kind = kind
-		got := CommandEnv(event)
-		expected := []string{
-			"AM_NOTIFY_KIND=" + want[0],
-			"AM_TITLE=deploy · am-x · am/fix-login · claude",
-			"AM_BODY=" + want[1],
-		}
-		if !slices.Equal(got, expected) {
-			t.Fatalf("%s env = %q, want %q", want[0], got, expected)
+		name, title, body, ok := Banner(event)
+		got := []string{name, title, body}
+		expected := []string{want[0], "deploy · am-x · am/fix-login · claude", want[1]}
+		if !ok || !slices.Equal(got, expected) {
+			t.Fatalf("%s banner = %q, %t, want %q", want[0], got, ok, expected)
 		}
 	}
-	if env := CommandEnv(Event{ID: "x"}); env != nil {
-		t.Fatalf("an event of no kind should have no env, got %q", env)
+	if _, _, _, ok := Banner(Event{ID: "x"}); ok {
+		t.Fatal("an event of no kind should have no banner")
 	}
 }
 

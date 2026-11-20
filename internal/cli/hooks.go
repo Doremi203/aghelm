@@ -45,7 +45,6 @@ type hookView struct {
 	Event   string   `json:"event"`
 	Command []string `json:"command"`
 	Events  []string `json:"events"`
-	Notify  bool     `json:"notify"`
 	Timeout string   `json:"timeout"`
 	Shown   bool     `json:"shown"`
 }
@@ -85,7 +84,6 @@ func runHooks(out io.Writer, args []string, configDir string) error {
 			Event:   hook.Event,
 			Command: hook.Command,
 			Events:  events,
-			Notify:  hook.Notify,
 			Timeout: hook.Timeout.String(),
 			Shown:   slices.Contains(shown, lifecyclehook.Fingerprint(hook.Event, hook.Command)),
 		})
@@ -118,8 +116,8 @@ func hooksText(report hooksReport) string {
 	fmt.Fprintf(w, "schema_version\t%d\n", report.SchemaVersion)
 	fmt.Fprintf(w, "events\t%s\n", strings.Join(report.Events, ", "))
 	for _, hook := range report.Hooks {
-		fmt.Fprintf(w, "%s\t%s\tevents=%s\tnotify=%t\ttimeout=%s\tshown=%t\n",
-			hook.Event, strings.Join(hook.Command, " "), strings.Join(hook.Events, ","), hook.Notify, hook.Timeout, hook.Shown)
+		fmt.Fprintf(w, "%s\t%s\tevents=%s\ttimeout=%s\tshown=%t\n",
+			hook.Event, strings.Join(hook.Command, " "), strings.Join(hook.Events, ","), hook.Timeout, hook.Shown)
 	}
 	if len(report.Failures) > 0 {
 		fmt.Fprintln(w, "failures\t")

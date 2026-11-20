@@ -56,9 +56,9 @@ func envValue(env []string, name string) string {
 	return ""
 }
 
-// A status change always emits. The banner text rides along only on a
-// banner trigger, since notify hooks run only then.
-func TestEmitSessionStateSetsNotifyEnvOnlyOnATrigger(t *testing.T) {
+// A status change always emits session_state. A banner trigger adds a
+// notification event after it, carrying the banner text.
+func TestEmitSessionStateAddsANotificationOnlyOnATrigger(t *testing.T) {
 	p, sess, _ := newNotifyTestPoller(t)
 	rec := &lifecyclehook.Recorder{}
 	p.events = rec
@@ -66,24 +66,25 @@ func TestEmitSessionStateSetsNotifyEnvOnlyOnATrigger(t *testing.T) {
 	p.emitSessionState(sess, status.Waiting, status.Idle, banner, true)
 	p.emitSessionState(sess, status.Working, status.Waiting, notify.Event{}, false)
 	got := rec.Events()
-	if len(got) != 2 || got[0].Name != lifecyclehook.EventSessionState || got[0].PreviousStatus != status.Idle || got[0].Session.Status != status.Waiting {
+	if len(got) != 3 || got[0].Name != lifecyclehook.EventSessionState || got[0].PreviousStatus != status.Idle || got[0].Session.Status != status.Waiting {
 		t.Fatalf("events = %+v", got)
 	}
-	if envValue(got[0].NotifyEnv, "AM_NOTIFY_KIND") != "waiting" || !strings.Contains(envValue(got[0].NotifyEnv, "AM_BODY"), "Do you want to proceed?") {
-		t.Fatalf("notify env = %q", got[0].NotifyEnv)
+	if got[0].Notification != nil {
+		t.Fatalf("session_state carries no banner text, got %+v", got[0].Notification)
 	}
-	if envValue(got[0].NotifyEnv, "AM_CWD") != "" {
-		t.Fatalf("notify env should carry only the banner variables, got %q", got[0].NotifyEnv)
+	note := got[1].Notification
+	if got[1].Name != lifecyclehook.EventNotification || got[1].Session.Status != status.Waiting || note == nil || note.Kind != "waiting" || !strings.Contains(note.Body, "Do you want to proceed?") {
+		t.Fatalf("notification = %+v", got[1])
 	}
-	if got[1].NotifyEnv != nil {
-		t.Fatalf("a change with no banner carries no banner text, got %q", got[1].NotifyEnv)
+	if got[2].Name != lifecyclehook.EventSessionState || got[2].Notification != nil {
+		t.Fatalf("a change with no banner emits only session_state, got %+v", got[2])
 	}
 }
 
-// Notify hooks follow the banner trigger, not the banner setting. A real
+// Notification hooks follow the banner trigger, not the banner setting. A real
 // poller drives a real dispatcher, with banners off first so the first-run
 // notice is shown on a trigger nobody saw a banner for.
-func TestNotifyHooksFollowTheBannerTriggerWhateverTheBannerSetting(t *testing.T) {
+func TestNotificationHooksFollowTheBannerTriggerWhateverTheBannerSetting(t *testing.T) {
 	testenv.SkipPOSIXShell(t)
 	m := buildModel(t)
 	hooked := m.cfg.Tools["claude-hooked"]
@@ -99,7 +100,7 @@ func TestNotifyHooksFollowTheBannerTriggerWhateverTheBannerSetting(t *testing.T)
 	notifyHook := writeScript(t, configDir, "notify.sh", `printf '%s|%s|%s\n' "$AM_NOTIFY_KIND" "$AM_TITLE" "$AM_BODY" >> `+strconv.Quote(notified))
 	changeHook := writeScript(t, configDir, "change.sh", `status=$(grep -o '"status":"[a-z]*"' | cut -d'"' -f4); printf '%s|%s\n' "$status" "$AM_BODY" >> `+strconv.Quote(changes))
 	hooksToml := "schema_version = 1\n" +
-		"[[hooks.session_state]]\ncommand = [" + strconv.Quote(notifyHook) + "]\nnotify = true\n" +
+		"[[hooks.notification]]\ncommand = [" + strconv.Quote(notifyHook) + "]\n" +
 		"[[hooks.session_state]]\ncommand = [" + strconv.Quote(changeHook) + "]\n"
 	if err := os.WriteFile(filepath.Join(configDir, lifecyclehook.HooksFile), []byte(hooksToml), 0o600); err != nil {
 		t.Fatal(err)
@@ -156,10 +157,10 @@ func TestNotifyHooksFollowTheBannerTriggerWhateverTheBannerSetting(t *testing.T)
 	moveTo(status.Idle, status.Waiting)
 	got := lines(notified, 1)
 	if len(got) != 1 || !strings.HasPrefix(got[0], "waiting|needy") || !strings.HasSuffix(got[0], "Waiting: boot-marker") {
-		t.Fatalf("banners off: a waiting trigger runs the notify hook with the banner title and body, got %q", got)
+		t.Fatalf("banners off: a waiting trigger runs the notification hook with the banner title and body, got %q", got)
 	}
 	shownMu.Lock()
-	announced := slices.Contains(shown, lifecyclehook.EventSessionState+": "+notifyHook)
+	announced := slices.Contains(shown, lifecyclehook.EventNotification+": "+notifyHook)
 	shownMu.Unlock()
 	if !announced {
 		t.Fatalf("banners off: the first-run notice follows the trigger, shown %q", shown)
@@ -170,10 +171,10 @@ func TestNotifyHooksFollowTheBannerTriggerWhateverTheBannerSetting(t *testing.T)
 
 	moveTo(status.Waiting, status.Working)
 	if got := lines(changes, 2); len(got) != 2 || got[0] != "waiting|" || got[1] != "working|" {
-		t.Fatalf("a hook without notify runs on every change with no banner text, got %q", got)
+		t.Fatalf("a session_state hook runs on every change with no banner text, got %q", got)
 	}
 	if got := lines(notified, 1); len(got) != 1 {
-		t.Fatalf("working is not a banner trigger, so the notify hook stays quiet, got %q", got)
+		t.Fatalf("working is not a banner trigger, so the notification hook stays quiet, got %q", got)
 	}
 
 	if err := m.store.SetSetting(notificationsSetting, "on"); err != nil {
@@ -182,10 +183,10 @@ func TestNotifyHooksFollowTheBannerTriggerWhateverTheBannerSetting(t *testing.T)
 	moveTo(status.Idle, status.Errored)
 	waitForCalls(t, banners, 1)
 	if got := lines(notified, 2); len(got) != 2 || !strings.HasPrefix(got[1], "errored|needy") {
-		t.Fatalf("banners on: an errored trigger runs the notify hook, got %q", got)
+		t.Fatalf("banners on: an errored trigger runs the notification hook, got %q", got)
 	}
 	if got := lines(changes, 3); len(got) != 3 || got[2] != "errored|" {
-		t.Fatalf("a hook without notify still runs once per change, got %q", got)
+		t.Fatalf("a session_state hook still runs once per change, got %q", got)
 	}
 }
 
@@ -379,7 +380,7 @@ func TestSessionStateEmitsOnceAcrossManagers(t *testing.T) {
 	m.poller.Step()
 	second.Step()
 	got := rec.Events()
-	if len(got) != 1 || got[0].Name != lifecyclehook.EventSessionState || got[0].Session.Status != status.Waiting || envValue(got[0].NotifyEnv, "AM_NOTIFY_KIND") != "waiting" {
+	if len(got) != 2 || got[0].Name != lifecyclehook.EventSessionState || got[0].Session.Status != status.Waiting || got[1].Name != lifecyclehook.EventNotification || got[1].Notification == nil || got[1].Notification.Kind != "waiting" {
 		t.Fatalf("two managers emitted %+v", got)
 	}
 }

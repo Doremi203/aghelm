@@ -27,7 +27,7 @@ func TestHooksJSONReportsTheFileAndAMissingFile(t *testing.T) {
 		t.Fatalf("missing file = %+v", missing)
 	}
 
-	body := "schema_version = 1\n\n[[hooks.session_state]]\ncommand = [\"sh\", \"-c\", \"true\"]\ntimeout = \"15s\"\nnotify = true\n"
+	body := "schema_version = 1\n\n[[hooks.notification]]\ncommand = [\"sh\", \"-c\", \"true\"]\ntimeout = \"15s\"\n"
 	if err := os.WriteFile(filepath.Join(dir, "hooks.toml"), []byte(body), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -35,7 +35,7 @@ func TestHooksJSONReportsTheFileAndAMissingFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fingerprint := lifecyclehook.Fingerprint("session_state", []string{"sh", "-c", "true"})
+	fingerprint := lifecyclehook.Fingerprint("notification", []string{"sh", "-c", "true"})
 	if _, err := st.ClaimHookShown(fingerprint); err != nil {
 		t.Fatal(err)
 	}
@@ -52,7 +52,7 @@ func TestHooksJSONReportsTheFileAndAMissingFile(t *testing.T) {
 	if err := json.Unmarshal(out.Bytes(), &report); err != nil {
 		t.Fatal(err)
 	}
-	if !report.Found || report.SchemaVersion != 1 || len(report.Hooks) != 1 || !report.Hooks[0].Shown || !report.Hooks[0].Notify || report.Hooks[0].Timeout != "15s" {
+	if !report.Found || report.SchemaVersion != 1 || len(report.Hooks) != 1 || !report.Hooks[0].Shown || report.Hooks[0].Event != "notification" || report.Hooks[0].Timeout != "15s" {
 		t.Fatalf("report = %+v", report)
 	}
 	if len(report.Failures) != 1 || report.Failures[0].Command != "sh" || report.Failures[0].Reason != "exit status 22" {

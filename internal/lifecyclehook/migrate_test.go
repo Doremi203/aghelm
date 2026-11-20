@@ -9,7 +9,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/status"
 	"github.com/YoanWai/agent-manager/internal/store"
 )
 
@@ -44,18 +43,15 @@ func TestMigrateWritesAPrivateFileAndSetsTheMarkerAfter(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !hook.Notify || hook.Timeout.String() != "15s" || !slices.Equal(hook.Command, argv) {
-		t.Fatalf("hook = %+v", hook)
-	}
-	if joined := strings.Join(hook.Events, ","); joined != status.Waiting+","+status.Errored+","+status.Finished {
-		t.Fatalf("events = %q", joined)
+	if len(file.Hooks) != 1 || hook.Event != EventNotification || len(hook.Events) != 0 || hook.Timeout.String() != "15s" || !slices.Equal(hook.Command, argv) {
+		t.Fatalf("hooks = %+v", file.Hooks)
 	}
 	marker, err := st.Setting(store.NotifyCommandMigratedKey)
 	if err != nil || marker != command {
 		t.Fatalf("marker = %q, %v", marker, err)
 	}
 	shown, err := st.HooksShown()
-	if err != nil || len(shown) != 1 || shown[0] != Fingerprint(EventSessionState, hook.Command) {
+	if err != nil || len(shown) != 1 || shown[0] != Fingerprint(EventNotification, hook.Command) {
 		t.Fatalf("shown = %v, %v", shown, err)
 	}
 	before, err := os.ReadFile(path)
