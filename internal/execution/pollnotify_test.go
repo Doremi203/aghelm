@@ -46,16 +46,6 @@ func newNotifyTestPoller(t *testing.T) (*Runner, store.Session, *notifyRecorder)
 	return p, sess, rec
 }
 
-func envValue(env []string, name string) string {
-	prefix := name + "="
-	for _, item := range env {
-		if strings.HasPrefix(item, prefix) {
-			return strings.TrimPrefix(item, prefix)
-		}
-	}
-	return ""
-}
-
 // A status change always emits session_state. A banner trigger adds a
 // notification event after it, carrying the banner text.
 func TestEmitSessionStateAddsANotificationOnlyOnATrigger(t *testing.T) {
