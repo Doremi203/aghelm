@@ -12,7 +12,7 @@ The **editor** row picks the command `o` opens a directory in (see [Opening the 
 schema_version = 1
 
 [[hooks.notification]]
-command = ["sh", "-c", "curl -fsS -H \"Title: $AM_TITLE\" -d \"$AM_BODY\" https://ntfy.sh/topic"]
+command = ["sh", "-c", 'curl -fsS -H "Title: $AM_TITLE" -d "$AM_BODY" https://ntfy.sh/topic']
 timeout = "15s"
 
 [[hooks.all]]
@@ -25,7 +25,7 @@ Each `[[hooks.<event>]]` block names one command. The events are `session_start`
 
 `notification` fires on every change that triggers the native banner, right after that change's `session_state`. That is `waiting`, `errored`, and `finished` while `notify on finish` is on. The `notifications` row in Settings only shows or hides the banner, so a `notification` hook still runs with banners off. Its JSON line carries the banner under `notification`, and its environment adds `AM_NOTIFY_KIND`, `AM_TITLE` and `AM_BODY`.
 
-`[[hooks.all]]` runs for every event above, so one script can handle all of them. It gets the same JSON line and `AM_*` variables, with `AM_EVENT` set to the event that fired, so a banner trigger reaches it twice, once as `session_state` and once as `notification`. It takes `command` and `timeout`. `events` belongs to `session_state`, and an `all` block that sets it refuses the file. The script reads `AM_EVENT` and the status on stdin to pick what it handles. For each event the manager runs that event's own hooks first and the `all` hooks after them, each in file order. A command listed in both places runs twice.
+`[[hooks.all]]` runs for every event above, so one script can handle all of them. It gets the same JSON line and `AM_*` variables, with `AM_EVENT` set to the event that fired, so a banner trigger reaches it twice, once as `session_state` and once as `notification`. It takes `command` and `timeout`. `events` belongs to `session_state`, and an `all` block that sets it refuses the file. The script reads `AM_EVENT` and the status on stdin to pick what it handles. For each event the manager runs that event's own hooks first and the `all` hooks after them, each in file order. A command listed in both places runs twice. Later releases add events, and an `all` hook receives those too, so a script must ignore an `AM_EVENT` it does not know.
 
 The manager writes one compact JSON line to the command's stdin.
 
