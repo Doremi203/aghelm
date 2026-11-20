@@ -25,6 +25,7 @@ import (
 	"github.com/YoanWai/agent-manager/internal/notify"
 	"github.com/YoanWai/agent-manager/internal/sessioncmd"
 	"github.com/YoanWai/agent-manager/internal/systheme"
+	"github.com/YoanWai/agent-manager/internal/termseq"
 	"github.com/YoanWai/agent-manager/internal/tmux"
 	"github.com/YoanWai/agent-manager/internal/ui"
 	"github.com/YoanWai/agent-manager/internal/update"
@@ -230,6 +231,9 @@ func runServe(out, errs io.Writer, args []string, dir string, start app.Starter)
 func withBackend(configDir, commandName string, command func(*sessioncmd.Backend) error) (err error) {
 	backend := sessioncmd.OpenBackend(configDir)
 	backend.SetVersion(version)
+	// A command's stdout is its answer, read as JSON over SSH and as the MCP
+	// stream, so the first-run hook banner's terminal fallback uses stderr.
+	termseq.Out = os.Stderr
 	backend.SetShow(notify.ShowCommand)
 	switch commandName {
 	case "spawn":
