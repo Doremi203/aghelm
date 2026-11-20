@@ -348,7 +348,7 @@ func TestTaskAndReservationHooksFollowTheWrite(t *testing.T) {
 		t.Fatal(err)
 	}
 	got = rec.Events()
-	if len(got) != 2 || got[0].Reservation.Action != lifecyclehook.ReservationRelease || got[0].Reservation.Pattern != "internal/ui/*.go" || got[1].Reservation.Pattern != "" || !got[1].Reservation.Released {
+	if len(got) != 2 || got[0].Reservation.Action != lifecyclehook.ReservationRelease || got[0].Reservation.Pattern != "internal/ui/*.go" || got[1].Reservation.Action != lifecyclehook.ReservationRelease || got[1].Reservation.Pattern != "" {
 		t.Fatalf("release = %+v %+v", got[0].Reservation, got[1].Reservation)
 	}
 }

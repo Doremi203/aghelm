@@ -40,7 +40,7 @@ The manager writes one compact JSON line to the command's stdin.
 | `model`, `effort` | the launch choice, on `session_start` |
 | `notification` | kind, title and body of the banner, on `notification` |
 | `task` | id, title and owner, on a task event. The body is not included |
-| `reservation` | action (`reserve` or `release`), pattern, mode, expires_at, released |
+| `reservation` | action (`reserve` or `release`), pattern, mode and expires_at |
 | `review` | comment_count, round and repo, on a confirmed review send |
 
 `directory` is the repository checkout when the session has a worktree, and the session directory otherwise. `worktree` is the worktree checkout when one exists, and empty otherwise. `AM_CWD` is always the session directory, which is the worktree checkout when the manager made one. A hook that `cd`s to `directory` lands in the main checkout of a worktree session. A hook that `cd`s to `AM_CWD` lands in the checkout the agent is using.

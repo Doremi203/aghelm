@@ -87,7 +87,6 @@ type ReservationInfo struct {
 	Pattern   string
 	Mode      string
 	ExpiresAt time.Time
-	Released  bool
 }
 
 // NotificationInfo is the native banner a status change triggers, sent
@@ -246,7 +245,7 @@ func Line(ev Event, version string) []byte {
 		payload.Task = &taskJSON{ID: ev.Task.ID, Title: ev.Task.Title, Owner: ev.Task.Owner}
 	}
 	if ev.Reservation != nil {
-		item := reservationJSON{Action: ev.Reservation.Action, Pattern: ev.Reservation.Pattern, Mode: ev.Reservation.Mode, Released: ev.Reservation.Released}
+		item := reservationJSON{Action: ev.Reservation.Action, Pattern: ev.Reservation.Pattern, Mode: ev.Reservation.Mode}
 		if !ev.Reservation.ExpiresAt.IsZero() {
 			item.ExpiresAt = ev.Reservation.ExpiresAt.UTC().Format(time.RFC3339)
 		}
@@ -313,7 +312,6 @@ type reservationJSON struct {
 	Pattern   string `json:"pattern"`
 	Mode      string `json:"mode,omitempty"`
 	ExpiresAt string `json:"expires_at,omitempty"`
-	Released  bool   `json:"released,omitempty"`
 }
 
 type reviewJSON struct {

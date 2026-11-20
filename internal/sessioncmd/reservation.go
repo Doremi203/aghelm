@@ -153,7 +153,7 @@ func (s *Sessions) ReleaseFiles(sessionID string, patterns []string) (int, error
 		if err != nil {
 			return 0, err
 		}
-		runtime.emitReservation(caller, lifecyclehook.ReservationInfo{Action: lifecyclehook.ReservationRelease, Released: true})
+		runtime.emitReservation(caller, lifecyclehook.ReservationInfo{Action: lifecyclehook.ReservationRelease})
 		return int(released), nil
 	}
 	total := int64(0)
@@ -164,9 +164,8 @@ func (s *Sessions) ReleaseFiles(sessionID string, patterns []string) (int, error
 		}
 		total += released
 		runtime.emitReservation(caller, lifecyclehook.ReservationInfo{
-			Action:   lifecyclehook.ReservationRelease,
-			Pattern:  pattern,
-			Released: true,
+			Action:  lifecyclehook.ReservationRelease,
+			Pattern: pattern,
 		})
 	}
 	return int(total), nil

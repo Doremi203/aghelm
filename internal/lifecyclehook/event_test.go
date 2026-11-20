@@ -49,13 +49,13 @@ func TestLineOmitsTaskBodyAndReservationNote(t *testing.T) {
 		Name:        EventTaskClaim,
 		Session:     store.Session{ID: "s1"},
 		Task:        &TaskInfo{ID: "t1", Title: "write it", Owner: "s1"},
-		Reservation: &ReservationInfo{Action: ReservationRelease, Pattern: "", Released: true},
+		Reservation: &ReservationInfo{Action: ReservationRelease, Pattern: ""},
 	}
 	raw := string(Line(ev, "dev"))
 	if strings.Contains(raw, "body") || strings.Contains(raw, "note") {
 		t.Fatalf("line = %s", raw)
 	}
-	if !strings.Contains(raw, `"pattern":""`) || !strings.Contains(raw, `"released":true`) {
+	if !strings.Contains(raw, `"action":"release","pattern":""`) || strings.Contains(raw, "released") {
 		t.Fatalf("line = %s", raw)
 	}
 }
