@@ -100,11 +100,9 @@ func (b *Backend) resolve() (Runtime, error) {
 	} else if b.owned {
 		// Settings can change between commands of a long-lived owner, so the
 		// session keys are reread from the store each time.
-		keys, err := b.runtime.Store.SessionKeys()
-		if err != nil {
+		if err := ApplyBindingSettings(b.runtime.Store, b.runtime.Driver); err != nil {
 			return Runtime{}, err
 		}
-		b.runtime.Driver.SetSessionKeys(keys)
 	}
 	return b.runtime, nil
 }
@@ -122,12 +120,10 @@ func openRuntime(configDir, version string) (Runtime, error) {
 	if err != nil {
 		return Runtime{}, err
 	}
-	keys, err := st.SessionKeys()
-	if err != nil {
+	if err := ApplyBindingSettings(st, driver); err != nil {
 		st.Close()
 		return Runtime{}, err
 	}
-	driver.SetSessionKeys(keys)
 	gitDriver, _ := git.New()
 	events := lifecyclehook.New(lifecyclehook.Options{
 		ConfigDir: configDir,

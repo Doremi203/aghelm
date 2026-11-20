@@ -49,12 +49,10 @@ func OpenLocal(profileDir, version string, driver *tmux.Driver) (*Local, error) 
 	if err != nil {
 		return nil, err
 	}
-	keys, err := st.SessionKeys()
-	if err != nil {
+	if err := sessioncmd.ApplyBindingSettings(st, driver); err != nil {
 		st.Close()
 		return nil, err
 	}
-	driver.SetSessionKeys(keys)
 	optionalGitDriver, _ := git.New()
 	// A notify_command from an older release is carried into hooks.toml
 	// here, on the profile this process already chose. A short command
