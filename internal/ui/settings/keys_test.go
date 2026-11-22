@@ -80,10 +80,6 @@ func TestKeysStepAndAskTheRoot(t *testing.T) {
 	if result := press(&s, ctx, "right"); !result.Background || !s.TerminalBackground || !s.Dirty {
 		t.Fatalf("background step = %+v, terminal %v dirty %v", result, s.TerminalBackground, s.Dirty)
 	}
-	s.Field = FieldUpdate
-	if result := press(&s, ctx, "enter"); result.Exit != Update {
-		t.Fatalf("enter on the version row = %v, want Update", result.Exit)
-	}
 	s.Field = FieldBugReport
 	if result := press(&s, ctx, "enter"); result.Exit != ReportBug {
 		t.Fatalf("enter on report a bug = %v, want ReportBug", result.Exit)
@@ -170,14 +166,12 @@ func TestKeyPickerSavesOnlyAChange(t *testing.T) {
 	}
 }
 
-// The dialog paints from its own state plus the release facts it is handed.
-func TestViewReadsReleaseFacts(t *testing.T) {
+// The dialog paints from its own state plus the version it is handed.
+func TestViewReadsTheVersion(t *testing.T) {
 	s := openState(testContext())
-	ctx := viewContext()
-	ctx.Latest = "v2.0.0"
-	frame := s.View(ctx)
-	if frame.Card != Flex || !strings.Contains(frame.Body, "version v1.0.0") || !strings.Contains(frame.Body, "update to v2.0.0") {
-		t.Fatalf("version row did not read the release:\n%s", frame.Body)
+	frame := s.View(viewContext())
+	if frame.Card != Flex || !strings.Contains(ansi.Strip(frame.Body), "v1.0.0") {
+		t.Fatalf("version row did not read the version:\n%s", frame.Body)
 	}
 	if !strings.Contains(frame.Body, "keybindings") || !strings.Contains(frame.Body, "defaults") {
 		t.Fatalf("keybindings row did not summarise the tables:\n%s", frame.Body)

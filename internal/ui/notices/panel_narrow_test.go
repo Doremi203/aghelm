@@ -12,7 +12,7 @@ import (
 
 func TestNoticeFooterAtNarrowWidths(t *testing.T) {
 	for _, mode := range []presentation.GlyphMode{presentation.GlyphModeBasic, presentation.GlyphModeAdvanced} {
-		for _, id := range []string{"", "custom", "update-test"} {
+		for _, id := range []string{"", "custom"} {
 			for _, width := range []int{10, 12, 13, 15, 20, 30, 40, 80, 120, 160} {
 				t.Run(fmt.Sprintf("%s/%s/%d", mode, id, width), func(t *testing.T) {
 					p := NewPanel(nil, nil)
@@ -36,10 +36,8 @@ func TestNoticeFooterAtNarrowWidths(t *testing.T) {
 						}
 						found[hit.Label] = true
 					}
-					for _, key := range []string{"r", "esc/q"} {
-						if !found[key] {
-							t.Fatalf("missing %s", key)
-						}
+					if !found["esc/q"] {
+						t.Fatal("missing esc/q")
 					}
 					if id != "" {
 						for _, key := range []string{"↵", "x"} {
@@ -47,9 +45,6 @@ func TestNoticeFooterAtNarrowWidths(t *testing.T) {
 								t.Fatalf("missing %s", key)
 							}
 						}
-					}
-					if id == "update-test" && !found["u"] {
-						t.Fatal("missing update")
 					}
 					for _, row := range view {
 						if ansi.StringWidth(row) > inner+4 {
@@ -126,28 +121,6 @@ func TestStackedNoticeFooterKeepsConfiguredCloseKeys(t *testing.T) {
 					}
 				}
 			}
-		}
-	}
-}
-
-func TestStackedReleaseFooterKeepsSectionAndFilterKeys(t *testing.T) {
-	p := NewPanel(nil, nil)
-	notices := []Notice{{ID: "release", Title: "release", ReleaseNotes: true}}
-	p.Open(notices, "release")
-	p.tab = TabChanges
-	f := testFrame()
-	f.Width = 20
-	view := p.View(notices, f)
-	found := map[string]bool{}
-	for _, hit := range p.Foot(notices, f) {
-		found[hit.Label] = true
-		if row := len(view) - 1 + hit.Y; row < 0 || row >= len(view) {
-			t.Fatalf("invalid release footer row %+v", hit)
-		}
-	}
-	for _, label := range []string{"tab", "f", "r", "↵", "x", "esc/q"} {
-		if !found[label] {
-			t.Fatalf("release footer lost %s", label)
 		}
 	}
 }

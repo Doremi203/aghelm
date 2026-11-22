@@ -11,7 +11,6 @@ import (
 	"github.com/Doremi203/aghelm/internal/store"
 	"github.com/Doremi203/aghelm/internal/ui/presentation"
 	uisettings "github.com/Doremi203/aghelm/internal/ui/settings"
-	tea "github.com/charmbracelet/bubbletea"
 )
 
 type Reader interface {
@@ -49,7 +48,6 @@ type Root interface {
 	// reports how many reads failed, so their prefs keep their state.
 	MirrorPrefs(values []uisettings.Readback) string
 	Restore(values []uisettings.Readback, hiddenRaw string, hiddenErr error, editors *uisettings.EditorsProbe)
-	Update(staged bool) tea.Cmd
 }
 
 // State is what the root keeps for Settings: the cache of the stored values,

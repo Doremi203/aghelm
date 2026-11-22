@@ -17,7 +17,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 	model, cmd := m.handleMsg(msg)
 	if mm, ok := model.(*Model); ok {
-		mm.flushPendingNotice()
 		if !mm.layout.keepFrame {
 			mm.prepareFrame()
 		}

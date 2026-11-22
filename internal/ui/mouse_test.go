@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"github.com/Doremi203/aghelm/internal/feed"
 	"go/ast"
 	"os"
 	"os/exec"
@@ -1512,7 +1511,7 @@ func TestWheelSwallowedInResizeMode(t *testing.T) {
 func messagesCell(t *testing.T, m *Model) (x, y int) {
 	t.Helper()
 	if len(m.activeNotices()) == 0 {
-		m.release.Feed = []feed.Message{{ID: noticeTip, Title: "A tip"}}
+		withNotice(m, "refused")
 	}
 	for row, line := range strings.Split(ansi.Strip(preparedView(m)), "\n") {
 		if col := strings.Index(line, "unread"); col >= 0 {
@@ -2118,7 +2117,7 @@ var mouseOpeners = map[string]func(t *testing.T, m *Model){
 	},
 	"help.Surface": func(t *testing.T, m *Model) { m.openHelp() },
 	"notices.Surface": func(t *testing.T, m *Model) {
-		m.release.Feed = []feed.Message{{ID: noticeTip, Title: "A tip"}}
+		withNotice(m, "refused")
 		m.Update(key("M"))
 	},
 	"onboarding.Surface":       func(t *testing.T, m *Model) { m.openSetup(true) },
@@ -2532,7 +2531,7 @@ func TestClickOnMessagesFootRunsItsKeys(t *testing.T) {
 	t.Parallel()
 	m := buildModel(t)
 	m.layout.width, m.layout.height = 120, 34
-	m.release.Feed = []feed.Message{{ID: noticeTip, Title: "A tip", Body: []string{strings.Repeat("a tip wide enough to give the card room for every key ", 2)}}}
+	withNotice(m, strings.Repeat("a reason wide enough to give the card room for every key ", 2))
 	m.openNotices("")
 
 	for _, key := range []string{"↑↓ message", "pgup/pgdn"} {

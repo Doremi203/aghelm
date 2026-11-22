@@ -92,3 +92,38 @@ func bindingOf(t *testing.T, text string) keybind.Binding {
 	}
 	return keybind.Keys(key)
 }
+
+const (
+	inboxNews    = "feed-news"
+	inboxHeadsUp = "feed-tmux"
+	testTip      = "feed-tip"
+)
+
+// listed marks each notice unread unless p has seen it, the way Active
+// does for the notices it builds.
+func listed(p Panel, notices ...Notice) []Notice {
+	out := make([]Notice, len(notices))
+	for i, n := range notices {
+		n.Unread = !p.Seen(n.ID)
+		out[i] = n
+	}
+	return out
+}
+
+func newsNotice() Notice {
+	return Notice{ID: inboxNews, Kind: KindNews, Title: "Community on Discord", Subtitle: "#help #workflows #dev", Body: []string{"Questions, setups and every release, in one place."}, URL: "https://discord.gg/ecS88An7pF"}
+}
+
+func headsUpNotice() Notice {
+	return Notice{ID: inboxHeadsUp, Kind: KindHeadsUp, Title: "tmux below 3.7", Subtitle: "control mode can crash"}
+}
+
+func tipNotice() Notice {
+	return Notice{ID: testTip, Kind: KindTip, Title: "A tip", Subtitle: "a quick one", URL: RepoURL + "#readme"}
+}
+
+// inboxNotices hold a news entry, a heads-up and a tip, unread unless p
+// has seen them.
+func inboxNotices(p Panel) []Notice {
+	return listed(p, newsNotice(), headsUpNotice(), tipNotice())
+}

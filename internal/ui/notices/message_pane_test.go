@@ -3,6 +3,7 @@ package notices
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Doremi203/aghelm/internal/ui/presentation"
 	"github.com/charmbracelet/lipgloss"
@@ -10,11 +11,31 @@ import (
 
 const discordURL = "https://discord.gg/ecS88An7pF"
 
-func feedText(n Notice, width int) []string {
-	return plainRows(feedPane(n, width, testTheme(), presentation.DefaultGlyphMode))
+func inIsraelTime(t *testing.T) {
+	t.Helper()
+	zone, err := time.LoadLocation("Asia/Jerusalem")
+	if err != nil {
+		t.Fatal(err)
+	}
+	previous := displayZone
+	displayZone = zone
+	t.Cleanup(func() { displayZone = previous })
 }
 
-func TestFeedPaneShowsKindChipBannerAndExpiry(t *testing.T) {
+func published(t *testing.T, stamp string) time.Time {
+	t.Helper()
+	at, err := time.Parse(time.RFC3339, stamp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return at
+}
+
+func messageText(n Notice, width int) []string {
+	return plainRows(messagePane(n, width, testTheme(), presentation.DefaultGlyphMode))
+}
+
+func TestMessagePaneShowsKindChipBannerAndExpiry(t *testing.T) {
 	useTrueColor(t)
 	inIsraelTime(t)
 	theme := testTheme()
@@ -25,7 +46,7 @@ func TestFeedPaneShowsKindChipBannerAndExpiry(t *testing.T) {
 		Body:     []string{"Update tmux before you attach."},
 		Expires:  published(t, "2026-11-21T22:30:00Z"),
 	}
-	rows := feedPane(n, 80, theme, presentation.DefaultGlyphMode)
+	rows := messagePane(n, 80, theme, presentation.DefaultGlyphMode)
 	plain := plainRows(rows)
 	if !strings.HasPrefix(plain[0], " HEADS UP   control mode can crash ") || !strings.HasSuffix(plain[0], " until Nov 22") || lipgloss.Width(plain[0]) != 80 {
 		t.Fatalf("first row = %q, want the chip, the banner and the local expiry date at the right", plain[0])
@@ -42,20 +63,20 @@ func TestFeedPaneShowsKindChipBannerAndExpiry(t *testing.T) {
 
 	for kind, want := range map[Kind]string{KindNews: chip("NEWS", theme.Accent2, theme), KindTip: chip("TIP", theme.Waiting, theme)} {
 		n := Notice{Kind: kind, Subtitle: "banner", Title: "title"}
-		if rows := feedPane(n, 80, theme, presentation.DefaultGlyphMode); !strings.HasPrefix(rows[0], want) {
+		if rows := messagePane(n, 80, theme, presentation.DefaultGlyphMode); !strings.HasPrefix(rows[0], want) {
 			t.Fatalf("%d chip = %q, want %q", kind, rows[0], want)
 		}
-		if got := feedText(n, 80)[0]; strings.Contains(got, "until") {
+		if got := messageText(n, 80)[0]; strings.Contains(got, "until") {
 			t.Fatalf("an entry that never expires names a date: %q", got)
 		}
 	}
 }
 
-func TestFeedCallToActionUsesTheActionOrOpenLink(t *testing.T) {
+func TestMessageCallToActionUsesTheActionOrOpenLink(t *testing.T) {
 	useTrueColor(t)
 	theme := testTheme()
 	n := Notice{Kind: KindNews, Subtitle: "Agent Manager has a Discord now", Title: "Join the community", Body: []string{"Ask in #help."}, URL: discordURL, Action: "Join on Discord"}
-	rows := feedPane(n, 80, theme, presentation.DefaultGlyphMode)
+	rows := messagePane(n, 80, theme, presentation.DefaultGlyphMode)
 	plain := plainRows(rows)
 	last := strings.TrimRight(plain[len(plain)-1], " ")
 	if !strings.HasPrefix(last, "▍   ↵    Join on Discord  ") || !strings.HasSuffix(last, "  discord.gg") || lipgloss.Width(last) != 79 {
@@ -72,18 +93,18 @@ func TestFeedCallToActionUsesTheActionOrOpenLink(t *testing.T) {
 	}
 
 	n.Action = ""
-	got := feedText(n, 80)
+	got := messageText(n, 80)
 	if bar := strings.TrimRight(got[len(got)-1], " "); !strings.HasPrefix(bar, "▍   ↵    Open link  ") || !strings.HasSuffix(bar, "discord.gg") {
 		t.Fatalf("without an action the bar reads %q, want Open link", got[len(got)-1])
 	}
-	if got := feedText(n, 30); lipgloss.Width(got[len(got)-1]) > 30 {
+	if got := messageText(n, 30); lipgloss.Width(got[len(got)-1]) > 30 {
 		t.Fatalf("the bar overflows a narrow pane: %q", got[len(got)-1])
 	}
 }
 
-func TestFeedWithoutURLHasNoCallToAction(t *testing.T) {
+func TestMessageWithoutURLHasNoCallToAction(t *testing.T) {
 	n := Notice{Kind: KindTip, Subtitle: "a quick one", Title: "Try the tip", Body: []string{"Press s for Settings."}, Action: "Open Settings"}
-	rows := feedText(n, 80)
+	rows := messageText(n, 80)
 	for _, row := range rows {
 		if strings.Contains(row, "▍") || strings.Contains(row, "↵") || strings.Contains(row, "Open") {
 			t.Fatalf("a call to action without a link:\n%s", strings.Join(rows, "\n"))
@@ -94,7 +115,7 @@ func TestFeedWithoutURLHasNoCallToAction(t *testing.T) {
 	}
 }
 
-func TestFeedKeepsAccentPhrases(t *testing.T) {
+func TestMessageKeepsAccentPhrases(t *testing.T) {
 	useTrueColor(t)
 	theme := testTheme()
 	n := Notice{
@@ -104,7 +125,7 @@ func TestFeedKeepsAccentPhrases(t *testing.T) {
 		Accent:   []string{"ctrl+l"},
 		Body:     []string{"In quick prompt mode, ctrl+l opens the model list."},
 	}
-	rows := feedPane(n, 80, theme, presentation.DefaultGlyphMode)
+	rows := messagePane(n, 80, theme, presentation.DefaultGlyphMode)
 	if !strings.Contains(strings.Join(rows, "\n"), theme.Key.Render("ctrl+l")) {
 		t.Fatalf("accent phrase is not styled:\n%q", rows)
 	}
@@ -113,26 +134,11 @@ func TestFeedKeepsAccentPhrases(t *testing.T) {
 	}
 }
 
-func TestFeedFootHasNoSectionOrFilterKeys(t *testing.T) {
-	p := NewPanel(map[string]bool{}, map[string]bool{})
-	notices := p.Active(inboxSources())
-	for _, id := range []string{inboxNews, inboxHeadsUp} {
-		p.Open(notices, id)
-		for _, width := range []int{100, 160} {
-			view := plainRows(p.View(notices, inboxFrame(width)))
-			foot := view[len(view)-1]
-			if strings.Contains(foot, "tab") || strings.Contains(foot, "filter") {
-				t.Fatalf("%s at %d: a feed message names keys it has no use for: %q", id, width, foot)
-			}
-		}
-	}
-}
-
 func TestPinnedMessageCannotBeDismissed(t *testing.T) {
-	src := inboxSources()
-	src.Feed[0].Pinned = true
 	p := NewPanel(map[string]bool{}, map[string]bool{})
-	notices := p.Active(src)
+	pinned := newsNotice()
+	pinned.Pinned = true
+	notices := listed(p, pinned, headsUpNotice())
 	p.Open(notices, inboxNews)
 	for _, press := range []string{"x", "d"} {
 		if out := p.Key(key(press), notices, testFrame()); out.Action != Stay {
@@ -150,14 +156,12 @@ func TestPinnedMessageCannotBeDismissed(t *testing.T) {
 
 func TestConfigImportWarningDrawsAsAHeadsUp(t *testing.T) {
 	p := NewPanel(map[string]bool{}, map[string]bool{})
-	src := inboxSources()
-	src.ConfigImportError = "bad key"
-	notices := p.Active(src)
+	notices := p.Active(Sources{Store: true, ConfigImportError: "bad key"})
 	warning := notices[len(notices)-1]
 	if warning.ID != ConfigNotImported || warning.Kind != KindHeadsUp {
 		t.Fatalf("test setup: last notice is %s", warning.ID)
 	}
-	rows := feedText(warning, 80)
+	rows := messageText(warning, 80)
 	if !strings.HasPrefix(rows[0], " HEADS UP   Settings could not import it") {
 		t.Fatalf("first row = %q", rows[0])
 	}

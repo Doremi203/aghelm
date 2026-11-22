@@ -20,7 +20,6 @@ import (
 	uistartup "github.com/Doremi203/aghelm/internal/ui/startup"
 	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/x/ansi"
 	"github.com/muesli/termenv"
 )
 
@@ -61,7 +60,7 @@ func (m *Model) renderFrame() string {
 	if m.base == baseReview {
 		frame = m.viewDiffFull()
 	} else {
-		frame = m.overlayRowMenu(m.titleTopRowWithUpdate(m.viewListFrame()))
+		frame = m.overlayRowMenu(m.viewListFrame())
 	}
 	frame = m.surfaceView(frame)
 	m.layout.keyHits = m.layout.keyHits.Above(m.layout.height)
@@ -103,16 +102,13 @@ func (m *Model) viewHeaderRows() []string {
 	}
 	header := uiframe.Header{
 		Left:    m.viewBanner()[0],
-		Version: uitheme.SubtleStyle().Render(" " + displayVersion(m.release.Version)),
+		Version: uitheme.SubtleStyle().Render(" " + displayVersion(m.version)),
 		Scope:   m.headerScope(),
 		Agents:  m.headerAgents(),
 		Rollup:  []string{m.viewStatusCounts(false), m.viewStatusCounts(true)},
 		Sep:     uitheme.SubtleStyle().Render("   "),
 		Width:   m.layout.width,
 		Gutter:  uiframe.RailGutter,
-	}
-	if tag := m.updateTag(); tag != "" {
-		header.Tag = uitheme.SubtleStyle().Render("  ") + tag
 	}
 	return []string{header.Row()}
 }
@@ -124,30 +120,6 @@ func displayVersion(version string) string {
 		return version
 	}
 	return "v" + version
-}
-
-func (m *Model) updateTag() string {
-	if m.release.Latest == "" {
-		return ""
-	}
-	return lipgloss.NewStyle().Foreground(uitheme.ColorAccent()).Render(m.glyphs().UpdateGlyph + " " + m.release.Latest + " available")
-}
-
-// titleTopRowWithUpdate keeps the update tag on the top edge when the header
-// that would carry it is hidden.
-func (m *Model) titleTopRowWithUpdate(frame string) string {
-	tag := m.updateTag()
-	if !m.prefs.hideHeader || tag == "" {
-		return frame
-	}
-	title := uitheme.Paint(" "+tag+" ", ansi.StringWidth(tag)+2, uitheme.BackdropHex())
-	left := m.layout.width - ansi.StringWidth(title) - uiframe.RailGutter
-	if left < uiframe.RailGutter {
-		return frame
-	}
-	rows := strings.SplitN(frame, "\n", 2)
-	rows[0] = spliceAtColumn(rows[0], title, left)
-	return strings.Join(rows, "\n")
 }
 
 // headerScope names what the list is showing. The count is of the same
@@ -407,18 +379,18 @@ func (m *Model) messagesAlert() (glyph, label string) {
 	if glyph == "" {
 		return "", ""
 	}
-	if m.release.FeedPending {
-		return glyph, uinotices.FeedPendingText
-	}
 	notices := m.activeNotices()
 	if len(notices) == 0 {
 		return "", ""
 	}
 	if slices.ContainsFunc(notices, func(n uinotices.Notice) bool { return n.Unread }) {
-		return glyph, "unread"
+		return glyph, messagesUnreadLabel
 	}
 	return glyph, messagesReadLabel
 }
+
+// messagesUnreadLabel is the chip while an active notice is unread.
+const messagesUnreadLabel = "unread"
 
 // messagesReadLabel is the chip once every active notice is read: dim, and
 // still a click into the panel.

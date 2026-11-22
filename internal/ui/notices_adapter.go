@@ -4,9 +4,7 @@ import (
 	"github.com/Doremi203/aghelm/internal/keybind"
 	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
 	uinotices "github.com/Doremi203/aghelm/internal/ui/notices"
-	uirelease "github.com/Doremi203/aghelm/internal/ui/notices/release"
 	"github.com/Doremi203/aghelm/internal/ui/presentation"
-	"github.com/Doremi203/aghelm/internal/version"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -15,10 +13,8 @@ const docsURL = uinotices.DocsURL
 var _ columnClicker = (*uinotices.Surface)(nil)
 
 // noticesPanel is the messages modal: uinotices.Panel owns the list it
-// builds, the cursor, the body scroll, the dismissed and seen sets, and
-// uirelease.State the releases and the feed. The root keeps a refused config
-// import and the notice that waits for the list to come back before it
-// opens.
+// builds, the cursor, the body scroll, the dismissed and seen sets. The root
+// keeps a refused config import.
 type noticesPanel struct {
 	uinotices.Panel
 	uinotices.Log
@@ -27,43 +23,27 @@ type noticesPanel struct {
 // noticeSources are the root facts the notice list is built from, copied so
 // the panel never reaches into the store or the key tables itself.
 func (m *Model) noticeSources() uinotices.Sources {
-	sources := m.release.Sources()
-	sources.Store = m.services.store != nil
-	sources.ConfigImportError = m.notices.ImportError
-	return sources
+	return uinotices.Sources{
+		Store:             m.services.store != nil,
+		ConfigImportError: m.notices.ImportError,
+	}
 }
 
 func (m *Model) activeNotices() []uinotices.Notice {
 	return m.notices.Active(m.noticeSources())
 }
 
-// noticesFrame is the terminal, the release work in flight and the status
-// bar as the panel's tail shows them.
+// noticesFrame is the terminal and the status bar as the panel's tail
+// shows them.
 func (m *Model) noticesFrame() uinotices.Frame {
 	return uinotices.Frame{
-		CloseKey:    m.services.listKeys.Binding(keybind.Messages),
-		GlyphMode:   m.prefs.glyphMode,
-		Width:       m.layout.width,
-		Height:      m.layout.height,
-		Refreshing:  m.release.Refreshing,
-		FeedPending: m.release.FeedPending,
-		Applying:    m.release.Applying,
-		Latest:      m.release.Latest,
-		Status:      m.statusRow(),
-		Theme:       uinotices.PanelTheme(),
+		CloseKey:  m.services.listKeys.Binding(keybind.Messages),
+		GlyphMode: m.prefs.glyphMode,
+		Width:     m.layout.width,
+		Height:    m.layout.height,
+		Status:    m.statusRow(),
+		Theme:     uinotices.PanelTheme(),
 	}
-}
-
-const setupGreeting = uirelease.SetupGreeting
-
-// startupGreeting is what greets this launch; uirelease.State.Greet decides
-// and records it.
-func (m *Model) startupGreeting() string {
-	id, err := m.release.Greet(m.services.store)
-	if err != nil {
-		m.reportErr(err.Error())
-	}
-	return id
 }
 
 // openNotices shows the panel on the notice with id, or on the first. An
@@ -77,66 +57,29 @@ func (m *Model) openNotices(id string) {
 	m.push(uinotices.NewSurface(noticesRoot{m}, m.notices.Panel, id))
 }
 
-// openStartupGreeting greets the launch when there is something to say:
-// the setup on the first run ever, what's new on the first run
-// after an update. A dev build is the developer's own tree, not an
-// install, so it never greets and never advances the stored version.
+// lastSeenVersionSetting records the version the setup screen was shown on,
+// so it opens on a store's first launch only.
+const lastSeenVersionSetting = "last_seen_version"
+
+// openStartupGreeting opens the setup screen on the first launch against a
+// store, and records this version so the next launch does not. A failed
+// read greets nothing; a failed write reports and greets nothing, so the
+// next launch tries again.
 func (m *Model) openStartupGreeting() {
-	if !version.IsRelease(m.release.Version) {
+	seen, err := m.services.store.Setting(lastSeenVersionSetting)
+	if err != nil || seen != "" {
 		return
 	}
-	switch id := m.startupGreeting(); id {
-	case "":
-	case setupGreeting:
-		m.openSetup(true)
-	default:
-		m.openNotices(id)
+	if err := m.services.store.SetSetting(lastSeenVersionSetting, m.version); err != nil {
+		m.reportErr(err.Error())
+		return
 	}
+	m.openSetup(true)
 }
 
 func (m *Model) noticesOpen() bool {
 	_, open := surfaceOf[*uinotices.Surface](m)
 	return open
-}
-
-// keepNoticeSelection applies a change that may add or remove notices and,
-// while the panel is open, keeps the cursor on the notice it was on.
-func (m *Model) keepNoticeSelection(apply func()) {
-	s, ok := surfaceOf[*uinotices.Surface](m)
-	if !ok {
-		apply()
-		return
-	}
-	selected := s.Panel().Selected(m.activeNotices())
-	apply()
-	s.Panel().Reselect(m.activeNotices(), selected)
-	m.seeShownNotice(s)
-}
-
-func (m *Model) applyNotices(apply func()) {
-	before := uinotices.IDs(m.activeNotices())
-	m.keepNoticeSelection(apply)
-	_, open := surfaceOf[*uinotices.Surface](m)
-	staged := m.notices.Staged(uinotices.Added(before, m.activeNotices()), open, m.listReadyForNotice())
-	if staged.Open != "" {
-		m.openNotices(staged.Open)
-		return
-	}
-	m.notices.Held = staged.Hold
-}
-
-func (m *Model) listReadyForNotice() bool {
-	return !m.effects.Quitting && m.base == baseList && len(m.surfaces) == 0 && !m.rail.Busy()
-}
-
-func (m *Model) flushPendingNotice() {
-	if m.notices.Held == "" || !m.listReadyForNotice() {
-		return
-	}
-	id := m.notices.Take()
-	if uinotices.Holds(m.activeNotices(), id) {
-		m.openNotices(id)
-	}
 }
 
 // paintNoticesCard floats the panel on the backdrop and records its body,
@@ -215,26 +158,6 @@ func (m *Model) noticesServices() uinotices.Services {
 	return uinotices.Services{Store: m.services.store}
 }
 
-// refreshNotices is r in the panel: one manual pass over releases and the
-// feed, refused while the previous one is still out.
-func (m *Model) refreshNotices() tea.Cmd {
-	cmd := m.release.Refresh()
-	if cmd != nil {
-		m.clearErr()
-	}
-	return cmd
-}
-
-// startUpdate is u on the update notice, refused while one is applying.
-func (m *Model) startUpdate() tea.Cmd {
-	if m.release.Applying {
-		return nil
-	}
-	m.release.Applying = true
-	m.clearErr()
-	return m.release.Apply()
-}
-
 // statusRow is the status bar message as the panel's tail shows it, empty
 // when the bar is.
 func (m *Model) statusRow() string {
@@ -250,10 +173,6 @@ type noticesRoot struct{ *Model }
 func (r noticesRoot) ActiveNotices() []uinotices.Notice { return r.activeNotices() }
 
 func (r noticesRoot) NoticesFrame() uinotices.Frame { return r.noticesFrame() }
-
-func (r noticesRoot) RefreshNotices() tea.Cmd { return r.refreshNotices() }
-
-func (r noticesRoot) StartUpdate() tea.Cmd { return r.startUpdate() }
 
 func (r noticesRoot) MarkNotice(mark uinotices.Mark) {
 	if mark.Dismiss {
@@ -271,30 +190,10 @@ func (r noticesRoot) TakeForeground() { r.takeForeground() }
 
 func (r noticesRoot) OpenLink(url string) tea.Cmd { return openLink(url) }
 
-// releaseRoot is the root as a routed release, feed or self-update result
-// reaches it.
-type releaseRoot struct{ *Model }
-
-func (r releaseRoot) ApplyNotices(apply func()) { r.applyNotices(apply) }
-
-func (r releaseRoot) KeepNoticeSelection(apply func()) { r.keepNoticeSelection(apply) }
-
-func (r releaseRoot) Quit() tea.Cmd {
-	_, cmd := r.requestQuit()
-	return cmd
-}
-
 func (m *Model) routeNoticesMsg(msg tea.Msg) (tea.Model, tea.Cmd, bool) {
 	if msg, ok := msg.(browserOpenMsg); ok {
 		m.handleBrowserOpen(msg)
 		return routed(m, nil)
 	}
-	if cmd, ok := m.release.Route(releaseRoot{m}, msg); ok {
-		return routed(m, cmd)
-	}
 	return nil, nil, false
 }
-
-// RestartPath is the binary main execs into after the program exits;
-// empty when no self-update happened this run.
-func (m *Model) RestartPath() string { return m.release.RestartPath }

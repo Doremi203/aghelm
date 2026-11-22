@@ -139,7 +139,8 @@ func (m *Model) applyEffect(job *uieffects.Job, result uieffects.Result, err err
 	case uireviewsource.Change:
 		return m.applyReviewChange(as[uireviewsource.Result](result), err)
 	case uipersist.SaveRequest:
-		return m.settings.ApplySave(settingsSaveHost{m}, request, as[uipersist.SaveResult](result), err)
+		m.settings.ApplySave(settingsSaveHost{m}, request, as[uipersist.SaveResult](result), err)
+		return nil
 	case uipersist.KeysRequest:
 		return uipersist.ApplyKeys(settingsSaveHost{m}, request, as[uipersist.KeysResult](result), err)
 	case uipersist.PromptRequest:

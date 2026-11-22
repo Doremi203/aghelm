@@ -16,7 +16,6 @@ import (
 	"github.com/Doremi203/aghelm/internal/sessioncmd"
 	"github.com/Doremi203/aghelm/internal/store"
 	"github.com/Doremi203/aghelm/internal/tmux"
-	"github.com/Doremi203/aghelm/internal/update"
 )
 
 // fakeSessions records what a subcommand asked the layer for, so the tests
@@ -481,9 +480,9 @@ func TestOperandTextMayStartWithADash(t *testing.T) {
 // Help must not promise a flag a command refuses: an agent that believes a
 // blanket promise gets "flag provided but not defined" instead of a record.
 func TestJSONIsPromisedOnlyWhereTheCommandTakesIt(t *testing.T) {
-	preamble, _, found := strings.Cut(Help("dev", false), "\n"+sessionSection().title)
+	preamble, _, found := strings.Cut(Help(false), "\n"+sessionSection().title)
 	if !found {
-		t.Fatalf("help has no sections:\n%s", Help("dev", false))
+		t.Fatalf("help has no sections:\n%s", Help(false))
 	}
 	if strings.Contains(preamble, "--json") {
 		t.Fatalf("the preamble promises --json for every command, and several refuse it:\n%s", preamble)
@@ -507,11 +506,6 @@ func TestJSONIsPromisedOnlyWhereTheCommandTakesIt(t *testing.T) {
 		}},
 		{usageReviewMode, func(out *bytes.Buffer, args []string) error {
 			return runReviewMode(out, append([]string{"staged"}, args...), "cafe0001", t.TempDir())
-		}},
-		{usageUpdate, func(out *bytes.Buffer, args []string) error {
-			swapUpdateSeams(t, "agent-manager", update.Manager{},
-				update.Result{Releases: []update.Release{{Version: "v0.31.0"}}}, nil)
-			return runUpdate("0.31.0")(out, args, t.TempDir())
 		}},
 	}
 	for _, testCase := range cases {
@@ -550,12 +544,12 @@ func TestAFrontReportsWhatTheLayerDecided(t *testing.T) {
 // Resolving a caller from a terminal asks tmux, which these commands have no
 // use for.
 func TestCommandsThatActAsNoSessionNeverResolveACaller(t *testing.T) {
-	table := Commands("dev", sampleSpecs)
+	table := Commands(sampleSpecs)
 	resolve := func() string {
 		t.Fatal("the caller was resolved")
 		return ""
 	}
-	for _, name := range []string{"update", "settings", "prompts", "env"} {
+	for _, name := range []string{"settings", "prompts", "env"} {
 		if err := table[name]([]string{"-h"}, resolve, t.TempDir()); !errors.Is(err, ErrUsageShown) {
 			t.Fatalf("%s -h: %v", name, err)
 		}
@@ -563,11 +557,11 @@ func TestCommandsThatActAsNoSessionNeverResolveACaller(t *testing.T) {
 }
 
 func TestCommandsAndHelpCoverEverySection(t *testing.T) {
-	table := Commands("dev", sampleSpecs)
+	table := Commands(sampleSpecs)
 	registered := []string{
 		"sessions", "snapshot", "spawn", "send", "type", "read", "wait", "message-status", "kill", "delete", "revive", "archive", "move", "archive-self", "kill-self", "prompts", "env",
 		"groups", "create-group", "delete-group", "task", "reserve", "release-files", "reservations", "terminal",
-		"rename", "review-repo", "review-base", "review-mode", "review-comment", "settings", "export", "import", "update",
+		"rename", "review-repo", "review-base", "review-mode", "review-comment", "settings", "export", "import",
 	}
 	for _, name := range registered {
 		if table[name] == nil {
@@ -578,8 +572,8 @@ func TestCommandsAndHelpCoverEverySection(t *testing.T) {
 		t.Fatalf("the command table holds %d entries, not the %d named here: %v", len(table), len(registered), table)
 	}
 
-	help := Help("dev", false)
-	for _, line := range []string{usageSessions, usageReserve, usageTerminalSend, usageRename, usageReviewComment, usageUpdate, usageSettingsSet, usagePromptsAdd, usageEnvSet, "task <list|create|claim|finish|release|delete>", "settings <list|get|set>", "prompts <list|add|rm>", "env <list|show|set|unset|rm>"} {
+	help := Help(false)
+	for _, line := range []string{usageSessions, usageReserve, usageTerminalSend, usageRename, usageReviewComment, usageSettingsSet, usagePromptsAdd, usageEnvSet, "task <list|create|claim|finish|release|delete>", "settings <list|get|set>", "prompts <list|add|rm>", "env <list|show|set|unset|rm>"} {
 		if !strings.Contains(help, line) {
 			t.Fatalf("help is missing %q:\n%s", line, help)
 		}
@@ -588,10 +582,10 @@ func TestCommandsAndHelpCoverEverySection(t *testing.T) {
 
 func TestHelpCarriesTheCoordinationMode(t *testing.T) {
 	const waitForTheUser = "only when the user asks"
-	if help := Help("dev", false); !strings.Contains(help, waitForTheUser) {
+	if help := Help(false); !strings.Contains(help, waitForTheUser) {
 		t.Fatalf("on-request help does not tell the agent to wait for the user:\n%s", help)
 	}
-	if help := Help("dev", true); strings.Contains(help, waitForTheUser) {
+	if help := Help(true); strings.Contains(help, waitForTheUser) {
 		t.Fatalf("proactive help still holds the agent back:\n%s", help)
 	}
 }
@@ -601,7 +595,7 @@ func TestBoundReviewCommandsRejectClosedBackend(t *testing.T) {
 	if err := backend.Close(); err != nil {
 		t.Fatal(err)
 	}
-	commands := CommandsWithBackend("test", sampleSpecs, backend)
+	commands := CommandsWithBackend(sampleSpecs, backend)
 	for _, tc := range []struct {
 		name string
 		args []string
@@ -640,7 +634,7 @@ func TestBoundMailboxCommandsIgnoreAlternateProfile(t *testing.T) {
 	}
 	repo := initRepo(t)
 	t.Chdir(repo)
-	commands := CommandsWithBackend("test", sampleSpecs, backend)
+	commands := CommandsWithBackend(sampleSpecs, backend)
 	for _, tc := range []struct {
 		name string
 		args []string
@@ -674,8 +668,8 @@ func TestBoundMailboxCommandsIgnoreAlternateProfile(t *testing.T) {
 func TestCommandsWithBackendServeEveryCommand(t *testing.T) {
 	backend := sessioncmd.OpenBackend(t.TempDir())
 	t.Cleanup(func() { _ = backend.Close() })
-	bound := CommandsWithBackend("test", sampleSpecs, backend)
-	for name := range Commands("test", sampleSpecs) {
+	bound := CommandsWithBackend(sampleSpecs, backend)
+	for name := range Commands(sampleSpecs) {
 		if bound[name] == nil {
 			t.Errorf("%s is in the help but not in the backend table", name)
 		}

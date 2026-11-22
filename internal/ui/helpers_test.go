@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	uirelease "github.com/Doremi203/aghelm/internal/ui/notices/release"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -59,6 +58,13 @@ func prepareStoreTemplate() (func(), error) {
 	path := filepath.Join(dir, "state.db")
 	st, err := store.Open(path)
 	if err != nil {
+		remove()
+		return nil, fmt.Errorf("store template: %w", err)
+	}
+	// A store that has seen a launch, so a model built on it does not open
+	// the first-run setup over the screen a test drives.
+	if err := st.SetSetting(lastSeenVersionSetting, "dev"); err != nil {
+		st.Close()
 		remove()
 		return nil, fmt.Errorf("store template: %w", err)
 	}
@@ -241,7 +247,6 @@ func buildModelWithStorePath(t *testing.T, dbPath string) *Model {
 	m.layout.width = 120
 	m.layout.height = 40
 	m.startup.Booting = false
-	m.Update(uirelease.FeedMsg{Startup: true})
 	t.Cleanup(func() {
 		for _, s := range m.workspace.sessions {
 			driver.Kill(s.ID)
@@ -713,7 +718,6 @@ func reloadModel(t *testing.T, m *Model) *Model {
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
-	loaded.Update(uirelease.FeedMsg{Startup: true})
 	return loaded
 }
 

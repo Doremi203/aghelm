@@ -85,7 +85,6 @@ const (
 	FieldDocs
 	FieldBugReport
 	FieldFeatureRequest
-	FieldUpdate
 	FieldCount
 )
 

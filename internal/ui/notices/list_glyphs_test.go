@@ -10,10 +10,8 @@ import (
 func TestNavigationNoticesKeepExternalText(t *testing.T) {
 	const literal = "literal ↑↓←→↕"
 	for _, mode := range []presentation.GlyphMode{presentation.GlyphModeBasic, presentation.GlyphModeAdvanced} {
-		src := testSources("")
-		src.Feed = []Message{{ID: "literal", Title: literal, Body: []string{literal}}}
 		p := NewPanel(nil, nil)
-		notices := p.Active(src)
+		notices := listed(p, tipNotice(), Notice{ID: "literal", Kind: KindNews, Title: literal, Body: []string{literal}})
 		found := false
 		for _, n := range notices {
 			if n.ID == "literal" {

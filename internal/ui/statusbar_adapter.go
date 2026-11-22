@@ -132,7 +132,3 @@ func (m *Model) overlayTopRight(frame string, box []string, top int) string {
 	}
 	return strings.Join(lines, "\n")
 }
-
-// spliceAtColumn overpaints a run of cells inside a styled row, keeping the
-// escape state on both sides of the patch intact.
-func spliceAtColumn(row, patch string, left int) string { return uistatusbar.Splice(row, patch, left) }

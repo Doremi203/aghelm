@@ -162,9 +162,6 @@ release or a user's sessions before.
   bindings, so a table read from anywhere else gives a session the wrong
   keys. A `config.toml` from an earlier release is read once, by the import
   in `internal/store`.
-- **`internal/update` verifies the checksum and the build provenance before
-  anything is renamed over the running binary.** No redirect to another host, no wider permissions on
-  the staged file, no write outside the staging directory.
 - **Workflow actions are pinned to a release tag** and bumped by dependabot.
   A branch ref or a missing ref is a defect.
 - **No speculative branches.** A fallback or nil-guard for a shape that
@@ -175,8 +172,6 @@ release or a user's sessions before.
 
 - `git stash` is repo-wide across worktrees. With several sessions on one
   checkout, a pop lands on someone else's work. Commit to the branch instead.
-- Every entry in `docs/messages.json` sets `max_version` to the release it
-  announces; an unbounded entry shows to every user forever.
 - Release notes: a `## Highlights` or `## Thank you` bullet past 120 visible
   characters is cut in the messages panel of v0.35.0 through v0.39.0, and
   past 160 in later ones. Backticks are not counted.

@@ -71,18 +71,14 @@ func TestClickOnTheButtonRowsRunsAtOnce(t *testing.T) {
 	}
 }
 
-// With no release to take, the version row reads, and a click on it must
-// not save and close the way ↵ does there.
-func TestClickOnTheVersionRowUpdatesOnlyWhenOneIsReady(t *testing.T) {
+// The version row only reads: a click on it neither moves the cursor nor
+// saves and closes.
+func TestClickOnTheVersionRowDoesNothing(t *testing.T) {
 	ctx, view := testContext(), viewContext()
 	s := openState(ctx)
-	s.Field = FieldUpdate
-	if result := clickText(t, &s, ctx, view, "version"); result.Exit != Stay {
-		t.Fatalf("no update known: click = %v, want Stay", result.Exit)
-	}
-	ctx.UpdateReady = true
-	if result := clickText(t, &s, ctx, view, "version"); result.Exit != Update {
-		t.Fatalf("update known: click = %v, want Update", result.Exit)
+	s.Field = FieldFeatureRequest
+	if result := clickText(t, &s, ctx, view, "version"); result.Exit != Stay || s.Field != FieldFeatureRequest {
+		t.Fatalf("version click = %v, field %d; want Stay on the feature request row", result.Exit, s.Field)
 	}
 }
 

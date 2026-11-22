@@ -135,7 +135,7 @@ func TestThemeAutoPersistsWithoutClobberingManualTheme(t *testing.T) {
 	if !m.settingsCard().State().ThemeAuto {
 		t.Fatal("toggle should enable theme auto")
 	}
-	m.applyCmd(t, m.captureSettingsSave(m.settingsCard().State(), true, false))
+	m.applyCmd(t, m.captureSettingsSave(m.settingsCard().State()))
 	if got, _ := m.services.store.Setting(uisettings.ThemeSetting); got != "nord" {
 		t.Fatalf("manual theme clobbered by auto: %q", got)
 	}
@@ -165,7 +165,7 @@ func TestManualThemeCycleDisablesAuto(t *testing.T) {
 	if m.settingsCard().State().ThemeAuto {
 		t.Fatal("stepping the theme by hand should turn auto off")
 	}
-	m.applyCmd(t, m.captureSettingsSave(m.settingsCard().State(), true, false))
+	m.applyCmd(t, m.captureSettingsSave(m.settingsCard().State()))
 	if got, _ := m.services.store.Setting(uisettings.ThemeAutoSetting); got != "off" {
 		t.Fatalf("theme_auto should persist off after a manual step: %q", got)
 	}

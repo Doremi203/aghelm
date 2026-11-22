@@ -1,7 +1,6 @@
 package ui
 
 import (
-	uinotices "github.com/Doremi203/aghelm/internal/ui/notices"
 	"slices"
 	"strings"
 	"time"
@@ -331,7 +330,7 @@ func (m *Model) legendReference() [][]legendSection {
 	views := []legendSection{widestView(ctx)}
 	if glyph := m.listGlyph(keybind.Messages); glyph != "" {
 		alert := ctx
-		alert.Unread = [2]string{glyph, uinotices.FeedPendingText}
+		alert.Unread = [2]string{glyph, messagesUnreadLabel}
 		views = append(views, widestView(alert))
 		read := ctx
 		read.Messages = [2]string{glyph, messagesReadLabel}

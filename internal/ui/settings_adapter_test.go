@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -17,13 +16,11 @@ import (
 	"github.com/Doremi203/aghelm/internal/launch"
 	"github.com/Doremi203/aghelm/internal/store"
 	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
-	uirelease "github.com/Doremi203/aghelm/internal/ui/notices/release"
 	"github.com/Doremi203/aghelm/internal/ui/presentation"
 	uisettings "github.com/Doremi203/aghelm/internal/ui/settings"
 	uipersist "github.com/Doremi203/aghelm/internal/ui/settings/persist"
 	uiterminal "github.com/Doremi203/aghelm/internal/ui/terminal"
 	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
-	"github.com/Doremi203/aghelm/internal/update"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
@@ -174,31 +171,12 @@ func TestSettingsMouseTogglePersists(t *testing.T) {
 func TestSettingsShowsVersion(t *testing.T) {
 	m := &Model{
 		layout:  layoutState{width: 120, height: 60},
-		release: uirelease.State{Version: "v0.9.0"},
+		version: "v0.9.0",
 	}
 	m.push(newSettingsSurface(m, uisettings.State{ToolNames: []string{"claude"}}))
-	out := m.viewSettings()
+	out := ansi.Strip(m.viewSettings())
 	if !strings.Contains(out, "version") || !strings.Contains(out, "v0.9.0") {
 		t.Errorf("settings missing version: %q", out)
-	}
-	if strings.Contains(out, "update to") {
-		t.Errorf("no update action expected when up to date: %q", out)
-	}
-	m.settingsCard().State().Field = uisettings.FieldUpdate
-	out = m.viewSettings()
-	if !strings.Contains(out, uitheme.KeyCap("↵/esc", "save and close")) {
-		t.Errorf("current version row should hint save, not update: %q", out)
-	}
-	m.settingsCard().State().Field = 0
-	m.release.Latest = "v0.9.1"
-	out = m.viewSettings()
-	if !strings.Contains(out, "v0.9.1") || !strings.Contains(out, "update to") {
-		t.Errorf("settings missing update action: %q", out)
-	}
-	m.settingsCard().State().Field = uisettings.FieldUpdate
-	out = m.viewSettings()
-	if !strings.Contains(out, uitheme.KeyStyle().Render("↵")+uitheme.MutedStyle().Render(" update to")) {
-		t.Errorf("focused update row should hint enter: %q", out)
 	}
 }
 
@@ -466,200 +444,6 @@ func TestCLIPickerShowsSupportAction(t *testing.T) {
 	}
 }
 
-func TestSettingsUpdateRowAppliesOnEnter(t *testing.T) {
-	m := footModel(t)
-	m.services.cfg = config.Config{Tools: map[string]config.Tool{"claude": {Command: "cat"}}}
-	m.release.Version = "v0.2.0"
-	m.release.Latest = "v0.3.0"
-	m.openSettings()
-	m.settingsCard().State().Field = uisettings.FieldUpdate
-
-	applied := ""
-	orig := uirelease.ApplyUpdate
-	defer func() { uirelease.ApplyUpdate = orig }()
-	origRefresh := uirelease.RefreshForApply
-	defer func() { uirelease.RefreshForApply = origRefresh }()
-	uirelease.RefreshForApply = func(context.Context, string, string) (update.Result, error) {
-		return update.Result{
-			Latest: "v0.6.0",
-			URL:    "https://github.com/wainmann/agent-manager/releases/tag/v0.6.0",
-			Releases: []update.Release{
-				uiRelease("v0.6.0", "Newest release"),
-				uiRelease("v0.2.0", "Current release"),
-			},
-		}, nil
-	}
-	uirelease.ApplyUpdate = func(_ context.Context, tag, execPath string) error {
-		applied = tag + " " + execPath
-		return nil
-	}
-
-	_, cmd := m.handleSettingsKey(key("enter"))
-	if cmd == nil {
-		t.Fatal("enter on the update row should start the update")
-	}
-	if !m.release.Applying {
-		t.Fatal("applying should be marked while the download runs")
-	}
-	if !m.settingsOpen() {
-		t.Fatal("starting the update must keep settings open")
-	}
-	completed := cmd().(uieffects.Completed)
-	if completed.Err != nil {
-		t.Fatalf("staged settings save: %v", completed.Err)
-	}
-	updated, next := m.Update(completed)
-	m = updated.(*Model)
-	if next == nil {
-		t.Fatal("no update command after the save completed")
-	}
-	var msg tea.Msg
-	switch batch := next().(type) {
-	case tea.BatchMsg:
-		for _, c := range batch {
-			if c != nil {
-				msg = c()
-				break
-			}
-		}
-	default:
-		msg = next()
-	}
-	swap, ok := msg.(uirelease.AppliedMsg)
-	if !ok {
-		t.Fatalf("update command returned %T", msg)
-	}
-	if swap.Err != nil {
-		t.Fatalf("apply: %v", swap.Err)
-	}
-	if !strings.HasPrefix(applied, "v0.6.0 ") {
-		t.Fatalf("uirelease.ApplyUpdate saw %q", applied)
-	}
-	updated, quit := m.Update(swap)
-	m = updated.(*Model)
-	if m.release.Applying {
-		t.Fatal("applying should clear once the swap lands")
-	}
-	if m.RestartPath() == "" {
-		t.Fatal("a successful swap must set the restart path")
-	}
-	if quit == nil {
-		t.Fatal("a successful swap must quit so main can exec the new build")
-	}
-}
-
-func TestSettingsUpdateRowIdleWhenCurrent(t *testing.T) {
-	m := footModel(t)
-	m.services.cfg = config.Config{Tools: map[string]config.Tool{"claude": {Command: "cat"}}}
-	m.release.Version = "v0.3.0"
-	m.openSettings()
-	m.settingsCard().State().Field = uisettings.FieldUpdate
-
-	orig := uirelease.ApplyUpdate
-	defer func() { uirelease.ApplyUpdate = orig }()
-	called := false
-	uirelease.ApplyUpdate = func(context.Context, string, string) error {
-		called = true
-		return nil
-	}
-
-	m.handleSettingsKey(key("enter"))
-	m.drainEffects(t)
-	if called || m.release.Applying {
-		t.Fatal("enter on version when up to date must not start an update")
-	}
-	if m.settingsOpen() {
-		t.Fatal("enter with no update should still save and close")
-	}
-}
-
-func TestSettingsUpdateRowApplyFailureSurfaces(t *testing.T) {
-	m := footModel(t)
-	m.services.cfg = config.Config{Tools: map[string]config.Tool{"claude": {Command: "cat"}}}
-	m.release.Version = "v0.2.0"
-	m.release.Latest = "v0.3.0"
-	m.openSettings()
-	m.settingsCard().State().Field = uisettings.FieldUpdate
-
-	orig := uirelease.ApplyUpdate
-	defer func() { uirelease.ApplyUpdate = orig }()
-	origRefresh := uirelease.RefreshForApply
-	defer func() { uirelease.RefreshForApply = origRefresh }()
-	uirelease.RefreshForApply = func(context.Context, string, string) (update.Result, error) {
-		return update.Result{
-			Latest:   "v0.3.0",
-			URL:      "https://github.com/wainmann/agent-manager/releases/tag/v0.3.0",
-			Releases: []update.Release{uiRelease("v0.3.0", "Newest release"), uiRelease("v0.2.0", "Current release")},
-		}, nil
-	}
-	uirelease.ApplyUpdate = func(context.Context, string, string) error {
-		return errors.New("permission denied")
-	}
-
-	_, cmd := m.handleSettingsKey(key("enter"))
-	completed := cmd().(uieffects.Completed)
-	if completed.Err != nil {
-		t.Fatalf("staged settings save: %v", completed.Err)
-	}
-	updated, next := m.Update(completed)
-	m = updated.(*Model)
-	if next == nil {
-		t.Fatal("no update command after the save completed")
-	}
-	swap, ok := next().(uirelease.AppliedMsg)
-	if !ok {
-		t.Fatalf("update command returned %T", next())
-	}
-	updated, _ = m.Update(swap)
-	m = updated.(*Model)
-	if m.release.Applying {
-		t.Fatal("applying should clear on failure")
-	}
-	if m.RestartPath() != "" {
-		t.Fatal("a failed swap must not restart")
-	}
-	if !strings.Contains(m.errBar.text, "permission denied") {
-		t.Fatalf("failure should surface, err=%q", m.errBar.text)
-	}
-}
-
-func TestSettingsUpdateRowPersistsStagedSettings(t *testing.T) {
-	m := footModel(t)
-	m.services.cfg = config.Config{Tools: map[string]config.Tool{"claude": {Command: "cat"}}}
-	m.release.Version = "v0.2.0"
-	m.release.Latest = "v0.3.0"
-	m.openSettings()
-	m.settingsCard().State().ThemeIndex = (m.settingsCard().State().ThemeIndex + 1) % len(uitheme.Palettes)
-	staged := uitheme.Palettes[m.settingsCard().State().ThemeIndex].Name
-	m.settingsCard().State().Field = uisettings.FieldUpdate
-
-	orig := uirelease.ApplyUpdate
-	defer func() { uirelease.ApplyUpdate = orig }()
-	origRefresh := uirelease.RefreshForApply
-	defer func() { uirelease.RefreshForApply = origRefresh }()
-	uirelease.RefreshForApply = func(context.Context, string, string) (update.Result, error) {
-		return update.Result{
-			Latest:   "v0.3.0",
-			URL:      "https://github.com/wainmann/agent-manager/releases/tag/v0.3.0",
-			Releases: []update.Release{uiRelease("v0.3.0", "Newest release"), uiRelease("v0.2.0", "Current release")},
-		}, nil
-	}
-	uirelease.ApplyUpdate = func(context.Context, string, string) error { return nil }
-
-	_, cmd := m.handleSettingsKey(key("enter"))
-	if cmd == nil {
-		t.Fatal("enter on the update row should start the update")
-	}
-	m.applyCmd(t, cmd)
-	got, err := m.services.store.Setting(uisettings.ThemeSetting)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got != staged {
-		t.Fatalf("theme setting = %q, want staged %q persisted before the restart", got, staged)
-	}
-}
-
 func TestSettingsHasNoTerminalRows(t *testing.T) {
 	m := buildModel(t)
 	m.openSettings()
@@ -899,7 +683,7 @@ func TestSettingsSavePartialFailureIsDurableAndHonest(t *testing.T) {
 		}
 	}
 
-	m.applyTestMsg(t, m.settings.ApplySave(settingsSaveHost{m}, request, result, err))
+	m.settings.ApplySave(settingsSaveHost{m}, request, result, err)
 	if m.errBar.text == "" {
 		t.Fatal("partial failure should surface in the err bar")
 	}
@@ -939,7 +723,7 @@ func TestSettingsSaveReadFailureDoesNotFabricateRestoration(t *testing.T) {
 		t.Fatal("the failing read must carry its error in the result")
 	}
 
-	m.applyTestMsg(t, m.settings.ApplySave(settingsSaveHost{m}, request, result, err))
+	m.settings.ApplySave(settingsSaveHost{m}, request, result, err)
 	if !m.settingsCard().State().ComfortableRows {
 		t.Fatal("a failed read was fabricated into the committed value")
 	}
@@ -967,7 +751,7 @@ func TestSettingsSavePartialFailureReconcilesPrefs(t *testing.T) {
 		t.Fatal("expected the scripted write failure")
 	}
 	result := rawResult
-	m.applyTestMsg(t, m.settings.ApplySave(settingsSaveHost{m}, request, result, err))
+	m.settings.ApplySave(settingsSaveHost{m}, request, result, err)
 	if m.prefs.comfortableRows {
 		t.Fatal("prefs kept the uncommitted density after a partial save")
 	}
@@ -996,7 +780,7 @@ func TestSettingsSaveStaleCompletionReconcilesPrefsNotDialog(t *testing.T) {
 	result := uipersist.SaveResult{Generation: request.Generation, Restored: []uisettings.Readback{
 		{Key: uisettings.ListDensitySetting, Value: "comfortable"},
 	}}
-	m.applyTestMsg(t, m.settings.ApplySave(settingsSaveHost{m}, request, result, errors.New("partial")))
+	m.settings.ApplySave(settingsSaveHost{m}, request, result, errors.New("partial"))
 	if !m.prefs.comfortableRows {
 		t.Fatal("stale completion must reconcile the runtime prefs to committed")
 	}
@@ -1090,7 +874,7 @@ func TestSettingsSaveEmptyHiddenClearsDialog(t *testing.T) {
 	if result.HiddenErr != nil {
 		t.Fatalf("hidden read failed: %v", result.HiddenErr)
 	}
-	m.applyTestMsg(t, m.settings.ApplySave(settingsSaveHost{m}, request, result, err))
+	m.settings.ApplySave(settingsSaveHost{m}, request, result, err)
 	if len(m.settingsCard().State().CLIHidden) != 0 {
 		t.Fatalf("committed empty hidden state did not clear the dialog: %v", m.settingsCard().State().CLIHidden)
 	}
@@ -1104,7 +888,7 @@ func TestSettingsSaveEmptyHiddenClearsDialog(t *testing.T) {
 		t.Fatal("expected a failed hidden read")
 	}
 	m.settingsCard().State().CLIHidden = map[string]bool{"codex": true}
-	m.applyTestMsg(t, m.settings.ApplySave(settingsSaveHost{m}, request2, result2, err2))
+	m.settings.ApplySave(settingsSaveHost{m}, request2, result2, err2)
 	if !m.settingsCard().State().CLIHidden["codex"] {
 		t.Fatal("failed hidden read must keep the dialog's map")
 	}
@@ -1125,7 +909,7 @@ func TestSettingsSaveCompletionRefusesStaleGeneration(t *testing.T) {
 	newer := uitheme.Palettes[m.settingsCard().State().ThemeIndex].Name
 
 	result := uipersist.SaveResult{Generation: request.Generation, Restored: []uisettings.Readback{{Key: uisettings.ThemeSetting, Value: "nord"}}}
-	m.applyTestMsg(t, m.settings.ApplySave(settingsSaveHost{m}, request, result, errors.New("partial")))
+	m.settings.ApplySave(settingsSaveHost{m}, request, result, errors.New("partial"))
 	if uitheme.Palettes[m.settingsCard().State().ThemeIndex].Name != newer {
 		t.Fatal("stale completion overwrote the newer dialog")
 	}
@@ -1296,7 +1080,7 @@ func TestLaterSuccessfulSettingsSaveReappliesCommittedPrefs(t *testing.T) {
 	m := buildModel(t)
 	request := uipersist.SaveRequest{Values: []uisettings.Value{{Key: uisettings.ListDensitySetting, Value: "comfortable"}}}
 	m.prefs.comfortableRows = false
-	m.applyTestMsg(t, m.settings.ApplySave(settingsSaveHost{m}, request, uipersist.SaveResult{}, nil))
+	m.settings.ApplySave(settingsSaveHost{m}, request, uipersist.SaveResult{}, nil)
 	if !m.prefs.comfortableRows {
 		t.Fatal("successful queued save did not reconcile its committed preferences")
 	}
@@ -1318,7 +1102,7 @@ func TestFailedSettingsSavePreservesUnsetDefaults(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected failed save")
 	}
-	m.applyTestMsg(t, m.settings.ApplySave(settingsSaveHost{m}, request, result, err))
+	m.settings.ApplySave(settingsSaveHost{m}, request, result, err)
 	if !m.prefs.focusOnEnter || !m.prefs.arrowStep {
 		t.Fatalf("failed density save changed unrelated defaults, focus=%v arrows=%v", m.prefs.focusOnEnter, m.prefs.arrowStep)
 	}
@@ -1655,7 +1439,7 @@ func TestSymbolsSaveFailureRestoresAndCanRetry(t *testing.T) {
 	if err == nil {
 		t.Fatal("fixture write must fail")
 	}
-	m.applyTestMsg(t, m.settings.ApplySave(settingsSaveHost{m}, request, result, err))
+	m.settings.ApplySave(settingsSaveHost{m}, request, result, err)
 	if m.prefs.glyphMode != "" || m.errBar.text == "" {
 		t.Fatal("failed symbols save did not restore default and report failure")
 	}
@@ -1665,24 +1449,6 @@ func TestSymbolsSaveFailureRestoresAndCanRetry(t *testing.T) {
 	m.applyCmd(t, save)
 	if raw, _ := m.services.store.Setting(uisettings.GlyphModeSetting); raw != "basic" {
 		t.Fatal("retry did not save")
-	}
-}
-
-func TestSettingsUpdateDoesNotStartAfterSymbolsSaveFails(t *testing.T) {
-	m := buildModel(t)
-	m.applyCmd(t, m.openSettings())
-	m.release.Latest = "v0.3.0"
-	m.settingsCard().State().Field = uisettings.FieldGlyphs
-	m.handleSettingsKey(key("right"))
-	m.settingsCard().State().Field = uisettings.FieldUpdate
-	m.handleSettingsKey(key("enter"))
-	job := m.effects.Main.Active
-	request := job.Request.(uipersist.SaveRequest)
-	if !request.StagedUpdate {
-		t.Fatal("update not captured")
-	}
-	if cmd := m.settings.ApplySave(settingsSaveHost{m}, request, uipersist.SaveResult{}, errors.New("disk full")); cmd != nil || m.release.Applying {
-		t.Fatal("failed settings save still starts update")
 	}
 }
 
@@ -2022,14 +1788,14 @@ func TestSettingsViewportKeepsFocusedFieldAndSaveVisible(t *testing.T) {
 	for _, size := range [][2]int{{34, 12}, {80, 24}, {160, 42}} {
 		m.layout.width, m.layout.height = size[0], size[1]
 		m.openSettings()
-		for _, field := range []int{uisettings.FieldGlyphs, uisettings.FieldKeybindings, uisettings.FieldUpdate} {
+		for _, field := range []int{uisettings.FieldGlyphs, uisettings.FieldKeybindings, uisettings.FieldFeatureRequest} {
 			m.settingsCard().State().Field = field
 			view := ansi.Strip(m.viewSettings())
 			lines := strings.Split(view, "\n")
 			if len(lines) > m.layout.height {
 				t.Fatalf("Settings exceeds height %d: %d", m.layout.height, len(lines))
 			}
-			want := map[int]string{uisettings.FieldGlyphs: "symbols", uisettings.FieldKeybindings: "keybindings", uisettings.FieldUpdate: "version"}[field]
+			want := map[int]string{uisettings.FieldGlyphs: "symbols", uisettings.FieldKeybindings: "keybindings", uisettings.FieldFeatureRequest: "suggest a change"}[field]
 			for _, text := range []string{want, "save and close", "esc"} {
 				if !strings.Contains(view, text) {
 					t.Fatalf("Settings %dx%d lost %q:\n%s", m.layout.width, m.layout.height, text, view)

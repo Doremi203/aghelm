@@ -37,7 +37,7 @@ func TestListFooterLayoutAcrossViewStates(t *testing.T) {
 			m.rebuildRows()
 			m.selectSessionRow(t, "narrow")
 			wantMode, wantRows := m.footerOf().Layout()
-			states := []func(){func() { m.selectGroupRow(t, "narrow-group") }, func() { m.release.FeedPending = true }, func() { m.rail.SetCollapsed("narrow-group", true) }, func() { m.rail.SetArchived(true) }, func() { m.rail.SetArchived(false) }, func() { m.rail.SetFilteringAttention(true) }, func() { m.rail.SetHideEmptyGroups(true) }, func() { m.release.FeedPending = false }, func() { resetRailModel(m) }}
+			states := []func(){func() { m.selectGroupRow(t, "narrow-group") }, func() { m.notices.ImportError = "refused" }, func() { m.rail.SetCollapsed("narrow-group", true) }, func() { m.rail.SetArchived(true) }, func() { m.rail.SetArchived(false) }, func() { m.rail.SetFilteringAttention(true) }, func() { m.rail.SetHideEmptyGroups(true) }, func() { m.notices.ImportError = "" }, func() { resetRailModel(m) }}
 			for i, change := range states {
 				change()
 				gotMode, gotRows := m.footerOf().Layout()
@@ -83,7 +83,9 @@ func TestNarrowListFooterKeepsConfiguredActionKeys(t *testing.T) {
 						m.services.listKeys = m.services.listKeys.With(keybind.Up, keybind.Keys())
 					}
 					m.services.listKeys = m.services.listKeys.With(binding.action, bindingOf(t, binding.key))
-					m.release.FeedPending = binding.action == keybind.Messages
+					if binding.action == keybind.Messages {
+						m.notices.ImportError = "refused"
+					}
 					m.selectSessionRow(t, "narrow")
 					preparedView(m)
 					var hit keyHit

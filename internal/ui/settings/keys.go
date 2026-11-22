@@ -14,7 +14,6 @@ type Exit uint8
 const (
 	Stay Exit = iota
 	Save
-	Update
 	ReportBug
 	OpenDocs
 	OpenFeatureRequest
@@ -40,7 +39,6 @@ type Context struct {
 	DefaultTool string
 	Session     keybind.Table
 	List        keybind.Table
-	UpdateReady bool
 }
 
 type Result struct {
@@ -117,8 +115,6 @@ func (s *State) Key(msg tea.KeyMsg, ctx Context) Result {
 				s.openEditorTyping()
 				return Result{}
 			}
-		case FieldUpdate:
-			return Result{Exit: Update}
 		}
 		return Result{Exit: Save}
 	case "esc":
