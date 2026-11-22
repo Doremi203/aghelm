@@ -3,8 +3,8 @@ package ui
 import (
 	"testing"
 
-	uidialogs "github.com/YoanWai/agent-manager/internal/ui/dialogs"
-	uiapply "github.com/YoanWai/agent-manager/internal/ui/dialogs/apply"
+	uidialogs "github.com/Doremi203/aghelm/internal/ui/dialogs"
+	uiapply "github.com/Doremi203/aghelm/internal/ui/dialogs/apply"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

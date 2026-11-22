@@ -1,8 +1,8 @@
 package source
 
 import (
-	"github.com/YoanWai/agent-manager/internal/store"
-	uireview "github.com/YoanWai/agent-manager/internal/ui/review"
+	"github.com/Doremi203/aghelm/internal/store"
+	uireview "github.com/Doremi203/aghelm/internal/ui/review"
 )
 
 func StateFromStore(state store.ReviewState) uireview.SavedState {

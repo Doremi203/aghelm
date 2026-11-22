@@ -9,7 +9,7 @@ package lifecycle
 import (
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/store"
+	"github.com/Doremi203/aghelm/internal/store"
 )
 
 // State is what the session actions remember between passes, none of it

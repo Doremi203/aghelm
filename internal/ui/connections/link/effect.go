@@ -3,9 +3,9 @@ package link
 import (
 	"context"
 
-	"github.com/YoanWai/agent-manager/internal/remote"
-	"github.com/YoanWai/agent-manager/internal/store"
-	uieffects "github.com/YoanWai/agent-manager/internal/ui/effects"
+	"github.com/Doremi203/aghelm/internal/remote"
+	"github.com/Doremi203/aghelm/internal/store"
+	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

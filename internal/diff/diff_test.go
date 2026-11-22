@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/git"
-	"github.com/YoanWai/agent-manager/internal/testenv"
+	"github.com/Doremi203/aghelm/internal/git"
+	"github.com/Doremi203/aghelm/internal/testenv"
 )
 
 const (

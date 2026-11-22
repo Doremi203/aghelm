@@ -28,9 +28,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/config"
-	"github.com/YoanWai/agent-manager/internal/termseq"
-	"github.com/YoanWai/agent-manager/internal/wsl"
+	"github.com/Doremi203/aghelm/internal/config"
+	"github.com/Doremi203/aghelm/internal/termseq"
+	"github.com/Doremi203/aghelm/internal/wsl"
 )
 
 // Overridable seams so tests can drive the platform branches without a

@@ -3,8 +3,8 @@ package connections
 import (
 	"testing"
 
-	remote "github.com/YoanWai/agent-manager/internal/remote/value"
-	"github.com/YoanWai/agent-manager/internal/ui/surface"
+	remote "github.com/Doremi203/aghelm/internal/remote/value"
+	"github.com/Doremi203/aghelm/internal/ui/surface"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"

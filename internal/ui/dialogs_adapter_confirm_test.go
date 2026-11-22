@@ -4,12 +4,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/store"
-	uilink "github.com/YoanWai/agent-manager/internal/ui/connections/link"
-	uidialogs "github.com/YoanWai/agent-manager/internal/ui/dialogs"
-	uieffects "github.com/YoanWai/agent-manager/internal/ui/effects"
-	uilifecycle "github.com/YoanWai/agent-manager/internal/ui/session/lifecycle"
-	uisurface "github.com/YoanWai/agent-manager/internal/ui/surface"
+	"github.com/Doremi203/aghelm/internal/store"
+	uilink "github.com/Doremi203/aghelm/internal/ui/connections/link"
+	uidialogs "github.com/Doremi203/aghelm/internal/ui/dialogs"
+	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
+	uilifecycle "github.com/Doremi203/aghelm/internal/ui/session/lifecycle"
+	uisurface "github.com/Doremi203/aghelm/internal/ui/surface"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/ansi"
 )

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/status"
+	"github.com/Doremi203/aghelm/internal/status"
 )
 
 // A manager on another machine drives this one's CLI over SSH, with no

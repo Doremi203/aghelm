@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/agentsession"
+	"github.com/Doremi203/aghelm/internal/agentsession"
 )
 
 // rowLines only asks for a transcript after KeepsTranscript, so a style

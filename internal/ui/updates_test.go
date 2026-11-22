@@ -6,11 +6,11 @@ import (
 	"go/token"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	"github.com/YoanWai/agent-manager/internal/status"
-	"github.com/YoanWai/agent-manager/internal/store"
-	uicapture "github.com/YoanWai/agent-manager/internal/ui/preview/capture"
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/status"
+	"github.com/Doremi203/aghelm/internal/store"
+	uicapture "github.com/Doremi203/aghelm/internal/ui/preview/capture"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

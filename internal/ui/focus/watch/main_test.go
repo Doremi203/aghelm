@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/testfixture"
-	"github.com/YoanWai/agent-manager/internal/tmux"
+	"github.com/Doremi203/aghelm/internal/testfixture"
+	"github.com/Doremi203/aghelm/internal/tmux"
 )
 
 // testSocket is an isolated tmux server for this package's tests, so they

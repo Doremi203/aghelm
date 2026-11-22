@@ -8,13 +8,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	"github.com/YoanWai/agent-manager/internal/status"
-	"github.com/YoanWai/agent-manager/internal/store"
-	uiframe "github.com/YoanWai/agent-manager/internal/ui/frame"
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
-	uisession "github.com/YoanWai/agent-manager/internal/ui/session"
-	uilifecycle "github.com/YoanWai/agent-manager/internal/ui/session/lifecycle"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/status"
+	"github.com/Doremi203/aghelm/internal/store"
+	uiframe "github.com/Doremi203/aghelm/internal/ui/frame"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
+	uisession "github.com/Doremi203/aghelm/internal/ui/session"
+	uilifecycle "github.com/Doremi203/aghelm/internal/ui/session/lifecycle"
 )
 
 // Card is one confirmation as the root opens it: the lifecycle request it

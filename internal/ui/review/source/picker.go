@@ -1,8 +1,8 @@
 package source
 
 import (
-	"github.com/YoanWai/agent-manager/internal/git"
-	uireview "github.com/YoanWai/agent-manager/internal/ui/review"
+	"github.com/Doremi203/aghelm/internal/git"
+	uireview "github.com/Doremi203/aghelm/internal/ui/review"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

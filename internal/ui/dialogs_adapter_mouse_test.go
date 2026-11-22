@@ -3,7 +3,7 @@ package ui
 import (
 	"testing"
 
-	uireview "github.com/YoanWai/agent-manager/internal/ui/review"
+	uireview "github.com/Doremi203/aghelm/internal/ui/review"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

@@ -6,14 +6,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/config"
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	"github.com/YoanWai/agent-manager/internal/status"
-	"github.com/YoanWai/agent-manager/internal/store"
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
-	uisettings "github.com/YoanWai/agent-manager/internal/ui/settings"
-	uistartup "github.com/YoanWai/agent-manager/internal/ui/startup"
-	uitheme "github.com/YoanWai/agent-manager/internal/ui/theme"
+	"github.com/Doremi203/aghelm/internal/config"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/status"
+	"github.com/Doremi203/aghelm/internal/store"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
+	uisettings "github.com/Doremi203/aghelm/internal/ui/settings"
+	uistartup "github.com/Doremi203/aghelm/internal/ui/startup"
+	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	"github.com/charmbracelet/x/ansi"
 )
 

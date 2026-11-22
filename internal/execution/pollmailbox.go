@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/YoanWai/agent-manager/internal/sessioncmd"
+	"github.com/Doremi203/aghelm/internal/sessioncmd"
 
-	"github.com/YoanWai/agent-manager/internal/store"
+	"github.com/Doremi203/aghelm/internal/store"
 )
 
 // applyPendingRename picks up a name the session's agent left via the

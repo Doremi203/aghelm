@@ -3,9 +3,9 @@ package connections
 import (
 	"strings"
 
-	remote "github.com/YoanWai/agent-manager/internal/remote/value"
-	uidialogs "github.com/YoanWai/agent-manager/internal/ui/dialogs"
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
+	remote "github.com/Doremi203/aghelm/internal/remote/value"
+	uidialogs "github.com/Doremi203/aghelm/internal/ui/dialogs"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"

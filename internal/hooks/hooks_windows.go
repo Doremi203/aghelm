@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/pwsh"
+	"github.com/Doremi203/aghelm/internal/pwsh"
 	"golang.org/x/sys/windows"
 )
 

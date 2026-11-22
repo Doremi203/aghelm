@@ -2,7 +2,7 @@ package model
 
 import (
 	"fmt"
-	git "github.com/YoanWai/agent-manager/internal/git/value"
+	git "github.com/Doremi203/aghelm/internal/git/value"
 	"strings"
 	"testing"
 	"unicode/utf8"

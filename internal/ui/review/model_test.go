@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	diff "github.com/YoanWai/agent-manager/internal/diff/model"
-	git "github.com/YoanWai/agent-manager/internal/git/value"
-	"github.com/YoanWai/agent-manager/internal/ui/review"
+	diff "github.com/Doremi203/aghelm/internal/diff/model"
+	git "github.com/Doremi203/aghelm/internal/git/value"
+	"github.com/Doremi203/aghelm/internal/ui/review"
 )
 
 func TestCloseRevokesLoadsAndKeepsPerTargetState(t *testing.T) {

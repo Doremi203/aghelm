@@ -1,14 +1,14 @@
 package ui
 
 import (
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	"github.com/YoanWai/agent-manager/internal/store"
-	"github.com/YoanWai/agent-manager/internal/tmux"
-	uiframe "github.com/YoanWai/agent-manager/internal/ui/frame"
-	uihelp "github.com/YoanWai/agent-manager/internal/ui/help"
-	uiquick "github.com/YoanWai/agent-manager/internal/ui/quick"
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
-	uireview "github.com/YoanWai/agent-manager/internal/ui/review"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/store"
+	"github.com/Doremi203/aghelm/internal/tmux"
+	uiframe "github.com/Doremi203/aghelm/internal/ui/frame"
+	uihelp "github.com/Doremi203/aghelm/internal/ui/help"
+	uiquick "github.com/Doremi203/aghelm/internal/ui/quick"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
+	uireview "github.com/Doremi203/aghelm/internal/ui/review"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )

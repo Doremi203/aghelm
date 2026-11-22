@@ -3,8 +3,8 @@ package quick
 import (
 	"strings"
 
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
-	"github.com/YoanWai/agent-manager/internal/ui/spawn"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
+	"github.com/Doremi203/aghelm/internal/ui/spawn"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 )

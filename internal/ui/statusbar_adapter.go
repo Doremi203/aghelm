@@ -3,9 +3,9 @@ package ui
 import (
 	"strings"
 
-	uiframe "github.com/YoanWai/agent-manager/internal/ui/frame"
-	uistatusbar "github.com/YoanWai/agent-manager/internal/ui/statusbar"
-	uitheme "github.com/YoanWai/agent-manager/internal/ui/theme"
+	uiframe "github.com/Doremi203/aghelm/internal/ui/frame"
+	uistatusbar "github.com/Doremi203/aghelm/internal/ui/statusbar"
+	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

@@ -3,10 +3,10 @@ package ui
 import (
 	"strings"
 
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
 
-	uitheme "github.com/YoanWai/agent-manager/internal/ui/theme"
+	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	"github.com/charmbracelet/lipgloss"
 )
 

@@ -3,7 +3,7 @@ package settings
 import (
 	"slices"
 
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
 )
 
 // Mirrored is what one stored row means for the live preferences: the

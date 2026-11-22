@@ -1,10 +1,10 @@
 package spawn
 
 import (
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/ui/pathcomplete"
+	"github.com/Doremi203/aghelm/internal/ui/pathcomplete"
 )
 
 // A field that offers no suggestions, a connection's directory, starts no

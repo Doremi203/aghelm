@@ -1,8 +1,8 @@
 package persist
 
 import (
-	"github.com/YoanWai/agent-manager/internal/config"
-	uisettings "github.com/YoanWai/agent-manager/internal/ui/settings"
+	"github.com/Doremi203/aghelm/internal/config"
+	uisettings "github.com/Doremi203/aghelm/internal/ui/settings"
 )
 
 // Tools is the configured CLI set the dialog offers, copied from the config.

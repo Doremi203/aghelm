@@ -3,8 +3,8 @@ package rail
 import (
 	"strings"
 
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 )

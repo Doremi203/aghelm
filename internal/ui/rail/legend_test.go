@@ -4,8 +4,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	"github.com/YoanWai/agent-manager/internal/ui/rail"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/ui/rail"
 )
 
 func TestRowLegendReadsTheRowRootPasses(t *testing.T) {

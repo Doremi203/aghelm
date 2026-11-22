@@ -18,8 +18,8 @@ import (
 	"time"
 	"unicode/utf16"
 
-	"github.com/YoanWai/agent-manager/internal/termseq"
-	"github.com/YoanWai/agent-manager/internal/wsl"
+	"github.com/Doremi203/aghelm/internal/termseq"
+	"github.com/Doremi203/aghelm/internal/wsl"
 	"github.com/charmbracelet/x/ansi"
 )
 

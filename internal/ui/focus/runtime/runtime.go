@@ -9,9 +9,9 @@ package runtime
 import (
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/tmux"
-	"github.com/YoanWai/agent-manager/internal/ui/focus"
-	"github.com/YoanWai/agent-manager/internal/ui/focus/watch"
+	"github.com/Doremi203/aghelm/internal/tmux"
+	"github.com/Doremi203/aghelm/internal/ui/focus"
+	"github.com/Doremi203/aghelm/internal/ui/focus/watch"
 )
 
 // liveTick is how soon a polled watcher looks again at a pane that just

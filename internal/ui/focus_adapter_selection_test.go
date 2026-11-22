@@ -5,12 +5,12 @@ import (
 	"testing"
 	"time"
 
-	uifocus "github.com/YoanWai/agent-manager/internal/ui/focus"
-	focusruntime "github.com/YoanWai/agent-manager/internal/ui/focus/runtime"
-	focuswatch "github.com/YoanWai/agent-manager/internal/ui/focus/watch"
-	uipreview "github.com/YoanWai/agent-manager/internal/ui/preview"
-	uicapture "github.com/YoanWai/agent-manager/internal/ui/preview/capture"
-	uitheme "github.com/YoanWai/agent-manager/internal/ui/theme"
+	uifocus "github.com/Doremi203/aghelm/internal/ui/focus"
+	focusruntime "github.com/Doremi203/aghelm/internal/ui/focus/runtime"
+	focuswatch "github.com/Doremi203/aghelm/internal/ui/focus/watch"
+	uipreview "github.com/Doremi203/aghelm/internal/ui/preview"
+	uicapture "github.com/Doremi203/aghelm/internal/ui/preview/capture"
+	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/ansi"
 )

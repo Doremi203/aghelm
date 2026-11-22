@@ -3,9 +3,9 @@ package install
 import (
 	"errors"
 
-	"github.com/YoanWai/agent-manager/internal/config"
-	"github.com/YoanWai/agent-manager/internal/deps"
-	"github.com/YoanWai/agent-manager/internal/mcpreg"
+	"github.com/Doremi203/aghelm/internal/config"
+	"github.com/Doremi203/aghelm/internal/deps"
+	"github.com/Doremi203/aghelm/internal/mcpreg"
 )
 
 // FixFor classifies a refused launch: a missing prerequisite or a CLI older

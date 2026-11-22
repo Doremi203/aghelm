@@ -5,7 +5,7 @@ import (
 	"testing"
 	"unicode/utf8"
 
-	"github.com/YoanWai/agent-manager/internal/ui/review"
+	"github.com/Doremi203/aghelm/internal/ui/review"
 )
 
 func TestExcerptKeepsRuneBoundary(t *testing.T) {

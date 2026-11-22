@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/termseq"
-	uisettings "github.com/YoanWai/agent-manager/internal/ui/settings"
-	uitheme "github.com/YoanWai/agent-manager/internal/ui/theme"
+	"github.com/Doremi203/aghelm/internal/termseq"
+	uisettings "github.com/Doremi203/aghelm/internal/ui/settings"
+	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"

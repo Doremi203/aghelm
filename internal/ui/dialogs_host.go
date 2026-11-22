@@ -1,17 +1,17 @@
 package ui
 
 import (
-	"github.com/YoanWai/agent-manager/internal/store"
-	"github.com/YoanWai/agent-manager/internal/ui/composer"
-	uilink "github.com/YoanWai/agent-manager/internal/ui/connections/link"
-	uidialogs "github.com/YoanWai/agent-manager/internal/ui/dialogs"
-	uiapply "github.com/YoanWai/agent-manager/internal/ui/dialogs/apply"
-	uiframe "github.com/YoanWai/agent-manager/internal/ui/frame"
-	uiinstall "github.com/YoanWai/agent-manager/internal/ui/launchhint/install"
-	uilifecycle "github.com/YoanWai/agent-manager/internal/ui/session/lifecycle"
-	"github.com/YoanWai/agent-manager/internal/ui/spawn"
-	uilaunch "github.com/YoanWai/agent-manager/internal/ui/spawn/launch"
-	uitheme "github.com/YoanWai/agent-manager/internal/ui/theme"
+	"github.com/Doremi203/aghelm/internal/store"
+	"github.com/Doremi203/aghelm/internal/ui/composer"
+	uilink "github.com/Doremi203/aghelm/internal/ui/connections/link"
+	uidialogs "github.com/Doremi203/aghelm/internal/ui/dialogs"
+	uiapply "github.com/Doremi203/aghelm/internal/ui/dialogs/apply"
+	uiframe "github.com/Doremi203/aghelm/internal/ui/frame"
+	uiinstall "github.com/Doremi203/aghelm/internal/ui/launchhint/install"
+	uilifecycle "github.com/Doremi203/aghelm/internal/ui/session/lifecycle"
+	"github.com/Doremi203/aghelm/internal/ui/spawn"
+	uilaunch "github.com/Doremi203/aghelm/internal/ui/spawn/launch"
+	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )

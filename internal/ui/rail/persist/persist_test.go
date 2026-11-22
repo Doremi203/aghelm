@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
 )
 
 func TestSavedFoldsComeBackOnTheNextRun(t *testing.T) {

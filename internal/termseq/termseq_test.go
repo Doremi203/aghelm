@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/testenv"
+	"github.com/Doremi203/aghelm/internal/testenv"
 )
 
 func swap(tmux bool) (*strings.Builder, func()) {

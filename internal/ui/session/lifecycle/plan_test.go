@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/sessioncmd"
-	"github.com/YoanWai/agent-manager/internal/store"
+	"github.com/Doremi203/aghelm/internal/sessioncmd"
+	"github.com/Doremi203/aghelm/internal/store"
 )
 
 func TestKillForgetsEveryRowWhoseWindowItEnded(t *testing.T) {

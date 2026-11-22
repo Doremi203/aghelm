@@ -4,7 +4,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/git"
+	"github.com/Doremi203/aghelm/internal/git"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

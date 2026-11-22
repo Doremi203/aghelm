@@ -7,13 +7,13 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/YoanWai/agent-manager/internal/config"
-	"github.com/YoanWai/agent-manager/internal/git"
-	"github.com/YoanWai/agent-manager/internal/launch"
-	"github.com/YoanWai/agent-manager/internal/sessioncmd"
-	"github.com/YoanWai/agent-manager/internal/store"
-	"github.com/YoanWai/agent-manager/internal/ui/composer"
-	"github.com/YoanWai/agent-manager/internal/ui/pathcomplete"
+	"github.com/Doremi203/aghelm/internal/config"
+	"github.com/Doremi203/aghelm/internal/git"
+	"github.com/Doremi203/aghelm/internal/launch"
+	"github.com/Doremi203/aghelm/internal/sessioncmd"
+	"github.com/Doremi203/aghelm/internal/store"
+	"github.com/Doremi203/aghelm/internal/ui/composer"
+	"github.com/Doremi203/aghelm/internal/ui/pathcomplete"
 )
 
 // Kind says which surface asked for the spawn: the form, the quick bar, or

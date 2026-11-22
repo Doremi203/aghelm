@@ -1,7 +1,7 @@
 package ui
 
 import (
-	"github.com/YoanWai/agent-manager/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/keybind"
 	"reflect"
 	"strings"
 	"testing"

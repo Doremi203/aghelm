@@ -5,10 +5,10 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/YoanWai/agent-manager/internal/diff"
-	"github.com/YoanWai/agent-manager/internal/git"
-	"github.com/YoanWai/agent-manager/internal/store"
-	uireview "github.com/YoanWai/agent-manager/internal/ui/review"
+	"github.com/Doremi203/aghelm/internal/diff"
+	"github.com/Doremi203/aghelm/internal/git"
+	"github.com/Doremi203/aghelm/internal/store"
+	uireview "github.com/Doremi203/aghelm/internal/ui/review"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

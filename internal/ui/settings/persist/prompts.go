@@ -1,8 +1,8 @@
 package persist
 
 import (
-	"github.com/YoanWai/agent-manager/internal/store"
-	uisettings "github.com/YoanWai/agent-manager/internal/ui/settings"
+	"github.com/Doremi203/aghelm/internal/store"
+	uisettings "github.com/Doremi203/aghelm/internal/ui/settings"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

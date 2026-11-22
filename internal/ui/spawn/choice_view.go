@@ -5,8 +5,8 @@ import (
 	"slices"
 	"strings"
 
-	catalog "github.com/YoanWai/agent-manager/internal/catalog/value"
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
+	catalog "github.com/Doremi203/aghelm/internal/catalog/value"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"

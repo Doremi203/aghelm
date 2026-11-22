@@ -3,7 +3,7 @@ package connections
 import (
 	"testing"
 
-	remote "github.com/YoanWai/agent-manager/internal/remote/value"
+	remote "github.com/Doremi203/aghelm/internal/remote/value"
 )
 
 func TestRowFindsAgentsAndTerminals(t *testing.T) {

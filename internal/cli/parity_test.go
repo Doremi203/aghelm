@@ -11,10 +11,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/mcpserver"
-	"github.com/YoanWai/agent-manager/internal/sessioncmd"
-	"github.com/YoanWai/agent-manager/internal/status"
-	"github.com/YoanWai/agent-manager/internal/store"
+	"github.com/Doremi203/aghelm/internal/mcpserver"
+	"github.com/Doremi203/aghelm/internal/sessioncmd"
+	"github.com/Doremi203/aghelm/internal/status"
+	"github.com/Doremi203/aghelm/internal/store"
 	"github.com/google/uuid"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )

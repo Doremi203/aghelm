@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/status"
-	"github.com/YoanWai/agent-manager/internal/store"
-	"github.com/YoanWai/agent-manager/internal/tmux"
+	"github.com/Doremi203/aghelm/internal/status"
+	"github.com/Doremi203/aghelm/internal/store"
+	"github.com/Doremi203/aghelm/internal/tmux"
 )
 
 // A long-lived process, such as a running TUI, binds ← from the stored

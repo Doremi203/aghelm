@@ -3,7 +3,7 @@ package theme
 import (
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/systheme"
+	"github.com/Doremi203/aghelm/internal/systheme"
 )
 
 func TestAutoThemeName(t *testing.T) {

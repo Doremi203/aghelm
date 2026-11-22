@@ -5,7 +5,7 @@ import (
 	"os/exec"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/testenv"
+	"github.com/Doremi203/aghelm/internal/testenv"
 )
 
 func fakeRun(outputs map[string]string, errs map[string]error) runner {

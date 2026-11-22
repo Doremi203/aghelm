@@ -1,10 +1,10 @@
 package ui
 
 import (
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	"github.com/YoanWai/agent-manager/internal/store"
-	focusruntime "github.com/YoanWai/agent-manager/internal/ui/focus/runtime"
-	uisurface "github.com/YoanWai/agent-manager/internal/ui/surface"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/store"
+	focusruntime "github.com/Doremi203/aghelm/internal/ui/focus/runtime"
+	uisurface "github.com/Doremi203/aghelm/internal/ui/surface"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

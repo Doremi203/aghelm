@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	uisettings "github.com/YoanWai/agent-manager/internal/ui/settings"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	uisettings "github.com/Doremi203/aghelm/internal/ui/settings"
 )
 
 // scriptWriter scripts failing writes and reads so a partial outcome can be

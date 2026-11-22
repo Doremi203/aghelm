@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/YoanWai/agent-manager/internal/tmux"
-	uireview "github.com/YoanWai/agent-manager/internal/ui/review"
-	uisession "github.com/YoanWai/agent-manager/internal/ui/session"
+	"github.com/Doremi203/aghelm/internal/tmux"
+	uireview "github.com/Doremi203/aghelm/internal/ui/review"
+	uisession "github.com/Doremi203/aghelm/internal/ui/session"
 )
 
 // Run performs one captured Review change and returns what it committed.

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/catalog"
-	"github.com/YoanWai/agent-manager/internal/config"
+	"github.com/Doremi203/aghelm/internal/catalog"
+	"github.com/Doremi203/aghelm/internal/config"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

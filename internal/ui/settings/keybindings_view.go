@@ -3,7 +3,7 @@ package settings
 import (
 	"strings"
 
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
 )
 
 func (s *State) viewKeyPicker(ctx ViewContext) Frame {

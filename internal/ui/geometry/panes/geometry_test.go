@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/tmux"
-	uigeometry "github.com/YoanWai/agent-manager/internal/ui/geometry"
+	"github.com/Doremi203/aghelm/internal/tmux"
+	uigeometry "github.com/Doremi203/aghelm/internal/ui/geometry"
 )
 
 type fakeStore struct {

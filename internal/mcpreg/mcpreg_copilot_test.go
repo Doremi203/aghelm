@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/tmux"
+	"github.com/Doremi203/aghelm/internal/tmux"
 )
 
 func TestApplyCopilotWritesConfigAndFlag(t *testing.T) {

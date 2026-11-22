@@ -5,11 +5,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	"github.com/YoanWai/agent-manager/internal/tmux"
-	uifocus "github.com/YoanWai/agent-manager/internal/ui/focus"
-	focusruntime "github.com/YoanWai/agent-manager/internal/ui/focus/runtime"
-	uigeometrypanes "github.com/YoanWai/agent-manager/internal/ui/geometry/panes"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/tmux"
+	uifocus "github.com/Doremi203/aghelm/internal/ui/focus"
+	focusruntime "github.com/Doremi203/aghelm/internal/ui/focus/runtime"
+	uigeometrypanes "github.com/Doremi203/aghelm/internal/ui/geometry/panes"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/ansi"
 )

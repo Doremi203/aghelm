@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/conversation"
+	"github.com/Doremi203/aghelm/internal/conversation"
 )
 
 // Hermes names a /branch or /resume only in the crumb it writes as it

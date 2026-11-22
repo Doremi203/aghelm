@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	git "github.com/YoanWai/agent-manager/internal/git/value"
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
+	git "github.com/Doremi203/aghelm/internal/git/value"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
 )
 
 // action is what a Review key does. Key switches on it, so the work stays

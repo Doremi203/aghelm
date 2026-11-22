@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	git "github.com/YoanWai/agent-manager/internal/git/value"
-	"github.com/YoanWai/agent-manager/internal/ui/review"
+	git "github.com/Doremi203/aghelm/internal/git/value"
+	"github.com/Doremi203/aghelm/internal/ui/review"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

@@ -1,8 +1,8 @@
 package runtime
 
 import (
-	"github.com/YoanWai/agent-manager/internal/ui/focus"
-	"github.com/YoanWai/agent-manager/internal/ui/focus/watch"
+	"github.com/Doremi203/aghelm/internal/ui/focus"
+	"github.com/Doremi203/aghelm/internal/ui/focus/watch"
 )
 
 // State is what one run keeps for the focused pane: the watcher the manager

@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/config"
+	"github.com/Doremi203/aghelm/internal/config"
 )
 
 // fetchFake runs the reader kind against the stand-in CLI named fake.

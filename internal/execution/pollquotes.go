@@ -3,17 +3,17 @@ package execution
 import (
 	"context"
 	"errors"
-	"github.com/YoanWai/agent-manager/internal/launch"
+	"github.com/Doremi203/aghelm/internal/launch"
 	"strings"
 
 	"unicode"
 
 	"os"
 
-	"github.com/YoanWai/agent-manager/internal/agentsession"
+	"github.com/Doremi203/aghelm/internal/agentsession"
 
-	"github.com/YoanWai/agent-manager/internal/store"
-	"github.com/YoanWai/agent-manager/internal/tmux"
+	"github.com/Doremi203/aghelm/internal/store"
+	"github.com/Doremi203/aghelm/internal/tmux"
 
 	"github.com/charmbracelet/x/ansi"
 )

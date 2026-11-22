@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/hooks"
-	"github.com/YoanWai/agent-manager/internal/tmux"
+	"github.com/Doremi203/aghelm/internal/hooks"
+	"github.com/Doremi203/aghelm/internal/tmux"
 )
 
 // Piped output is not a terminal, and Setsid drops the controlling

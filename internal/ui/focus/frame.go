@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	uiframe "github.com/YoanWai/agent-manager/internal/ui/frame"
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
-	uitheme "github.com/YoanWai/agent-manager/internal/ui/theme"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	uiframe "github.com/Doremi203/aghelm/internal/ui/frame"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
+	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 )

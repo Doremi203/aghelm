@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	git "github.com/YoanWai/agent-manager/internal/git/value"
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
+	git "github.com/Doremi203/aghelm/internal/git/value"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/ansi"
 )

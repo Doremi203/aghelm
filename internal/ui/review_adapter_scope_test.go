@@ -4,9 +4,9 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/git"
-	uireview "github.com/YoanWai/agent-manager/internal/ui/review"
-	uisettings "github.com/YoanWai/agent-manager/internal/ui/settings"
+	"github.com/Doremi203/aghelm/internal/git"
+	uireview "github.com/Doremi203/aghelm/internal/ui/review"
+	uisettings "github.com/Doremi203/aghelm/internal/ui/settings"
 )
 
 // The scope picked with s is the one the session's review opens in next,

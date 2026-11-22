@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	diff "github.com/YoanWai/agent-manager/internal/diff/model"
+	diff "github.com/Doremi203/aghelm/internal/diff/model"
 	"github.com/charmbracelet/x/ansi"
 )
 

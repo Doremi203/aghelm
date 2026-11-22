@@ -1,6 +1,6 @@
 package connections
 
-import remote "github.com/YoanWai/agent-manager/internal/remote/value"
+import remote "github.com/Doremi203/aghelm/internal/remote/value"
 
 // Kind is which of a connection's rows a target names.
 type Kind uint8

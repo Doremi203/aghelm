@@ -1,7 +1,7 @@
 package ui
 
 import (
-	uinotices "github.com/YoanWai/agent-manager/internal/ui/notices"
+	uinotices "github.com/Doremi203/aghelm/internal/ui/notices"
 )
 
 // noticesSurfaceOf is the messages modal on the stack, which a test reads the

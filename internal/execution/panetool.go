@@ -3,8 +3,8 @@ package execution
 import (
 	"strings"
 
-	"github.com/YoanWai/agent-manager/internal/config"
-	"github.com/YoanWai/agent-manager/internal/store"
+	"github.com/Doremi203/aghelm/internal/config"
+	"github.com/Doremi203/aghelm/internal/store"
 )
 
 // Shells and blocks without a command hold no binary: a terminal row is a

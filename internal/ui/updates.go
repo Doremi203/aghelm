@@ -1,7 +1,7 @@
 package ui
 
 import (
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

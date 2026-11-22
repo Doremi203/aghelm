@@ -1,6 +1,6 @@
 package notify
 
-import "github.com/YoanWai/agent-manager/internal/pwsh"
+import "github.com/Doremi203/aghelm/internal/pwsh"
 
 // powershellFallback is where Windows keeps PowerShell when WSL interop
 // has not put it on PATH.

@@ -5,7 +5,7 @@ package execution
 import (
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/config"
+	"github.com/Doremi203/aghelm/internal/config"
 )
 
 // The process snapshot names images in lower case without .exe, so a

@@ -3,7 +3,7 @@ package model
 import (
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/git/value"
+	"github.com/Doremi203/aghelm/internal/git/value"
 )
 
 func TestBuildFileStoresTheContentHash(t *testing.T) {

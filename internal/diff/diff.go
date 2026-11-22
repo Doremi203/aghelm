@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/YoanWai/agent-manager/internal/diff/model"
-	"github.com/YoanWai/agent-manager/internal/git"
+	"github.com/Doremi203/aghelm/internal/diff/model"
+	"github.com/Doremi203/aghelm/internal/git"
 )
 
 type LineKind = model.LineKind

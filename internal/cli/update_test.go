@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/update"
+	"github.com/Doremi203/aghelm/internal/update"
 )
 
 // swapUpdateSeams steers the update path: exec, detection and the refresh

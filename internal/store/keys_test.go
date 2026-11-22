@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/keybind"
 )
 
 func bindingOf(t *testing.T, specs ...string) keybind.Binding {

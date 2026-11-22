@@ -1,12 +1,12 @@
 package ui
 
 import (
-	uilaunch "github.com/YoanWai/agent-manager/internal/ui/spawn/launch"
+	uilaunch "github.com/Doremi203/aghelm/internal/ui/spawn/launch"
 	"strings"
 	"testing"
 
-	uidialogs "github.com/YoanWai/agent-manager/internal/ui/dialogs"
-	uisurface "github.com/YoanWai/agent-manager/internal/ui/surface"
+	uidialogs "github.com/Doremi203/aghelm/internal/ui/dialogs"
+	uisurface "github.com/Doremi203/aghelm/internal/ui/surface"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

@@ -4,7 +4,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
 	"github.com/charmbracelet/lipgloss"
 )
 

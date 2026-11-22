@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	uifocus "github.com/YoanWai/agent-manager/internal/ui/focus"
-	uitheme "github.com/YoanWai/agent-manager/internal/ui/theme"
+	uifocus "github.com/Doremi203/aghelm/internal/ui/focus"
+	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )

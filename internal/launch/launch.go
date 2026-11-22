@@ -15,12 +15,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/config"
-	"github.com/YoanWai/agent-manager/internal/hooks"
-	"github.com/YoanWai/agent-manager/internal/mcpreg"
-	"github.com/YoanWai/agent-manager/internal/sessionreport"
-	"github.com/YoanWai/agent-manager/internal/store"
-	"github.com/YoanWai/agent-manager/internal/tmux"
+	"github.com/Doremi203/aghelm/internal/config"
+	"github.com/Doremi203/aghelm/internal/hooks"
+	"github.com/Doremi203/aghelm/internal/mcpreg"
+	"github.com/Doremi203/aghelm/internal/sessionreport"
+	"github.com/Doremi203/aghelm/internal/store"
+	"github.com/Doremi203/aghelm/internal/tmux"
 	"github.com/google/uuid"
 )
 

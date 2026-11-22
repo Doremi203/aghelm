@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/pwsh"
+	"github.com/Doremi203/aghelm/internal/pwsh"
 )
 
 // WSL has no notification daemon of its own; the banner is a Windows toast

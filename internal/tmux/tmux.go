@@ -12,8 +12,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/deps"
-	"github.com/YoanWai/agent-manager/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/deps"
+	"github.com/Doremi203/aghelm/internal/keybind"
 )
 
 const prefix = "am_"

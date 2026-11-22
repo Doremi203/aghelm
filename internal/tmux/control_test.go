@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/testenv"
+	"github.com/Doremi203/aghelm/internal/testenv"
 )
 
 type blockingWriteCloser struct {

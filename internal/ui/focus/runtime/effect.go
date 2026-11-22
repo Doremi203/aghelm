@@ -1,11 +1,11 @@
 package runtime
 
 import (
-	"github.com/YoanWai/agent-manager/internal/status"
-	"github.com/YoanWai/agent-manager/internal/store"
-	"github.com/YoanWai/agent-manager/internal/tmux"
-	uieffects "github.com/YoanWai/agent-manager/internal/ui/effects"
-	"github.com/YoanWai/agent-manager/internal/ui/focus/watch"
+	"github.com/Doremi203/aghelm/internal/status"
+	"github.com/Doremi203/aghelm/internal/store"
+	"github.com/Doremi203/aghelm/internal/tmux"
+	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
+	"github.com/Doremi203/aghelm/internal/ui/focus/watch"
 )
 
 // Services is what this package's effects run against: the store, the tmux

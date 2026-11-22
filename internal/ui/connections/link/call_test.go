@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/remote"
-	"github.com/YoanWai/agent-manager/internal/sessioncmd"
+	"github.com/Doremi203/aghelm/internal/remote"
+	"github.com/Doremi203/aghelm/internal/sessioncmd"
 )
 
 func TestRunTurnsEachCallIntoItsHostCommand(t *testing.T) {

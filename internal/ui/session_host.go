@@ -1,8 +1,8 @@
 package ui
 
 import (
-	"github.com/YoanWai/agent-manager/internal/store"
-	sessiondialogs "github.com/YoanWai/agent-manager/internal/ui/session/dialogs"
+	"github.com/Doremi203/aghelm/internal/store"
+	sessiondialogs "github.com/Doremi203/aghelm/internal/ui/session/dialogs"
 )
 
 // sessionHost is the root as the session packages read it: the loaded rows,

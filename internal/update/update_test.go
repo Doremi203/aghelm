@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/atomicfile"
+	"github.com/Doremi203/aghelm/internal/atomicfile"
 )
 
 func TestParseVersion(t *testing.T) {

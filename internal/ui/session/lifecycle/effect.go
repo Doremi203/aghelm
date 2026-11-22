@@ -4,7 +4,7 @@ import (
 	"maps"
 	"slices"
 
-	uieffects "github.com/YoanWai/agent-manager/internal/ui/effects"
+	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
 )
 
 // EffectName is the action as a quit notice names it: the confirm card

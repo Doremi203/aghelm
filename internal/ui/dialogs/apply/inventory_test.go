@@ -3,7 +3,7 @@ package apply
 import (
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/store"
+	"github.com/Doremi203/aghelm/internal/store"
 )
 
 // A group rename moves the subtree and mirrors only the stages that

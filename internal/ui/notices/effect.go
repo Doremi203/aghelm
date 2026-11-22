@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	uieffects "github.com/YoanWai/agent-manager/internal/ui/effects"
+	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
 )
 
 // Store is the persisted dismissal or read mark a queued one writes through.

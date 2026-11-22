@@ -3,7 +3,7 @@ package persist
 import (
 	"testing"
 
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
 )
 
 // A queued Rail change runs against the store and labels its services hand

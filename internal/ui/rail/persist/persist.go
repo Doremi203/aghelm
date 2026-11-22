@@ -8,8 +8,8 @@ import (
 	"encoding/json"
 	"sort"
 
-	"github.com/YoanWai/agent-manager/internal/store"
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
+	"github.com/Doremi203/aghelm/internal/store"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
 )
 
 const (

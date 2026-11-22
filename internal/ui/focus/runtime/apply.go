@@ -1,7 +1,7 @@
 package runtime
 
 import (
-	"github.com/YoanWai/agent-manager/internal/tmux"
+	"github.com/Doremi203/aghelm/internal/tmux"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

@@ -17,8 +17,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/atomicfile"
-	"github.com/YoanWai/agent-manager/internal/update"
+	"github.com/Doremi203/aghelm/internal/atomicfile"
+	"github.com/Doremi203/aghelm/internal/update"
 	"github.com/charmbracelet/x/ansi"
 )
 

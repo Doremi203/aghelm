@@ -4,8 +4,8 @@ import (
 	"os/exec"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/status"
-	"github.com/YoanWai/agent-manager/internal/tmux"
+	"github.com/Doremi203/aghelm/internal/status"
+	"github.com/Doremi203/aghelm/internal/tmux"
 )
 
 // A probe of a window tmux no longer holds refuses the entry, and the refusal

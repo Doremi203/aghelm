@@ -3,12 +3,12 @@ package ui
 import (
 	"strconv"
 
-	"github.com/YoanWai/agent-manager/internal/status"
-	"github.com/YoanWai/agent-manager/internal/store"
-	"github.com/YoanWai/agent-manager/internal/termseq"
-	"github.com/YoanWai/agent-manager/internal/tmux"
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
-	uitheme "github.com/YoanWai/agent-manager/internal/ui/theme"
+	"github.com/Doremi203/aghelm/internal/status"
+	"github.com/Doremi203/aghelm/internal/store"
+	"github.com/Doremi203/aghelm/internal/termseq"
+	"github.com/Doremi203/aghelm/internal/tmux"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
+	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )

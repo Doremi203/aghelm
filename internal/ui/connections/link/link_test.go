@@ -8,12 +8,12 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/remote"
-	"github.com/YoanWai/agent-manager/internal/remote/remotetest"
-	"github.com/YoanWai/agent-manager/internal/sessioncmd"
-	"github.com/YoanWai/agent-manager/internal/store"
-	uiconnections "github.com/YoanWai/agent-manager/internal/ui/connections"
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
+	"github.com/Doremi203/aghelm/internal/remote"
+	"github.com/Doremi203/aghelm/internal/remote/remotetest"
+	"github.com/Doremi203/aghelm/internal/sessioncmd"
+	"github.com/Doremi203/aghelm/internal/store"
+	uiconnections "github.com/Doremi203/aghelm/internal/ui/connections"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

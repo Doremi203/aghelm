@@ -8,9 +8,9 @@ package persist
 import (
 	"fmt"
 
-	"github.com/YoanWai/agent-manager/internal/store"
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
-	uisettings "github.com/YoanWai/agent-manager/internal/ui/settings"
+	"github.com/Doremi203/aghelm/internal/store"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
+	uisettings "github.com/Doremi203/aghelm/internal/ui/settings"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

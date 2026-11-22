@@ -1,7 +1,7 @@
 package tmux
 
 import (
-	"github.com/YoanWai/agent-manager/internal/testenv"
+	"github.com/Doremi203/aghelm/internal/testenv"
 	"os"
 	"strconv"
 	"strings"

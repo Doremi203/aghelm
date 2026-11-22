@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/YoanWai/agent-manager/internal/deps"
-	"github.com/YoanWai/agent-manager/internal/wsl"
+	"github.com/Doremi203/aghelm/internal/deps"
+	"github.com/Doremi203/aghelm/internal/wsl"
 )
 
 var (

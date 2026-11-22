@@ -5,8 +5,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	remote "github.com/YoanWai/agent-manager/internal/remote/value"
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
+	remote "github.com/Doremi203/aghelm/internal/remote/value"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 )

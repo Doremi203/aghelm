@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/deps"
+	"github.com/Doremi203/aghelm/internal/deps"
 )
 
 func TestCheckInstalledAcceptsPresentBinary(t *testing.T) {

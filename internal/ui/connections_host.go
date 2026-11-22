@@ -3,16 +3,16 @@ package ui
 import (
 	"strings"
 
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	"github.com/YoanWai/agent-manager/internal/remote"
-	"github.com/YoanWai/agent-manager/internal/store"
-	uiconnections "github.com/YoanWai/agent-manager/internal/ui/connections"
-	uilink "github.com/YoanWai/agent-manager/internal/ui/connections/link"
-	uidialogs "github.com/YoanWai/agent-manager/internal/ui/dialogs"
-	uiframe "github.com/YoanWai/agent-manager/internal/ui/frame"
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
-	"github.com/YoanWai/agent-manager/internal/ui/spawn"
-	uitheme "github.com/YoanWai/agent-manager/internal/ui/theme"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/remote"
+	"github.com/Doremi203/aghelm/internal/store"
+	uiconnections "github.com/Doremi203/aghelm/internal/ui/connections"
+	uilink "github.com/Doremi203/aghelm/internal/ui/connections/link"
+	uidialogs "github.com/Doremi203/aghelm/internal/ui/dialogs"
+	uiframe "github.com/Doremi203/aghelm/internal/ui/frame"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
+	"github.com/Doremi203/aghelm/internal/ui/spawn"
+	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

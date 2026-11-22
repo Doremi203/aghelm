@@ -5,11 +5,11 @@ import (
 	"encoding/hex"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/config"
-	"github.com/YoanWai/agent-manager/internal/launch"
-	"github.com/YoanWai/agent-manager/internal/sessioncmd"
-	"github.com/YoanWai/agent-manager/internal/ui/composer"
-	"github.com/YoanWai/agent-manager/internal/ui/spawn"
+	"github.com/Doremi203/aghelm/internal/config"
+	"github.com/Doremi203/aghelm/internal/launch"
+	"github.com/Doremi203/aghelm/internal/sessioncmd"
+	"github.com/Doremi203/aghelm/internal/ui/composer"
+	"github.com/Doremi203/aghelm/internal/ui/spawn"
 )
 
 // Defaults are the launch inputs a spawn into a group captures at dispatch

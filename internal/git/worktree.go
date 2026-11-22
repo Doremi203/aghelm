@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/git/value"
+	"github.com/Doremi203/aghelm/internal/git/value"
 )
 
 type Worktree = value.Worktree

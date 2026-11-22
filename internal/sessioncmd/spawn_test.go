@@ -3,7 +3,7 @@ package sessioncmd
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/YoanWai/agent-manager/internal/testenv"
+	"github.com/Doremi203/aghelm/internal/testenv"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -11,11 +11,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	"github.com/YoanWai/agent-manager/internal/launch"
-	"github.com/YoanWai/agent-manager/internal/status"
-	"github.com/YoanWai/agent-manager/internal/store"
-	"github.com/YoanWai/agent-manager/internal/tmux"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/launch"
+	"github.com/Doremi203/aghelm/internal/status"
+	"github.com/Doremi203/aghelm/internal/store"
+	"github.com/Doremi203/aghelm/internal/tmux"
 )
 
 func TestSessionsCreateCarriesNamePromptAndTargetWithRealTmux(t *testing.T) {

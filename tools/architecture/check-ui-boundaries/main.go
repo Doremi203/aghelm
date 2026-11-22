@@ -10,7 +10,18 @@ import (
 	"strings"
 )
 
-const module = "github.com/YoanWai/agent-manager"
+// module is read from go.mod so a rename of the module does not touch this
+// program.
+var module = modulePath()
+
+func modulePath() string {
+	out, err := exec.Command("go", "list", "-m").Output()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "go list -m:", err)
+		os.Exit(1)
+	}
+	return strings.TrimSpace(string(out))
+}
 
 // platforms are the GOOS values .goreleaser.yaml builds. A dependency behind
 // a build tag on one of them is still a dependency.

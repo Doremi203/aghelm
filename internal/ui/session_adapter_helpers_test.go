@@ -3,12 +3,12 @@ package ui
 import (
 	"fmt"
 
-	"github.com/YoanWai/agent-manager/internal/sessioncmd"
-	"github.com/YoanWai/agent-manager/internal/store"
-	uidialogs "github.com/YoanWai/agent-manager/internal/ui/dialogs"
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
-	uirailpersist "github.com/YoanWai/agent-manager/internal/ui/rail/persist"
-	uilifecycle "github.com/YoanWai/agent-manager/internal/ui/session/lifecycle"
+	"github.com/Doremi203/aghelm/internal/sessioncmd"
+	"github.com/Doremi203/aghelm/internal/store"
+	uidialogs "github.com/Doremi203/aghelm/internal/ui/dialogs"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
+	uirailpersist "github.com/Doremi203/aghelm/internal/ui/rail/persist"
+	uilifecycle "github.com/Doremi203/aghelm/internal/ui/session/lifecycle"
 )
 
 // Legacy fixture entry points drive the same captured executor and reconciliation

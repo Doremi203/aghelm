@@ -12,10 +12,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/YoanWai/agent-manager/examples/extensions"
-	"github.com/YoanWai/agent-manager/internal/app"
-	"github.com/YoanWai/agent-manager/internal/execution"
-	"github.com/YoanWai/agent-manager/internal/tmux"
+	"github.com/Doremi203/aghelm/examples/extensions"
+	"github.com/Doremi203/aghelm/internal/app"
+	"github.com/Doremi203/aghelm/internal/execution"
+	"github.com/Doremi203/aghelm/internal/tmux"
 )
 
 type observation struct {

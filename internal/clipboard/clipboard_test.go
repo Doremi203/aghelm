@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/testenv"
+	"github.com/Doremi203/aghelm/internal/testenv"
 )
 
 // restore saves the seams for the returned func to put back, and starts the

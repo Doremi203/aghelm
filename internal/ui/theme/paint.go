@@ -1,6 +1,6 @@
 package theme
 
-import "github.com/YoanWai/agent-manager/internal/ui/presentation"
+import "github.com/Doremi203/aghelm/internal/ui/presentation"
 
 // BgSeq is the raw "set background" SGR for a hex color, for the few spots
 // that paint a background around content lipgloss already styled. It goes

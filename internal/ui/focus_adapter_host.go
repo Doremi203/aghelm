@@ -1,12 +1,12 @@
 package ui
 
 import (
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	"github.com/YoanWai/agent-manager/internal/tmux"
-	uifocus "github.com/YoanWai/agent-manager/internal/ui/focus"
-	focusruntime "github.com/YoanWai/agent-manager/internal/ui/focus/runtime"
-	uicapture "github.com/YoanWai/agent-manager/internal/ui/preview/capture"
-	uireviewsource "github.com/YoanWai/agent-manager/internal/ui/review/source"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/tmux"
+	uifocus "github.com/Doremi203/aghelm/internal/ui/focus"
+	focusruntime "github.com/Doremi203/aghelm/internal/ui/focus/runtime"
+	uicapture "github.com/Doremi203/aghelm/internal/ui/preview/capture"
+	uireviewsource "github.com/Doremi203/aghelm/internal/ui/review/source"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

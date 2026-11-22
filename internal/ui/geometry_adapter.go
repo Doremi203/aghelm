@@ -1,9 +1,9 @@
 package ui
 
 import (
-	uieffects "github.com/YoanWai/agent-manager/internal/ui/effects"
-	uigeometry "github.com/YoanWai/agent-manager/internal/ui/geometry"
-	uigeometrypanes "github.com/YoanWai/agent-manager/internal/ui/geometry/panes"
+	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
+	uigeometry "github.com/Doremi203/aghelm/internal/ui/geometry"
+	uigeometrypanes "github.com/Doremi203/aghelm/internal/ui/geometry/panes"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

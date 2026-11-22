@@ -19,7 +19,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/YoanWai/agent-manager/internal/atomicfile"
+	"github.com/Doremi203/aghelm/internal/atomicfile"
 	"github.com/charmbracelet/x/ansi"
 )
 

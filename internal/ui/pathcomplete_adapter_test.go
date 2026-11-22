@@ -6,9 +6,9 @@ import (
 	"sync"
 	"testing"
 
-	uidialogs "github.com/YoanWai/agent-manager/internal/ui/dialogs"
-	"github.com/YoanWai/agent-manager/internal/ui/pathcomplete"
-	"github.com/YoanWai/agent-manager/internal/ui/spawn"
+	uidialogs "github.com/Doremi203/aghelm/internal/ui/dialogs"
+	"github.com/Doremi203/aghelm/internal/ui/pathcomplete"
+	"github.com/Doremi203/aghelm/internal/ui/spawn"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

@@ -1,12 +1,12 @@
 package ui
 
 import (
-	uitheme "github.com/YoanWai/agent-manager/internal/ui/theme"
+	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/status"
-	uionboarding "github.com/YoanWai/agent-manager/internal/ui/onboarding"
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
+	"github.com/Doremi203/aghelm/internal/status"
+	uionboarding "github.com/Doremi203/aghelm/internal/ui/onboarding"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
 	"github.com/charmbracelet/lipgloss"
 )
 

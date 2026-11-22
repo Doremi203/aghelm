@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/YoanWai/agent-manager/internal/remote/value"
+	"github.com/Doremi203/aghelm/internal/remote/value"
 )
 
 // The connection values live in remote/value, so the UI can name hosts and

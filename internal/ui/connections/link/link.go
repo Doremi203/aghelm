@@ -5,11 +5,11 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/remote"
-	"github.com/YoanWai/agent-manager/internal/store"
-	uiconnections "github.com/YoanWai/agent-manager/internal/ui/connections"
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
-	uiterminal "github.com/YoanWai/agent-manager/internal/ui/terminal"
+	"github.com/Doremi203/aghelm/internal/remote"
+	"github.com/Doremi203/aghelm/internal/store"
+	uiconnections "github.com/Doremi203/aghelm/internal/ui/connections"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
+	uiterminal "github.com/Doremi203/aghelm/internal/ui/terminal"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

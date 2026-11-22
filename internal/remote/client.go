@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/remote/value"
-	"github.com/YoanWai/agent-manager/internal/sessioncmd"
+	"github.com/Doremi203/aghelm/internal/remote/value"
+	"github.com/Doremi203/aghelm/internal/sessioncmd"
 )
 
 const (

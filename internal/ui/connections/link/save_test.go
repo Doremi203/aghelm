@@ -5,8 +5,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/remote"
-	"github.com/YoanWai/agent-manager/internal/store"
+	"github.com/Doremi203/aghelm/internal/remote"
+	"github.com/Doremi203/aghelm/internal/store"
 )
 
 // connectionsTable is the connections table a save writes.

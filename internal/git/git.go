@@ -18,8 +18,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/YoanWai/agent-manager/internal/deps"
-	"github.com/YoanWai/agent-manager/internal/git/value"
+	"github.com/Doremi203/aghelm/internal/deps"
+	"github.com/Doremi203/aghelm/internal/git/value"
 )
 
 var ErrNotARepo = errors.New("not a git repository")

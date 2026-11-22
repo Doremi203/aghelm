@@ -3,11 +3,11 @@ package ui
 import (
 	"testing"
 
-	uieffects "github.com/YoanWai/agent-manager/internal/ui/effects"
-	uigeometrypanes "github.com/YoanWai/agent-manager/internal/ui/geometry/panes"
-	uiinstall "github.com/YoanWai/agent-manager/internal/ui/launchhint/install"
-	uireviewsource "github.com/YoanWai/agent-manager/internal/ui/review/source"
-	uilifecycle "github.com/YoanWai/agent-manager/internal/ui/session/lifecycle"
+	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
+	uigeometrypanes "github.com/Doremi203/aghelm/internal/ui/geometry/panes"
+	uiinstall "github.com/Doremi203/aghelm/internal/ui/launchhint/install"
+	uireviewsource "github.com/Doremi203/aghelm/internal/ui/review/source"
+	uilifecycle "github.com/Doremi203/aghelm/internal/ui/session/lifecycle"
 )
 
 // Every poll enqueues the review status read while a review is open, and

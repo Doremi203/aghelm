@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/YoanWai/agent-manager/internal/config"
-	"github.com/YoanWai/agent-manager/internal/launch"
-	"github.com/YoanWai/agent-manager/internal/notify"
+	"github.com/Doremi203/aghelm/internal/config"
+	"github.com/Doremi203/aghelm/internal/launch"
+	"github.com/Doremi203/aghelm/internal/notify"
 
-	"github.com/YoanWai/agent-manager/internal/status"
-	"github.com/YoanWai/agent-manager/internal/store"
+	"github.com/Doremi203/aghelm/internal/status"
+	"github.com/Doremi203/aghelm/internal/store"
 )
 
 // notifyTransition fires a desktop notification when a session's status

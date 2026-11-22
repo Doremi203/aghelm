@@ -7,11 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/diff"
-	"github.com/YoanWai/agent-manager/internal/git"
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
-	uireview "github.com/YoanWai/agent-manager/internal/ui/review"
-	uireviewsource "github.com/YoanWai/agent-manager/internal/ui/review/source"
+	"github.com/Doremi203/aghelm/internal/diff"
+	"github.com/Doremi203/aghelm/internal/git"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
+	uireview "github.com/Doremi203/aghelm/internal/ui/review"
+	uireviewsource "github.com/Doremi203/aghelm/internal/ui/review/source"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/ansi"
 )

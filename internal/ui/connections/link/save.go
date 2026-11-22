@@ -1,7 +1,7 @@
 package link
 
 import (
-	"github.com/YoanWai/agent-manager/internal/store"
+	"github.com/Doremi203/aghelm/internal/store"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

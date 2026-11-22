@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/pwsh"
+	"github.com/Doremi203/aghelm/internal/pwsh"
 )
 
 // The line typed into the pane names the shell Path found and quotes the

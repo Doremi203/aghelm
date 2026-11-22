@@ -3,9 +3,9 @@
 package launch
 
 import (
-	"github.com/YoanWai/agent-manager/internal/conversation"
-	"github.com/YoanWai/agent-manager/internal/hooks"
-	"github.com/YoanWai/agent-manager/internal/tmux"
+	"github.com/Doremi203/aghelm/internal/conversation"
+	"github.com/Doremi203/aghelm/internal/hooks"
+	"github.com/Doremi203/aghelm/internal/tmux"
 )
 
 // tracksConversations: the agent runs under a pid its launch records, so

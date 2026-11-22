@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	diff "github.com/YoanWai/agent-manager/internal/diff/model"
-	git "github.com/YoanWai/agent-manager/internal/git/value"
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
+	diff "github.com/Doremi203/aghelm/internal/diff/model"
+	git "github.com/Doremi203/aghelm/internal/git/value"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"

@@ -1,8 +1,8 @@
 package spawn
 
 import (
-	"github.com/YoanWai/agent-manager/internal/ui/pathcomplete"
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
+	"github.com/Doremi203/aghelm/internal/ui/pathcomplete"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

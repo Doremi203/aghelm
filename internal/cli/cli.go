@@ -14,7 +14,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/YoanWai/agent-manager/internal/sessioncmd"
+	"github.com/Doremi203/aghelm/internal/sessioncmd"
 )
 
 // Command takes its caller as a function so a command that acts as no

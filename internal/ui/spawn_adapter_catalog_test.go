@@ -2,7 +2,7 @@ package ui
 
 import (
 	"errors"
-	uilaunch "github.com/YoanWai/agent-manager/internal/ui/spawn/launch"
+	uilaunch "github.com/Doremi203/aghelm/internal/ui/spawn/launch"
 	"os"
 	"path/filepath"
 	"slices"
@@ -10,13 +10,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/catalog"
-	"github.com/YoanWai/agent-manager/internal/config"
-	"github.com/YoanWai/agent-manager/internal/deps"
-	"github.com/YoanWai/agent-manager/internal/testenv"
-	"github.com/YoanWai/agent-manager/internal/ui/composer"
-	uiinstall "github.com/YoanWai/agent-manager/internal/ui/launchhint/install"
-	"github.com/YoanWai/agent-manager/internal/ui/spawn"
+	"github.com/Doremi203/aghelm/internal/catalog"
+	"github.com/Doremi203/aghelm/internal/config"
+	"github.com/Doremi203/aghelm/internal/deps"
+	"github.com/Doremi203/aghelm/internal/testenv"
+	"github.com/Doremi203/aghelm/internal/ui/composer"
+	uiinstall "github.com/Doremi203/aghelm/internal/ui/launchhint/install"
+	"github.com/Doremi203/aghelm/internal/ui/spawn"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

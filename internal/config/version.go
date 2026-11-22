@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/deps"
-	"github.com/YoanWai/agent-manager/internal/update"
+	"github.com/Doremi203/aghelm/internal/deps"
+	"github.com/Doremi203/aghelm/internal/update"
 )
 
 type OutdatedToolError struct {

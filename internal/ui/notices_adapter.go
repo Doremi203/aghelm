@@ -1,12 +1,12 @@
 package ui
 
 import (
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	uieffects "github.com/YoanWai/agent-manager/internal/ui/effects"
-	uinotices "github.com/YoanWai/agent-manager/internal/ui/notices"
-	uirelease "github.com/YoanWai/agent-manager/internal/ui/notices/release"
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
-	"github.com/YoanWai/agent-manager/internal/update"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
+	uinotices "github.com/Doremi203/aghelm/internal/ui/notices"
+	uirelease "github.com/Doremi203/aghelm/internal/ui/notices/release"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
+	"github.com/Doremi203/aghelm/internal/update"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

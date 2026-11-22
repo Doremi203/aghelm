@@ -1,10 +1,10 @@
 package connections
 
 import (
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	uidialogs "github.com/YoanWai/agent-manager/internal/ui/dialogs"
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
-	uitheme "github.com/YoanWai/agent-manager/internal/ui/theme"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	uidialogs "github.com/Doremi203/aghelm/internal/ui/dialogs"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
+	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	"github.com/charmbracelet/lipgloss"
 )
 

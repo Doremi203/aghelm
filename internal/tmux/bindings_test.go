@@ -1,7 +1,7 @@
 package tmux
 
 import (
-	"github.com/YoanWai/agent-manager/internal/testenv"
+	"github.com/Doremi203/aghelm/internal/testenv"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/keybind"
 )
 
 // resolvedOption's global fallback can fail on its own (no server, a

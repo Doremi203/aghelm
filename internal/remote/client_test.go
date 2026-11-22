@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/remote/remotetest"
-	"github.com/YoanWai/agent-manager/internal/sessioncmd"
+	"github.com/Doremi203/aghelm/internal/remote/remotetest"
+	"github.com/Doremi203/aghelm/internal/sessioncmd"
 )
 
 type exitStatus int

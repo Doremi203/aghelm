@@ -3,8 +3,8 @@ package review
 import (
 	"strings"
 
-	diff "github.com/YoanWai/agent-manager/internal/diff/model"
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
+	diff "github.com/Doremi203/aghelm/internal/diff/model"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/formatters"
 	"github.com/alecthomas/chroma/v2/lexers"

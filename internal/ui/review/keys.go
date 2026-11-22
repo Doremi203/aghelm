@@ -3,7 +3,7 @@ package review
 import (
 	"path/filepath"
 
-	"github.com/YoanWai/agent-manager/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/keybind"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

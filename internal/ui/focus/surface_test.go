@@ -3,9 +3,9 @@ package focus
 import (
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	"github.com/YoanWai/agent-manager/internal/ui/spawn"
-	"github.com/YoanWai/agent-manager/internal/ui/surface"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/ui/spawn"
+	"github.com/Doremi203/aghelm/internal/ui/surface"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )

@@ -4,7 +4,7 @@
 package terminal
 
 import (
-	uisession "github.com/YoanWai/agent-manager/internal/ui/session"
+	uisession "github.com/Doremi203/aghelm/internal/ui/session"
 )
 
 // PanePath reads a pane's live working directory; nil reads no pane.

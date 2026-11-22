@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/tmux"
+	"github.com/Doremi203/aghelm/internal/tmux"
 )
 
 // The record names the process the launch line execs into, which is the

@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/ui/composer"
-	"github.com/YoanWai/agent-manager/internal/ui/surface"
+	"github.com/Doremi203/aghelm/internal/ui/composer"
+	"github.com/Doremi203/aghelm/internal/ui/surface"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

@@ -1,9 +1,9 @@
 package ui
 
 import (
-	"github.com/YoanWai/agent-manager/internal/ui/pathcomplete"
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
-	uitheme "github.com/YoanWai/agent-manager/internal/ui/theme"
+	"github.com/Doremi203/aghelm/internal/ui/pathcomplete"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
+	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

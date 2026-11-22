@@ -1,9 +1,9 @@
 package sessioncmd
 
 import (
-	"github.com/YoanWai/agent-manager/internal/launch"
-	"github.com/YoanWai/agent-manager/internal/store"
-	"github.com/YoanWai/agent-manager/internal/tmux"
+	"github.com/Doremi203/aghelm/internal/launch"
+	"github.com/Doremi203/aghelm/internal/store"
+	"github.com/Doremi203/aghelm/internal/tmux"
 )
 
 // PromptHeadCommand is the hidden subcommand an attached ← runs. tmux

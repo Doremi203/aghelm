@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/config"
-	"github.com/YoanWai/agent-manager/internal/ui/composer"
+	"github.com/Doremi203/aghelm/internal/config"
+	"github.com/Doremi203/aghelm/internal/ui/composer"
 )
 
 func withSeam[T any](t *testing.T, seam *T, value T) {

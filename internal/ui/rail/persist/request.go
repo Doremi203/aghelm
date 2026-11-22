@@ -3,8 +3,8 @@ package persist
 import (
 	"slices"
 
-	uieffects "github.com/YoanWai/agent-manager/internal/ui/effects"
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
+	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
 )
 
 // Services is what a Rail change needs off the update path: the rows it

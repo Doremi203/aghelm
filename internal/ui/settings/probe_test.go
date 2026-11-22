@@ -3,7 +3,7 @@ package settings
 import (
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
 )
 
 func TestMirrorReadsTheRowTheFrameCaresAbout(t *testing.T) {

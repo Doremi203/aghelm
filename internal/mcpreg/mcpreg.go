@@ -19,9 +19,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/atomicfile"
-	"github.com/YoanWai/agent-manager/internal/hooks"
-	"github.com/YoanWai/agent-manager/internal/tmux"
+	"github.com/Doremi203/aghelm/internal/atomicfile"
+	"github.com/Doremi203/aghelm/internal/hooks"
+	"github.com/Doremi203/aghelm/internal/tmux"
 )
 
 const serverName = "agent-manager"

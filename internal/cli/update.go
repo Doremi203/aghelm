@@ -7,7 +7,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/YoanWai/agent-manager/internal/update"
+	"github.com/Doremi203/aghelm/internal/update"
 )
 
 const usageUpdate = "update [--json]"

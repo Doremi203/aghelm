@@ -1,13 +1,13 @@
 package ui
 
 import (
-	"github.com/YoanWai/agent-manager/internal/ui/composer"
-	uiconnections "github.com/YoanWai/agent-manager/internal/ui/connections"
-	uiquick "github.com/YoanWai/agent-manager/internal/ui/quick"
-	uiquicksend "github.com/YoanWai/agent-manager/internal/ui/quick/send"
-	uisettings "github.com/YoanWai/agent-manager/internal/ui/settings"
-	uipersist "github.com/YoanWai/agent-manager/internal/ui/settings/persist"
-	"github.com/YoanWai/agent-manager/internal/ui/spawn"
+	"github.com/Doremi203/aghelm/internal/ui/composer"
+	uiconnections "github.com/Doremi203/aghelm/internal/ui/connections"
+	uiquick "github.com/Doremi203/aghelm/internal/ui/quick"
+	uiquicksend "github.com/Doremi203/aghelm/internal/ui/quick/send"
+	uisettings "github.com/Doremi203/aghelm/internal/ui/settings"
+	uipersist "github.com/Doremi203/aghelm/internal/ui/settings/persist"
+	"github.com/Doremi203/aghelm/internal/ui/spawn"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

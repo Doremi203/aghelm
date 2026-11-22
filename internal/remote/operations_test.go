@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/sessioncmd"
+	"github.com/Doremi203/aghelm/internal/sessioncmd"
 )
 
 // recorder answers every call with stdout and keeps the words each one ran.

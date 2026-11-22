@@ -3,8 +3,8 @@ package source
 import (
 	"testing"
 
-	uieffects "github.com/YoanWai/agent-manager/internal/ui/effects"
-	uireview "github.com/YoanWai/agent-manager/internal/ui/review"
+	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
+	uireview "github.com/Doremi203/aghelm/internal/ui/review"
 )
 
 func TestRouteNamesEveryReviewMessage(t *testing.T) {

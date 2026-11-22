@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/config"
-	uisettings "github.com/YoanWai/agent-manager/internal/ui/settings"
+	"github.com/Doremi203/aghelm/internal/config"
+	uisettings "github.com/Doremi203/aghelm/internal/ui/settings"
 )
 
 // scriptReader answers a fixed map and can fail one key.

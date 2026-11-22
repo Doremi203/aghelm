@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/store"
-	"github.com/YoanWai/agent-manager/internal/ui/composer"
-	uieffects "github.com/YoanWai/agent-manager/internal/ui/effects"
-	uilaunch "github.com/YoanWai/agent-manager/internal/ui/spawn/launch"
+	"github.com/Doremi203/aghelm/internal/store"
+	"github.com/Doremi203/aghelm/internal/ui/composer"
+	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
+	uilaunch "github.com/Doremi203/aghelm/internal/ui/spawn/launch"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

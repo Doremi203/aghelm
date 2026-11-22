@@ -3,9 +3,9 @@ package persist
 import (
 	"fmt"
 
-	"github.com/YoanWai/agent-manager/internal/sessioncmd"
-	"github.com/YoanWai/agent-manager/internal/store"
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
+	"github.com/Doremi203/aghelm/internal/sessioncmd"
+	"github.com/Doremi203/aghelm/internal/store"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
 )
 
 // Precondition is the placement the caller saw when it queued the move: a

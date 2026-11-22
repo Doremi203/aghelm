@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/YoanWai/agent-manager/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/keybind"
 )
 
 // DeadHint names the ways back from a dead row by the keys the user bound:

@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	uihelp "github.com/YoanWai/agent-manager/internal/ui/help"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	uihelp "github.com/Doremi203/aghelm/internal/ui/help"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/ansi"
 )

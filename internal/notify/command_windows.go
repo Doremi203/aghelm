@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"strconv"
 
-	"github.com/YoanWai/agent-manager/internal/pwsh"
+	"github.com/Doremi203/aghelm/internal/pwsh"
 )
 
 // shellCommand runs the notify command through PowerShell, the shell the

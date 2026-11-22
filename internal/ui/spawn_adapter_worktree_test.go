@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/ui/spawn"
-	uilaunch "github.com/YoanWai/agent-manager/internal/ui/spawn/launch"
+	"github.com/Doremi203/aghelm/internal/ui/spawn"
+	uilaunch "github.com/Doremi203/aghelm/internal/ui/spawn/launch"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/ansi"
 )

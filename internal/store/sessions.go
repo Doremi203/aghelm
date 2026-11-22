@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/config"
-	"github.com/YoanWai/agent-manager/internal/status"
+	"github.com/Doremi203/aghelm/internal/config"
+	"github.com/Doremi203/aghelm/internal/status"
 )
 
 // ErrSessionGone reports an operation against a session row that is no longer

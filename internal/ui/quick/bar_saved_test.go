@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
-	"github.com/YoanWai/agent-manager/internal/ui/spawn"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
+	"github.com/Doremi203/aghelm/internal/ui/spawn"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )

@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/store"
+	"github.com/Doremi203/aghelm/internal/store"
 )
 
 // storeWith opens a store holding one session, which is what a queued write
