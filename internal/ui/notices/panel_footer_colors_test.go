@@ -42,7 +42,7 @@ func TestNoticeFooterBackgroundRoles(t *testing.T) {
 		lipgloss.SetColorProfile(profile)
 		for _, mode := range []presentation.GlyphMode{presentation.GlyphModeBasic, presentation.GlyphModeAdvanced} {
 			for _, width := range []int{10, 12, 15, 20, 30, 80, 160} {
-				for _, id := range []string{"", "custom", "update-test"} {
+				for _, id := range []string{"", "custom"} {
 					t.Run(fmt.Sprintf("%d/%s/%d/%s", profile, mode, width, id), func(t *testing.T) {
 						p := NewPanel(nil, nil)
 						f := testFrame()

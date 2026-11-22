@@ -65,8 +65,7 @@ func (m *Model) handleSettingsLoaded(msg uipersist.LoadedMsg) (tea.Model, tea.Cm
 
 // applySettingsResult runs the work a dialog key asked beyond its own
 // state, and says whether the card closes: the links, the palette repaint,
-// the saves, and the exits that close the dialog or start the in-place
-// update.
+// the saves, and the exits that close the dialog.
 func (m *Model) applySettingsResult(d *uisettings.State, result uisettings.Result) (tea.Cmd, bool) {
 	cmd := m.runSettingsResult(d, result)
 	switch result.Exit {
@@ -77,25 +76,11 @@ func (m *Model) applySettingsResult(d *uisettings.State, result uisettings.Resul
 	case uisettings.RequestCLISupport:
 		return openLink(uinotices.SupportRequestURL()), false
 	case uisettings.ReportBug:
-		return openLink(uinotices.BugReportURL(m.release.Version)), false
+		return openLink(uinotices.BugReportURL(m.version)), false
 	case uisettings.OpenSetup:
 		request := openSetupMsg{Screen: m.screenID(), ForegroundGen: m.gens.foreground}
 		request.Screen.depth--
 		return func() tea.Msg { return request }, true
-	case uisettings.Update:
-		if m.release.Applying {
-			return nil, false
-		}
-		if m.release.Latest != "" {
-			// A successful swap quits to exec the new build, so
-			// everything staged this visit must land first; the
-			// update command follows the save's completion.
-			m.release.Applying = true
-			m.applySettingsPrefs(d)
-			m.clearErr()
-			return m.captureSettingsSave(d, false, true), false
-		}
-		return nil, true
 	case uisettings.Save:
 		return nil, true
 	}
@@ -136,26 +121,25 @@ func (m *Model) runSettingsResult(d *uisettings.State, result uisettings.Result)
 func (m *Model) leaveSettings(d *uisettings.State) {
 	m.applySettingsPrefs(d)
 	m.rebuildRows()
-	m.queueSettingsSave(d, true, false)
+	m.queueSettingsSave(d)
 }
 
 // captureSettingsSave enqueues the dialog's chosen preferences on the
 // effect lane; the store writes run outside Update. The captured
 // generation fences a completion against a newer dialog.
-func (m *Model) captureSettingsSave(d *uisettings.State, includeHidden, followUpdate bool) tea.Cmd {
-	m.queueSettingsSave(d, includeHidden, followUpdate)
+func (m *Model) captureSettingsSave(d *uisettings.State) tea.Cmd {
+	m.queueSettingsSave(d)
 	return m.nextEffectCmd()
 }
 
-func (m *Model) queueSettingsSave(d *uisettings.State, includeHidden, followUpdate bool) {
+func (m *Model) queueSettingsSave(d *uisettings.State) {
 	s := &m.settings
 	s.Gen++
 	request := uipersist.SaveRequest{
-		Values:       d.ChangedValues(),
-		StagedUpdate: followUpdate,
-		Generation:   s.Gen,
+		Values:     d.ChangedValues(),
+		Generation: s.Gen,
 	}
-	if hidden := d.HiddenList(); includeHidden && !d.HiddenAtBaseline(hidden) {
+	if hidden := d.HiddenList(); !d.HiddenAtBaseline(hidden) {
 		request.Hidden = hidden
 	}
 	d.AdvanceBaseline(request.Values, request.Hidden)
@@ -495,9 +479,7 @@ func (m *Model) paintSettings(d *uisettings.State) string {
 		Session:    m.services.keys,
 		List:       m.services.listKeys,
 		Envs:       m.settingsEnvs(),
-		Version:    m.release.Version,
-		Latest:     m.release.Latest,
-		Applying:   m.release.Applying,
+		Version:    m.version,
 		Height:     m.layout.height,
 		InnerWidth: uiframe.CardInnerWidth(m.cardWidth()),
 		Chrome:     m.flexChromeRows,
@@ -528,7 +510,7 @@ type columnClicker interface {
 var _ columnClicker = (*uisettings.Surface)(nil)
 
 // settingsHost is the root as the Settings card reads it: the live key
-// tables, the cached store values and the update state a key reads.
+// tables and the cached store values a key reads.
 type settingsHost struct{ m *Model }
 
 func (h settingsHost) Context() uisettings.Context {
@@ -539,13 +521,12 @@ func (h settingsHost) Context() uisettings.Context {
 		DefaultTool: h.m.settings.Cache.Value(uisettings.DefaultToolSetting),
 		Session:     session,
 		List:        list,
-		UpdateReady: h.m.release.Latest != "",
 	}
 }
 
 // Apply runs what a key asked beyond the dialog's own state and says
 // whether the card closes: the links, the palette repaint, the saves, and
-// the exits that close the dialog or start the in-place update.
+// the exits that close the dialog.
 func (h settingsHost) Apply(d *uisettings.State, result uisettings.Result) (tea.Cmd, bool) {
 	return h.m.applySettingsResult(d, result)
 }
@@ -633,14 +614,6 @@ func (h settingsSaveHost) Restore(values []uisettings.Readback, hiddenRaw string
 	if card, open := surfaceOf[*uisettings.Surface](h.m); open {
 		card.State().Restore(values, hiddenRaw, hiddenErr, editors)
 	}
-}
-
-func (h settingsSaveHost) Update(staged bool) tea.Cmd {
-	if !staged {
-		h.m.release.Applying = false
-		return nil
-	}
-	return h.m.release.Apply()
 }
 
 // SaveKeys re-applies the saved tables to the sessions already running.

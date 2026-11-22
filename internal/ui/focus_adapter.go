@@ -169,7 +169,6 @@ func (m *Model) leaveFocusMode() tea.Cmd {
 	// A run opened before the session was entered would pair with the very
 	// click that comes back here, focusing it again instead of leaving.
 	m.rail.ResetClickHistory()
-	m.flushPendingNotice()
 	m.mouse.flickAt = time.Now()
 	return nil
 }

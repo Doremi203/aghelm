@@ -41,28 +41,26 @@ func TestCompatibleNoticeFooterMeasuresDisplayedKeys(t *testing.T) {
 }
 
 func TestCompatibleModeUsesASCIIForEveryNewGlyph(t *testing.T) {
-	want := map[presentation.GlyphMode][9]string{
-		presentation.GlyphModeAdvanced: {"▲", "✧", "✚", "●", "◌", "◇", "♥", "▍", "●"},
-		presentation.GlyphModeBasic:    {"!", "?", "+", "*", "-", "o", "&", "|", "*"},
+	want := map[presentation.GlyphMode][4]string{
+		presentation.GlyphModeAdvanced: {"▲", "✧", "▍", "●"},
+		presentation.GlyphModeBasic:    {"!", "?", "|", "*"},
 	}
 	for mode, glyphs := range want {
 		g := presentation.GlyphsFor(mode)
-		got := [9]string{g.HeadsUpGlyph, g.TipGlyph, g.FeatureGlyph, g.FixGlyph, g.OtherGlyph, g.StartedGlyph, g.PeopleGlyph, g.SectionBarGlyph, g.UnreadGlyph}
+		got := [4]string{g.HeadsUpGlyph, g.TipGlyph, g.SectionBarGlyph, g.UnreadGlyph}
 		if got != glyphs {
 			t.Fatalf("%s glyphs = %q, want %q", mode, got, glyphs)
 		}
 	}
 
-	src := inboxSources()
-	src.Feed[1].URL, src.Feed[1].Action = "https://github.com/tmux/tmux/issues/4511", "Read the tmux issue"
-	src.Feed[1].Expires = time.Date(2026, 11, 22, 12, 0, 0, 0, time.UTC)
-	src.Feed = append(src.Feed, Message{ID: "feed-tip", Kind: KindTip, Title: "Try the tip", Banner: "a quick one", Body: []string{"Press s for Settings."}, URL: RepoURL + "#readme"})
-	src.Update.Version = src.Update.Latest
-	src.WhatsNewVersion, src.WhatsNewFrom = src.Update.Latest, "v0.45.0"
-	src.ConfigImportError = "bad key"
 	p := NewPanel(map[string]bool{}, map[string]bool{})
 	p.See(inboxHeadsUp)
-	notices := p.Active(src)
+	headsUp := headsUpNotice()
+	headsUp.URL, headsUp.Action = "https://github.com/tmux/tmux/issues/4511", "Read the tmux issue"
+	headsUp.Expires = time.Date(2026, 11, 22, 12, 0, 0, 0, time.UTC)
+	tip := tipNotice()
+	tip.Body = []string{"Press s for Settings."}
+	notices := append(listed(p, newsNotice(), headsUp, tip), p.Active(Sources{Store: true, ConfigImportError: "bad key"})...)
 	// The card's own chrome draws box lines, an ellipsis and the middle dot
 	// separator in either mode; the bottom edge's keys still name ↑↓, so it
 	// is left out.
@@ -88,7 +86,7 @@ func TestCompatibleNoticeChromeKeepsBodyAndScrollGeometry(t *testing.T) {
 	const literal = "◂▸╭╮╰╯━╸┃┄▀▄▐▜▟"
 	n := Notice{Kind: KindNews, Title: "Title", Body: []string{literal}}
 	for _, mode := range []presentation.GlyphMode{presentation.GlyphModeBasic, presentation.GlyphModeAdvanced} {
-		rows := feedPane(n, 80, testTheme(), mode)
+		rows := messagePane(n, 80, testTheme(), mode)
 		if !strings.Contains(ansi.Strip(strings.Join(rows, "\n")), literal) {
 			t.Fatal("notice body was converted")
 		}
@@ -142,19 +140,16 @@ func footNotices(id string) []Notice {
 func TestNoticeFooterPaintsEveryKeyWhereFootReports(t *testing.T) {
 	for width := 10; width <= 60; width++ {
 		for _, mode := range []presentation.GlyphMode{presentation.GlyphModeBasic, presentation.GlyphModeAdvanced} {
-			for _, id := range []string{"", "custom", "update-test"} {
+			for _, id := range []string{"", "custom"} {
 				notices := footNotices(id)
 				p := NewPanel(nil, nil)
 				f := testFrame()
 				f.Width, f.GlyphMode = width, mode
 				view := p.View(notices, f)
 				feet := p.Foot(notices, f)
-				want := []string{"r", "esc/q"}
+				want := []string{"esc/q"}
 				if id != "" {
 					want = append(want, "↵", "x")
-				}
-				if id == "update-test" {
-					want = append(want, "u")
 				}
 				inner := innerWidth(notices, width)
 				cut := false
@@ -231,7 +226,7 @@ func longNotice() []Notice {
 // The stacked rows join the tail in the body's budget, so the card keeps
 // to the terminal and the last page still reaches the last body line.
 func TestStackedNoticeFooterFollowsAResize(t *testing.T) {
-	for _, id := range []string{"", "custom", "update-test"} {
+	for _, id := range []string{"", "custom"} {
 		notices := footNotices(id)
 		p := NewPanel(nil, nil)
 		for _, width := range []int{80, 20, 13, 10, 15, 43, 13, 200} {

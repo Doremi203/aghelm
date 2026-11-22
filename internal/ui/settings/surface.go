@@ -16,7 +16,7 @@ type Surface struct {
 }
 
 // Root is what the Settings card reads and does on the root beyond
-// surface.Host: the live key tables and update state a key reads, the work a
+// surface.Host: the live key tables and cached values a key reads, the work a
 // key asks for, what closing saves and the card chrome.
 type Root interface {
 	// Context is what a key reads live: the tools, the cached hidden CLIs

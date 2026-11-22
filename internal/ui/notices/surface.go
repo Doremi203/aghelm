@@ -16,13 +16,11 @@ type Surface struct {
 }
 
 // Root is what the modal reads and asks of the root beyond surface.Host: the
-// list it shows, the terminal it is painted for, the work its keys start, the
-// card it floats on the backdrop and the link it opens.
+// list it shows, the terminal it is painted for, the card it floats on the
+// backdrop and the link it opens.
 type Root interface {
 	ActiveNotices() []Notice
 	NoticesFrame() Frame
-	RefreshNotices() tea.Cmd
-	StartUpdate() tea.Cmd
 	// MarkNotice dismisses a notice, or marks the one the panel shows read.
 	MarkNotice(mark Mark)
 	// PaintNoticesCard floats the card and records its body and the keys on
@@ -103,10 +101,6 @@ func (s *Surface) Leave(surface.Host) {}
 
 func (s *Surface) apply(h surface.Host, out Outcome) tea.Cmd {
 	switch out.Action {
-	case Refresh:
-		return s.root.RefreshNotices()
-	case StartUpdate:
-		return s.root.StartUpdate()
 	case OpenLink:
 		return s.root.OpenLink(out.URL)
 	case Dismiss:

@@ -22,10 +22,8 @@ func JoinHeaderPieces(sep string, pieces ...string) string {
 // (scope and rollup, then a compact rollup, then the scope alone).
 type Header struct {
 	Left string
-	// Version follows Left, before Tag, and is the first piece a narrow
-	// row drops.
+	// Version follows Left and is the first piece a narrow row drops.
 	Version string
-	Tag     string
 	Scope   string
 	Agents  string
 	// Rollup is the status strip, richest first: full, compact, and absent.
@@ -47,8 +45,8 @@ func (h Header) Row() string {
 		readings = append(readings, JoinHeaderPieces(h.Sep, h.Scope, h.Rollup[len(h.Rollup)-1]))
 	}
 	readings = append(readings, h.Scope, "")
-	if wide := h.Left + h.Version + h.Tag; h.Width-h.Gutter-ansi.StringWidth(wide)-ansi.StringWidth(readings[0]) >= 2 {
+	if wide := h.Left + h.Version; h.Width-h.Gutter-ansi.StringWidth(wide)-ansi.StringWidth(readings[0]) >= 2 {
 		return HeaderRow(wide, readings[:1], h.Width, h.Gutter)
 	}
-	return HeaderRow(h.Left+h.Tag, readings, h.Width, h.Gutter)
+	return HeaderRow(h.Left, readings, h.Width, h.Gutter)
 }

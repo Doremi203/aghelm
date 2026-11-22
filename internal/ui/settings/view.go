@@ -22,7 +22,7 @@ type Styles struct {
 }
 
 // ViewContext is what painting reads from the root: the live key tables,
-// the release facts, the room the key picker scrolls in, the styles, and
+// the build's version, the room the key picker scrolls in, the styles, and
 // the root's text-field renderer, which marks the IME cursor. Chrome is the
 // rows the card spends around a body with this hint.
 type ViewContext struct {
@@ -30,16 +30,19 @@ type ViewContext struct {
 	Session, List keybind.Table
 	// Envs are the environment profiles the shell defined, which the
 	// dialog lists and never edits.
-	Envs            []Env
-	Version, Latest string
-	Applying        bool
-	Height          int
-	InnerWidth      int
-	Chrome          func(hint [][2]string) int
-	Styles          Styles
-	TextInput       func(textinput.Model) string
-	TextArea        func(textarea.Model) string
+	Envs       []Env
+	Version    string
+	Height     int
+	InnerWidth int
+	Chrome     func(hint [][2]string) int
+	Styles     Styles
+	TextInput  func(textinput.Model) string
+	TextArea   func(textarea.Model) string
 }
+
+// versionLine is the version row's place in a painted row's field list: it
+// shows the build and takes neither the cursor nor a click.
+const versionLine = -1
 
 type Card uint8
 
@@ -167,8 +170,6 @@ func (s *State) View(ctx ViewContext) Frame {
 			lines = append(lines, ctaRow(FieldBugReport, "report a bug", "open the bug report form"))
 		case FieldFeatureRequest:
 			lines = append(lines, ctaRow(FieldFeatureRequest, "suggest a change", "open the feature request form"))
-		case FieldUpdate:
-			lines = append(lines, versionRow(ctx, lead, actionRow))
 		case FieldArrowStep:
 			name := label(FieldArrowStep)
 			if ctx.GlyphMode.Effective() == presentation.GlyphModeBasic {
@@ -180,6 +181,8 @@ func (s *State) View(ctx ViewContext) Frame {
 			lines = append(lines, row(field, setting.Row, presentation.KeyLabel(ctx.GlyphMode, setting.label(*setting.Flag(s)))))
 		}
 	}
+	fields = append(fields, versionLine)
+	lines = append(lines, lead(versionLine, "version")+st.Value.Render(ctx.Version))
 	hint := [][2]string{{presentation.NavigationLabel(ctx.GlyphMode, "↑↓"), "field"}, {presentation.NavigationLabel(ctx.GlyphMode, "←→"), "change"}, {"↵/esc", "save and close"}}
 	switch s.Field {
 	case FieldGlyphs:
@@ -205,15 +208,6 @@ func (s *State) View(ctx ViewContext) Frame {
 		case s.Editor.custom:
 			hint = [][2]string{{presentation.NavigationLabel(ctx.GlyphMode, "↑↓"), "field"}, {presentation.NavigationLabel(ctx.GlyphMode, "←→"), "change"}, {"↵", "type the command"}, {"esc", "save and close"}}
 		}
-	case FieldUpdate:
-		switch {
-		case ctx.Applying:
-			hint = [][2]string{{presentation.NavigationLabel(ctx.GlyphMode, "↑↓"), "field"}, {"esc", "save and close"}}
-		case ctx.Latest != "":
-			hint = [][2]string{{presentation.NavigationLabel(ctx.GlyphMode, "↑↓"), "field"}, {"↵", "update"}, {"esc", "save and close"}}
-		default:
-			hint = [][2]string{{presentation.NavigationLabel(ctx.GlyphMode, "↑↓"), "field"}, {"↵/esc", "save and close"}}
-		}
 	}
 	return Frame{Card: Flex, Title: presentation.GlyphsFor(ctx.GlyphMode).SettingsGlyph + " Settings", Body: s.fitRows(ctx, fields, lines, hint), Hints: hint}
 }
@@ -229,29 +223,16 @@ func (s *State) fitRows(ctx ViewContext, fields []int, rows []string, hint [][2]
 	s.lines.Reset()
 	for i, row := range rows {
 		field := fields[s.first+i]
+		if field == versionLine {
+			s.lines.Skip(1)
+			continue
+		}
 		s.lines.Show(field, 1)
 		if field == FieldGlyphs {
 			s.glyphWidth = ansi.StringWidth(row)
 		}
 	}
 	return strings.Join(rows, "\n")
-}
-
-// versionRow is the focusable version line: when a newer release is known
-// it is an action row that starts the same in-place update as the messages
-// modal's u key.
-func versionRow(ctx ViewContext, lead func(int, string) string, actionRow func(int, string, string) string) string {
-	if ctx.Applying {
-		label := ctx.Latest
-		if label == "" {
-			label = "update"
-		}
-		return lead(FieldUpdate, "version") + ctx.Styles.Marker.Render(presentation.GlyphsFor(ctx.GlyphMode).DownloadGlyph+" downloading "+label+"…")
-	}
-	if ctx.Latest != "" {
-		return actionRow(FieldUpdate, "version "+ctx.Version, "update to "+ctx.Latest)
-	}
-	return lead(FieldUpdate, "version") + ctx.Styles.Value.Render(ctx.Version)
 }
 
 func (s *State) viewCLIPicker(ctx ViewContext) Frame {

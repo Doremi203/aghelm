@@ -150,7 +150,7 @@ func (m *Model) saveSetup(choices uionboarding.Choices) tea.Cmd {
 	d.ShowTheme(setup.Palette(choices, uitheme.Current().Name))
 	m.applySettingsPrefs(&d)
 	m.rebuildRows()
-	return m.captureSettingsSave(&d, true, false)
+	return m.captureSettingsSave(&d)
 }
 
 func (m *Model) syncSetupPalette() tea.Cmd {

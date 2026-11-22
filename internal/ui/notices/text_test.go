@@ -28,6 +28,18 @@ func accented(lines [][]textRun) []string {
 	return found
 }
 
+// markedRuns accents the backtick spans of text, a shorthand for the runs
+// the wrap tests feed in.
+func markedRuns(text string) []textRun {
+	var runs []textRun
+	for index, part := range strings.Split(text, "`") {
+		if part != "" {
+			runs = append(runs, textRun{text: part, accent: index%2 == 1})
+		}
+	}
+	return runs
+}
+
 func TestMarkedRunsAccentTheBacktickSpans(t *testing.T) {
 	got := markedRuns("press `ctrl+x` or `ctrl+l` now")
 	want := []textRun{{text: "press "}, {text: "ctrl+x", accent: true}, {text: " or "}, {text: "ctrl+l", accent: true}, {text: " now"}}

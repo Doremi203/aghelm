@@ -679,8 +679,7 @@ func TestRailFootOnlyShowsComputerStats(t *testing.T) {
 
 func TestRailFootLinesFitWidth(t *testing.T) {
 	m := footModel(t)
-	m.release.Latest = "v0.9.9"
-	m.release.URL = "https://example.com"
+	m.notices.ImportError = "refused"
 	for _, width := range []int{40, 55, 70} {
 		for _, line := range m.railFootLines(width) {
 			if got := ansi.StringWidth(line); got > width {

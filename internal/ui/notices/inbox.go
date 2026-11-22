@@ -45,14 +45,6 @@ func innerWidth(notices []Notice, terminalWidth int) int {
 	return inner
 }
 
-// measure leaves the summary out: a paragraph wraps to the modal and must never widen it.
-func measure(n Notice) []string {
-	if !n.ReleaseNotes {
-		return feedMeasure(n)
-	}
-	return append(append([]string{n.Headline}, n.Body...), releaseMeasure(n)...)
-}
-
 // inboxWidths is the card's content column and the message pane inside it:
 // the same column stacked, the room right of the list and its seam split.
 func inboxWidths(notices []Notice, width int, splitView bool) (inner, pane int) {

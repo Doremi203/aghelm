@@ -26,7 +26,6 @@ import (
 	"github.com/Doremi203/aghelm/internal/systheme"
 	"github.com/Doremi203/aghelm/internal/tmux"
 	"github.com/Doremi203/aghelm/internal/ui"
-	"github.com/Doremi203/aghelm/internal/update"
 	semver "github.com/Doremi203/aghelm/internal/version"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/term"
@@ -36,16 +35,9 @@ const devVersion = "dev"
 
 var version = devVersion
 
-// A packager building from source can mark the binary as externally
-// managed with -X main.buildSource=Homebrew, which disables self-update.
-// No official channel sets it; released binaries rely on the install-path
-// check in internal/update instead.
-var buildSource = ""
-
 // resolveVersion falls back to the module version so `go install` builds, which
 // carry no ldflags, report the tag they came from. Pseudo-versions stay "dev":
-// they name a commit rather than a release, and the update check compares
-// against release tags.
+// they name a commit rather than a release.
 func resolveVersion(embedded string, info *debug.BuildInfo, ok bool) string {
 	if embedded != devVersion {
 		return strings.TrimPrefix(embedded, "v")
@@ -62,7 +54,6 @@ func resolveVersion(embedded string, info *debug.BuildInfo, ok bool) string {
 func main() {
 	info, hasInfo := debug.ReadBuildInfo()
 	version = resolveVersion(version, info, hasInfo)
-	update.SetBuildSource(buildSource)
 
 	// The macOS notifier bundle runs a copy of this binary; a click on a
 	// banner relaunches it with no arguments at all.
@@ -133,7 +124,7 @@ func printHelp(w io.Writer, configDir string) error {
 	if err != nil {
 		return err
 	}
-	_, err = fmt.Fprintln(w, cli.Help(version, proactive))
+	_, err = fmt.Fprintln(w, cli.Help(proactive))
 	return err
 }
 
@@ -166,10 +157,10 @@ func subcommands() map[string]func(args []string) error {
 			return app.PromptHead(configDir, driver, args)
 		}),
 	}
-	for name := range cli.Commands(version, ui.SettingSpecs) {
+	for name := range cli.Commands(ui.SettingSpecs) {
 		table[name] = withConfigDir(func(args []string, caller func() string, configDir string) error {
 			return withBackend(configDir, func(backend *sessioncmd.Backend) error {
-				return cli.CommandsWithBackend(version, ui.SettingSpecs, backend)[name](args, caller, configDir)
+				return cli.CommandsWithBackend(ui.SettingSpecs, backend)[name](args, caller, configDir)
 			})
 		})
 	}
@@ -285,7 +276,7 @@ func callerSession(configDir string) string {
 var callerConversationOwner = sessioncmd.ConversationOwner
 
 // sessionFromPane asks the manager's tmux server which session owns the
-// pane this command runs in. Every failure answers empty: `update` and the
+// pane this command runs in. Every failure answers empty: `settings` and the
 // rest have to keep working outside tmux, and on a machine without tmux
 // installed at all.
 func sessionFromPane() string {
@@ -403,7 +394,7 @@ func run() (resultErr error) {
 		})
 	}
 	defer stopRuntime()
-	final, runErr := program.Run()
+	_, runErr := program.Run()
 	catalog.StopAll()
 	ui.ResetTerminalColors()
 	ui.ResetPointer()
@@ -411,19 +402,6 @@ func run() (resultErr error) {
 	stopRuntime()
 	if abandoned := model.AbandonedEffects(); len(abandoned) > 0 && runErr == nil {
 		runErr = fmt.Errorf("quit before these finished, so check their result: %s", strings.Join(abandoned, "; "))
-	}
-	if runErr == nil {
-		if finished, ok := final.(*ui.Model); ok && finished.RestartPath() != "" {
-			// A self-update swapped the binary on disk; restart hands over
-			// to the new build so the manager comes back updated without
-			// touching the tmux sessions it manages. On Windows this process
-			// waits as the new one's parent, so its poll stops first.
-			stopRuntime()
-			if err := local.Close(); err != nil {
-				return err
-			}
-			return restart(finished.RestartPath())
-		}
 	}
 	return runErr
 }

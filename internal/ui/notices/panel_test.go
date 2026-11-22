@@ -11,16 +11,6 @@ import (
 	"github.com/charmbracelet/x/ansi"
 )
 
-func testSources(latest string) Sources {
-	return Sources{
-		Store:  true,
-		Update: Update{Version: "v0.2.0", Latest: latest},
-		Feed:   []Message{{ID: testTip, Kind: KindTip, Title: "A tip", URL: RepoURL + "#readme"}},
-	}
-}
-
-const testTip = "feed-tip"
-
 func testFrame() Frame {
 	return Frame{Width: 100, Height: 40, Theme: testTheme()}
 }
@@ -33,49 +23,33 @@ func ids(notices []Notice) []string {
 	return out
 }
 
-func TestPendingFeedNamesThePanelTail(t *testing.T) {
-	frame := testFrame()
-	frame.FeedPending = true
-	panel := NewPanel(nil, nil)
-	got := ansi.Strip(strings.Join(panel.View(nil, frame), "\n"))
-	if !strings.Contains(got, FeedPendingText) {
-		t.Fatalf("a pending feed should say so in the panel:\n%s", got)
-	}
-}
-
-func TestPanelRunsOnCopiedSources(t *testing.T) {
-	src := testSources("v0.3.0")
+func TestPanelKeysAskTheRoot(t *testing.T) {
 	p := NewPanel(map[string]bool{}, map[string]bool{})
-	notices := p.Active(src)
-	if got := ids(notices); !slices.Equal(got, []string{"update-v0.3.0", testTip}) {
-		t.Fatalf("notices = %v", got)
-	}
+	notices := listed(p, headsUpNotice(), tipNotice())
 	p.Open(notices, testTip)
 	if p.Cursor() != 1 {
 		t.Fatalf("open selected %d, want the tip", p.Cursor())
 	}
-
-	if out := p.Key(key("u"), notices, testFrame()); out.Action != Stay {
-		t.Fatalf("u off the update notice = %+v", out)
+	if out := p.Key(key("enter"), notices, testFrame()); out.Action != OpenLink || out.URL != notices[1].URL {
+		t.Fatalf("enter on the tip = %+v", out)
 	}
 	p.Key(key("up"), notices, testFrame())
-	if out := p.Key(key("u"), notices, testFrame()); out.Action != StartUpdate {
-		t.Fatalf("u on the update notice = %+v", out)
-	}
-	if out := p.Key(key("r"), notices, testFrame()); out.Action != Refresh {
-		t.Fatalf("r = %+v", out)
-	}
 	if out := p.Key(key("enter"), notices, testFrame()); out.Action != Stay {
 		t.Fatalf("enter on a notice without a link = %+v", out)
 	}
+	for _, removed := range []string{"r", "u", "tab", "f"} {
+		if out := p.Key(key(removed), notices, testFrame()); out.Action != Stay || p.Cursor() != 0 {
+			t.Fatalf("%s = %+v, cursor %d; want nothing", removed, out, p.Cursor())
+		}
+	}
 
 	frame := testFrame()
-	frame.Status = "refresh failed"
-	if view := strings.Join(p.View(notices, frame), "\n"); !strings.Contains(view, "refresh failed") || !strings.Contains(view, "0.3.0 available") {
+	frame.Status = "open failed"
+	if view := strings.Join(p.View(notices, frame), "\n"); !strings.Contains(view, "open failed") || !strings.Contains(view, "tmux below 3.7") {
 		t.Fatalf("view missed the status or the list:\n%s", view)
 	}
 
-	if out := p.Key(key("x"), notices, testFrame()); out.Action != Dismiss || out.ID != "update-v0.3.0" || out.Close {
+	if out := p.Key(key("x"), notices, testFrame()); out.Action != Dismiss || out.ID != inboxHeadsUp || out.Close {
 		t.Fatalf("x = %+v", out)
 	}
 	if out := p.Key(key("esc"), notices, testFrame()); out.Action != Close {
@@ -83,31 +57,13 @@ func TestPanelRunsOnCopiedSources(t *testing.T) {
 	}
 }
 
-func TestUpdateNoticeHighlightsPressU(t *testing.T) {
-	useTrueColor(t)
-	p := NewPanel(map[string]bool{}, map[string]bool{})
-	notices := p.Active(testSources("v0.3.0"))
-	view := strings.Join(p.View(notices, testFrame()), "\n")
-	theme := testTheme()
-	updateKey := lipgloss.NewStyle().Foreground(theme.Accent).Render("u") + theme.Muted.Render(" update")
-	if !strings.Contains(view, updateKey) || !strings.Contains(ansi.Strip(view), "u    Update to 0.3.0 and restart") {
-		t.Fatalf("update notice lacks its call to action:\n%s", ansi.Strip(view))
-	}
-	p.Key(key("down"), notices, testFrame())
-	next := strings.Join(p.View(notices, testFrame()), "\n")
-	if strings.Contains(next, updateKey) || strings.Contains(ansi.Strip(next), "Update to") {
-		t.Fatalf("press u stays on the update notice only:\n%s", ansi.Strip(next))
-	}
-}
-
 // A wide but short terminal cannot hold the two-line list, so the inbox
 // stacks rather than push its bottom edge off screen.
 func TestShortWideTerminalStacksTheInbox(t *testing.T) {
-	src := inboxSources()
-	src.WhatsNewVersion, src.WhatsNewFrom = src.Update.Version, "v0.44.0"
-	src.Feed = append(src.Feed, Message{ID: "feed-more", Kind: KindNews, Title: "More news", Banner: "a second entry"})
 	p := NewPanel(map[string]bool{}, map[string]bool{})
-	notices := p.Active(src)
+	more := Notice{ID: "feed-more", Kind: KindNews, Title: "More news", Subtitle: "a second entry"}
+	another := Notice{ID: "feed-another", Kind: KindTip, Title: "Another tip", Subtitle: "a third entry"}
+	notices := listed(p, newsNotice(), more, headsUpNotice(), tipNotice(), another)
 	if len(notices) != 5 {
 		t.Fatalf("test setup: %v", ids(notices))
 	}
@@ -128,29 +84,29 @@ func TestShortWideTerminalStacksTheInbox(t *testing.T) {
 }
 
 func TestPanelDismissingTheLastNoticeCloses(t *testing.T) {
-	src := testSources("")
+	src := Sources{Store: true, ConfigImportError: "bad key"}
 	p := NewPanel(map[string]bool{}, map[string]bool{})
 	notices := p.Active(src)
-	p.Open(notices, testTip)
-	if out := p.Key(key("d"), notices, testFrame()); out.Action != Dismiss || out.ID != testTip || !out.Close {
+	p.Open(notices, ConfigNotImported)
+	if out := p.Key(key("d"), notices, testFrame()); out.Action != Dismiss || out.ID != ConfigNotImported || !out.Close {
 		t.Fatalf("d on the only notice = %+v", out)
 	}
-	p.Dismiss(testTip)
+	p.Dismiss(ConfigNotImported)
 	if notices = p.Active(src); len(notices) != 0 {
 		t.Fatalf("dismissed notices still listed: %v", ids(notices))
 	}
-	p.Restore(testTip)
-	if !slices.Equal(ids(p.Active(src)), []string{testTip}) {
+	p.Restore(ConfigNotImported)
+	if !slices.Equal(ids(p.Active(src)), []string{ConfigNotImported}) {
 		t.Fatal("a restored notice is listed again")
 	}
 }
 
 func TestPanelReselectsByID(t *testing.T) {
 	p := NewPanel(map[string]bool{}, map[string]bool{})
-	before := p.Active(testSources(""))
+	before := listed(p, tipNotice())
 	p.Open(before, testTip)
 	selected := p.Selected(before)
-	after := p.Active(testSources("v0.3.0"))
+	after := listed(p, headsUpNotice(), tipNotice())
 	p.Reselect(after, selected)
 	if after[p.Cursor()].ID != testTip {
 		t.Fatalf("selection moved to %q", after[p.Cursor()].ID)
@@ -162,8 +118,7 @@ func TestPanelReselectsByID(t *testing.T) {
 }
 
 func TestPanelWithoutAStoreListsNothing(t *testing.T) {
-	src := testSources("v0.3.0")
-	src.Store = false
+	src := Sources{ConfigImportError: "bad key"}
 	if notices := NewPanel(map[string]bool{}, map[string]bool{}).Active(src); notices != nil {
 		t.Fatalf("notices = %v", ids(notices))
 	}
@@ -173,9 +128,12 @@ func TestPanelWithoutAStoreListsNothing(t *testing.T) {
 // every width the edge's text takes, including the cut that drops keys.
 func TestPanelFootKeysSitOnTheirLabels(t *testing.T) {
 	for _, width := range []int{120, 60, 44} {
-		for _, update := range []string{"", "v0.3.0"} {
+		for _, many := range []bool{false, true} {
 			p := NewPanel(map[string]bool{}, map[string]bool{})
-			notices := p.Active(testSources(update))
+			notices := listed(p, tipNotice())
+			if many {
+				notices = inboxNotices(p)
+			}
 			p.Open(notices, "")
 			frame := testFrame()
 			frame.Width = width
@@ -185,8 +143,8 @@ func TestPanelFootKeysSitOnTheirLabels(t *testing.T) {
 			for _, foot := range feet {
 				labels[foot.Label] = true
 			}
-			if !labels["r"] || !labels["↵"] || !labels["x"] || !labels["esc/q"] {
-				t.Fatalf("width %d: the edge names r, ↵, x and esc at least, got %+v", width, feet)
+			if !labels["↵"] || !labels["x"] || !labels["esc/q"] {
+				t.Fatalf("width %d: the edge names ↵, x and esc at least, got %+v", width, feet)
 			}
 			for _, foot := range feet {
 				// A key stacked above the edge counts its row up from it.
@@ -206,7 +164,7 @@ func TestPanelFootKeysSitOnTheirLabels(t *testing.T) {
 // opens its link, the way ↵ does.
 func TestPanelClickSelectsThenOpensATitle(t *testing.T) {
 	p := NewPanel(map[string]bool{}, map[string]bool{})
-	notices := p.Active(testSources("v0.3.0"))
+	notices := listed(p, headsUpNotice(), tipNotice())
 	p.Open(notices, "")
 	if len(notices) < 2 {
 		t.Fatalf("test setup: need two notices, have %v", ids(notices))
@@ -236,18 +194,16 @@ func TestPanelClickSelectsThenOpensATitle(t *testing.T) {
 
 func TestActiveMarksUnseenNoticesUnread(t *testing.T) {
 	p := NewPanel(map[string]bool{}, map[string]bool{})
-	p.See("update-v0.3.0")
-	if !p.Seen("update-v0.3.0") || p.Seen(testTip) {
+	src := Sources{Store: true, ConfigImportError: "bad key"}
+	if notices := p.Active(src); !notices[0].Unread {
+		t.Fatal("an unseen notice reads as read")
+	}
+	p.See(ConfigNotImported)
+	if !p.Seen(ConfigNotImported) || p.Seen(testTip) {
 		t.Fatal("See should mark that notice alone")
 	}
-	var unread []string
-	for _, n := range p.Active(testSources("v0.3.0")) {
-		if n.Unread {
-			unread = append(unread, n.ID)
-		}
-	}
-	if !slices.Equal(unread, []string{testTip}) {
-		t.Fatalf("unread = %v, want the tip alone", unread)
+	if notices := p.Active(src); notices[0].Unread {
+		t.Fatal("a seen notice still reads unread")
 	}
 }
 

@@ -734,7 +734,7 @@ func TestSettingsSaveOutranksAPendingPickerSave(t *testing.T) {
 	if chosen == "opencode" {
 		t.Fatalf("settings row picked %q, want a tool the picker did not choose", chosen)
 	}
-	m.applyCmd(t, m.captureSettingsSave(d, true, false))
+	m.applyCmd(t, m.captureSettingsSave(d))
 	if got := m.settings.Cache.Value(key); got != chosen {
 		t.Fatalf("cached %s = %q, want the settings pick %q", key, got, chosen)
 	}

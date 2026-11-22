@@ -33,8 +33,9 @@ func TestTableCoversEveryRow(t *testing.T) {
 	view := viewContext()
 	view.Envs = []Env{{Name: "work"}}
 	lines := strings.Split(s.View(view).Body, "\n")
-	if len(lines) != FieldCount {
-		t.Fatalf("the dialog paints %d lines for %d fields", len(lines), FieldCount)
+	// The version line follows the fields and takes no cursor.
+	if len(lines) != FieldCount+1 {
+		t.Fatalf("the dialog paints %d lines for %d fields and the version", len(lines), FieldCount)
 	}
 	written := map[string]bool{}
 	for _, value := range s.Values() {

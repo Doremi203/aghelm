@@ -25,7 +25,6 @@ import (
 	uiframe "github.com/Doremi203/aghelm/internal/ui/frame"
 	uigeometrypanes "github.com/Doremi203/aghelm/internal/ui/geometry/panes"
 	uinotices "github.com/Doremi203/aghelm/internal/ui/notices"
-	uirelease "github.com/Doremi203/aghelm/internal/ui/notices/release"
 	"github.com/Doremi203/aghelm/internal/ui/presentation"
 	uicapture "github.com/Doremi203/aghelm/internal/ui/preview/capture"
 	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
@@ -61,7 +60,7 @@ type Model struct {
 	ssh       uilink.State
 	layout    layoutState
 	errBar    errBar
-	release   uirelease.State
+	version   string
 }
 
 // generations fence asynchronous completions against the state that
@@ -200,7 +199,7 @@ func newView(deps Dependencies, version string) (*Model, error) {
 			workDir: uilaunch.InitialWorkingDir(),
 			homeDir: uilaunch.InitialHomeDir(),
 		},
-		release: uirelease.New(st, version),
+		version: version,
 		services: services{
 			cfg:         cfg,
 			lifecycle:   deps.Lifecycle,
@@ -224,12 +223,9 @@ func newView(deps Dependencies, version string) (*Model, error) {
 			Booting: true,
 		},
 		notices: noticesPanel{
-			Panel: uinotices.NewPanel(uirelease.Dismissed(st), uirelease.Seen(st)),
+			Panel: uinotices.NewPanel(uinotices.Dismissed(st), uinotices.Seen(st)),
 			Log:   uinotices.Log{ImportError: configImportError},
 		},
-	}
-	if deps.ProfileDir != "" {
-		model.release.UseCached(deps.ProfileDir)
 	}
 	model.applyCachedSettingsPrefs()
 	model.prefs.terminalBackground = model.storedTerminalBackground()
@@ -240,7 +236,6 @@ func newView(deps Dependencies, version string) (*Model, error) {
 		model.prefs.glyphMode = presentation.GlyphMode(glyph.Value)
 	}
 	model.openStartupGreeting()
-	model.release.IndexRanges()
 	model.review = uireview.New(model.defaultSplitLayout())
 	model.prepareFrame()
 	return model, nil
@@ -248,5 +243,5 @@ func newView(deps Dependencies, version string) (*Model, error) {
 
 func (m *Model) Init() tea.Cmd {
 	m.syncPollInput()
-	return tea.Batch(m.syncPaneTheme(), m.setupOnLaunch(), m.refreshExistingSessionUX, m.release.Check(), m.release.CheckStartupFeed(), uirelease.Tick(), m.bannerTick(), m.workspace.capture.Tick(previewCaptures{m}), m.startStartupTick(), uicomposer.SweepCmd, uicomposer.SweepTick(), uistartup.CheckPaneShell)
+	return tea.Batch(m.syncPaneTheme(), m.setupOnLaunch(), m.refreshExistingSessionUX, m.bannerTick(), m.workspace.capture.Tick(previewCaptures{m}), m.startStartupTick(), uicomposer.SweepCmd, uicomposer.SweepTick(), uistartup.CheckPaneShell)
 }

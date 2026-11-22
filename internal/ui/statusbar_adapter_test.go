@@ -1,7 +1,6 @@
 package ui
 
 import (
-	uirelease "github.com/Doremi203/aghelm/internal/ui/notices/release"
 	uistatusbar "github.com/Doremi203/aghelm/internal/ui/statusbar"
 	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	"github.com/charmbracelet/x/ansi"
@@ -126,20 +125,6 @@ func TestOpenedEditorReadsAsAnOutcome(t *testing.T) {
 	}
 	if want := uitheme.DoneStyle().Render("● " + m.errBar.text); m.statusLine() != want {
 		t.Fatalf("status line is %q, want the outcome styling %q", m.statusLine(), want)
-	}
-}
-
-// The same for an update check that found the current version installed:
-// the check ran, so the toast reports it rather than crossing it out.
-func TestUpToDateReadsAsAnOutcome(t *testing.T) {
-	m := shotModel()
-	updated, _ := m.Update(uirelease.AppliedMsg{UpToDate: true})
-	m = updated.(*Model)
-	if m.errBar.text != "already up to date" {
-		t.Fatalf("status text is %q", m.errBar.text)
-	}
-	if want := uitheme.DoneStyle().Render("● already up to date"); m.statusLine() != want {
-		t.Fatalf("status line is %q, want %q", m.statusLine(), want)
 	}
 }
 

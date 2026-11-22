@@ -21,10 +21,6 @@ func (r *stubRoot) ActiveNotices() []Notice { return r.notices }
 
 func (r *stubRoot) NoticesFrame() Frame { return Frame{Width: 100, Height: 40} }
 
-func (r *stubRoot) RefreshNotices() tea.Cmd { return nil }
-
-func (r *stubRoot) StartUpdate() tea.Cmd { return nil }
-
 func (r *stubRoot) MarkNotice(mark Mark) {
 	if mark.Dismiss {
 		r.dismissed = mark.ID

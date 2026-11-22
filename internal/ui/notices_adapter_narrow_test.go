@@ -13,7 +13,7 @@ import (
 func TestClickOnStackedNoticeKeys(t *testing.T) {
 	for _, mode := range []presentation.GlyphMode{presentation.GlyphModeBasic, presentation.GlyphModeAdvanced} {
 		for _, width := range []int{10, 13, 20, 35} {
-			for _, action := range []string{"esc", "x", "r", "enter"} {
+			for _, action := range []string{"esc", "x", "enter"} {
 				t.Run(fmt.Sprintf("%s/%d/%s", mode, width, action), func(t *testing.T) {
 					m := noticeModel(noticeStore(t), "v1.0.0")
 					m.layout.width, m.layout.height = width, 40
@@ -35,10 +35,11 @@ func TestClickOnStackedNoticeKeys(t *testing.T) {
 					if text := ansi.Cut(frame[hit.Y], hit.X0, hit.X1); strings.TrimSpace(text) == "" {
 						t.Fatal("target covers only padding")
 					}
-					if action == "r" {
+					if action == "x" {
 						for _, x := range []int{hit.X0 - 1, hit.X1} {
 							_, cmd := leftClickCmd(m, x, hit.Y)
-							if cmd != nil || m.release.Refreshing || !m.noticesOpen() {
+							m.drainEffects(t)
+							if cmd != nil || m.notices.Dismissed(noticeTip) || !m.noticesOpen() {
 								t.Fatal("padding triggered an action")
 							}
 						}
@@ -54,10 +55,6 @@ func TestClickOnStackedNoticeKeys(t *testing.T) {
 						m.drainEffects(t)
 						if !m.notices.Dismissed(noticeTip) {
 							t.Fatal("dismiss key did not dismiss")
-						}
-					case "r":
-						if cmd == nil || !m.release.Refreshing {
-							t.Fatal("refresh key did not start refresh")
 						}
 					case "enter":
 						if cmd == nil {

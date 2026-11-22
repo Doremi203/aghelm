@@ -6,19 +6,15 @@ import (
 	"strings"
 
 	uisettings "github.com/Doremi203/aghelm/internal/ui/settings"
-	tea "github.com/charmbracelet/bubbletea"
 )
 
 // SaveRequest is the dialog's chosen preferences and CLI visibility as the
 // save captured them. A nil Hidden means the dialog did not touch the
 // hidden-CLI set; an empty one means it cleared it.
 type SaveRequest struct {
-	Values []uisettings.Value
-	Hidden []string
-	// StagedUpdate says the save must land before the self-update it was
-	// closed for starts.
-	StagedUpdate bool
-	Generation   uint64
+	Values     []uisettings.Value
+	Hidden     []string
+	Generation uint64
 }
 
 // Clone copies the mutable slices so a later dialog edit never retargets an
@@ -78,7 +74,7 @@ func RunSave(request SaveRequest, writer Writer) (SaveResult, error) {
 // on every completion, stale included, because the lane's FIFO order lets a
 // later save's completion win. Dialog fields are restored only while the
 // request is the latest accepted save, so a newer dialog is never replaced.
-func (s *State) ApplySave(root Root, request SaveRequest, result SaveResult, err error) tea.Cmd {
+func (s *State) ApplySave(root Root, request SaveRequest, result SaveResult, err error) {
 	if s.Pending > 0 {
 		s.Pending--
 	}
@@ -114,8 +110,4 @@ func (s *State) ApplySave(root Root, request SaveRequest, result SaveResult, err
 			root.ReportErr(note)
 		}
 	}
-	if request.StagedUpdate {
-		return root.Update(err == nil)
-	}
-	return nil
 }

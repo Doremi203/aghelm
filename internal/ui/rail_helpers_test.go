@@ -90,13 +90,6 @@ func railHitRows(m *Model) []int {
 	return hits
 }
 
-func selectionKeyForTest(selection uirail.Selection) string {
-	if selection.Kind == uirail.GroupRow {
-		return "g:" + selection.Group
-	}
-	return "s:" + selection.SessionID
-}
-
 func clearRailInventory(m *Model) {
 	m.workspace.sessions = nil
 	m.workspace.groups = nil

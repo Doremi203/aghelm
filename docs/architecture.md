@@ -23,8 +23,7 @@ Under `internal/`:
 - `ui/spawn`, `ui/quick`: the New Session form with its model choice, and the quick bar; the root keeps their prompt box and runs their spawn.
 - `ui/dialogs`: the confirm, rename, move, fork and launch fix dialogs.
 - `ui/onboarding`: first-run setup, feature-owned surface, live preview, and saved-conversation import.
-- `ui/notices`: the messages panel, its notice list and release-note rendering.
-- `ui/notices/release`: the panel's runtime: release and feed checks, the what's-new greeting recorded in settings, and the self-update.
+- `ui/notices`: the messages panel, its notice list and message rendering.
 - `ui/focus/watch`: the focused pane's watcher: control-mode client, polled fallback, pushed frames.
 - Runtime packages. Each holds one feature's state and the store, tmux, git and network work behind it. It answers a narrow `Root` the root adapts, and never imports `ui`:
   - `ui/settings/persist`: the cached stored values, the writes a save hands the effect lane, and the read-back a partial failure reconciles from.
@@ -53,7 +52,6 @@ Under `internal/`:
 - `diff`: loads changed files through `git`. `diff/model`: pure diff and line models.
 - `keybind`: key names and their spellings per surface.
 - `clipboard`, `notify`, `termseq`, `systheme`, `sysstat`: clipboard, notifications, terminal escapes, OS theme, host stats.
-- `update`, `feed`: release checks and the message feed.
 - `atomicfile`, `deps`, `pwsh`, `proctree`, `wsl`: small helpers for file writes, install hints, PowerShell, Windows processes, WSL detection.
 - `testenv`, `testfixture`: test helpers.
 

@@ -40,66 +40,6 @@ func TestSupportRequestURLPrefillsTheCLIFields(t *testing.T) {
 	}
 }
 
-func TestStagedOpensOnAClearList(t *testing.T) {
-	var log Log
-	if got := log.Staged("feed-new", false, true); got.Open != "feed-new" || got.Hold != "" {
-		t.Fatalf("a clear list should open the notice, got %+v", got)
-	}
-}
-
-func TestStagedHoldsWhileTheListIsBusy(t *testing.T) {
-	var log Log
-	got := log.Staged("feed-new", false, false)
-	if got.Open != "" || got.Hold != "feed-new" {
-		t.Fatalf("a busy list should hold the notice, got %+v", got)
-	}
-}
-
-func TestStagedLeavesAnOpenPanelToTheCaller(t *testing.T) {
-	var log Log
-	if got := log.Staged("feed-new", true, true); got != (Stage{}) {
-		t.Fatalf("an open panel stages nothing, got %+v", got)
-	}
-}
-
-func TestStagedIgnoresAChangeThatAddedNothing(t *testing.T) {
-	var log Log
-	if got := log.Staged("", false, true); got != (Stage{}) {
-		t.Fatalf("no added notice stages nothing, got %+v", got)
-	}
-}
-
-func TestTakeClearsTheHeldNotice(t *testing.T) {
-	log := Log{Held: "feed-new"}
-	if got := log.Take(); got != "feed-new" {
-		t.Fatalf("Take = %q, want the held notice", got)
-	}
-	if log.Held != "" {
-		t.Fatalf("Take left %q held", log.Held)
-	}
-}
-
-func TestAddedIsTheNoticeTheChangeIntroduced(t *testing.T) {
-	before := IDs([]Notice{{ID: "welcome"}})
-	now := []Notice{{ID: "welcome"}, {ID: "feed-new"}}
-	if got := Added(before, now); got != "feed-new" {
-		t.Fatalf("Added = %q, want feed-new", got)
-	}
-	if got := Added(IDs(now), now); got != "" {
-		t.Fatalf("a change that added nothing reported %q", got)
-	}
-}
-
-func TestHoldsOnlyReportsAListedNotice(t *testing.T) {
-	notices := []Notice{{ID: "feed-new"}}
-	if !Holds(notices, "feed-new") {
-		t.Fatal("a listed notice should be held")
-	}
-	if Holds(notices, "dismissed-already") {
-		t.Fatal("a notice that left the list must not open")
-	}
-}
-
 func TestQueuedFindsARunningOrWaitingDismissal(t *testing.T) {
 	requests := []DismissRequest{{ID: "welcome"}}
 	if !Queued(requests, "welcome") {
@@ -135,11 +75,3 @@ func (e errString) Error() string { return string(e) }
 
 // A refresh that adds nothing keeps the notice held while the list was busy;
 // clearing it lost the popup the user was promised on return.
-func TestStagedKeepsTheHeldNoticeWhenNothingIsAdded(t *testing.T) {
-	log := Log{Held: "config-not-imported"}
-	for _, open := range []bool{false, true} {
-		if got := log.Staged("", open, false); got.Hold != "config-not-imported" || got.Open != "" {
-			t.Fatalf("panel open=%v: a change that added nothing dropped the held notice, got %+v", open, got)
-		}
-	}
-}

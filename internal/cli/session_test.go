@@ -444,7 +444,7 @@ func TestSpawnAcceptsSessionPreset(t *testing.T) {
 	if fake.opts.Preset != "project/reviewer" || fake.opts.Prompt != " task " || fake.opts.Group != nil || fake.opts.Worktree != nil {
 		t.Fatalf("preset options changed: %+v", fake.opts)
 	}
-	if !strings.Contains(usageSpawn, "[--saved <name>]") || !strings.Contains(Help("test", false), "[--saved <name>]") {
+	if !strings.Contains(usageSpawn, "[--saved <name>]") || !strings.Contains(Help(false), "[--saved <name>]") {
 		t.Fatalf("spawn usage omits preset: %s", usageSpawn)
 	}
 }

@@ -24,27 +24,13 @@ func appendWrapped(rows []string, runs []textRun, width int, base lipgloss.Style
 	return rows
 }
 
-func plainMarks(text string) string {
-	return strings.ReplaceAll(text, "`", "")
-}
-
 type textRun struct {
 	text   string
 	accent bool
 }
 
-func markedRuns(text string) []textRun {
-	var runs []textRun
-	for index, part := range strings.Split(text, "`") {
-		if part != "" {
-			runs = append(runs, textRun{text: part, accent: index%2 == 1})
-		}
-	}
-	return runs
-}
-
 // Where two phrases start at one place the longer wins.
-// An empty phrase would loop forever here, and feed.sanitize drops them.
+// An empty phrase would loop forever here; Notice.Accent never holds one.
 func phraseRuns(text string, phrases []string) []textRun {
 	var runs []textRun
 	for text != "" {

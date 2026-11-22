@@ -20,7 +20,6 @@ import (
 	uifocus "github.com/Doremi203/aghelm/internal/ui/focus"
 	uiframe "github.com/Doremi203/aghelm/internal/ui/frame"
 	uinotices "github.com/Doremi203/aghelm/internal/ui/notices"
-	uirelease "github.com/Doremi203/aghelm/internal/ui/notices/release"
 	"github.com/Doremi203/aghelm/internal/ui/presentation"
 	uireview "github.com/Doremi203/aghelm/internal/ui/review"
 	uisettings "github.com/Doremi203/aghelm/internal/ui/settings"
@@ -76,7 +75,7 @@ func TestZZShot(t *testing.T) {
 			ToolNames: []string{"claude", "codex", "grok", "opencode"},
 			ToolIndex: 0, ThemeIndex: 1, Field: uisettings.FieldTheme, LayoutSplit: true,
 		}))
-		m.release.Version = "0.9.2"
+		m.version = "0.9.2"
 	case "help":
 		m.openHelp()
 	}
@@ -203,23 +202,16 @@ func preparedView(m *Model) string {
 	return m.View()
 }
 
-func TestHeaderShowsUpdateBadgeBesideWordmark(t *testing.T) {
+func TestHeaderShowsTheVersionBesideWordmark(t *testing.T) {
 	m := &Model{
 		layout:  layoutState{width: 120},
-		release: uirelease.State{Version: "0.8.1", Latest: "v0.9.0"},
+		version: "0.8.1",
 	}
 	header := ansi.Strip(m.viewHeaderRows()[0])
-	if !strings.Contains(header, " v0.8.1  ↑ v0.9.0 available") {
-		t.Errorf("header missing running version and update badge: %q", header)
+	if !strings.Contains(header, " v0.8.1") || strings.Index(header, "v0.8.1") > strings.Index(header, "agents") {
+		t.Errorf("header should carry the running version by the wordmark: %q", header)
 	}
-	if strings.Index(header, "available") > strings.Index(header, "agents") {
-		t.Errorf("badge should sit left, by the wordmark: %q", header)
-	}
-	m.release.Latest = ""
-	if header := ansi.Strip(m.viewHeaderRows()[0]); strings.Contains(header, "available") {
-		t.Errorf("header should have no badge when up to date: %q", header)
-	}
-	m.release.Version = "dev"
+	m.version = "dev"
 	if header := ansi.Strip(m.viewHeaderRows()[0]); !strings.Contains(header, " dev") || strings.Contains(header, "vdev") {
 		t.Errorf("dev build should read dev: %q", header)
 	}
@@ -233,7 +225,8 @@ func TestViewLegendPaintsWaitingMessagesWarm(t *testing.T) {
 	t.Cleanup(func() { st.Close() })
 	waiting := &Model{
 		services: services{store: st, keys: keybind.DefaultSession(), listKeys: keybind.DefaultList()},
-		release:  uirelease.State{Latest: "v0.41.0", Version: "0.40.0"},
+		version:  "0.40.0",
+		notices:  noticesPanel{Panel: uinotices.NewPanel(nil, nil), Log: uinotices.Log{ImportError: "refused"}},
 	}
 	bar := paintLegend([]legendSection{waiting.viewLegend()}, 160, presentation.DefaultGlyphMode).Text
 	if !strings.Contains(bar, uitheme.LegendAlertStyle().Render("M unread")) {
@@ -241,7 +234,7 @@ func TestViewLegendPaintsWaitingMessagesWarm(t *testing.T) {
 	}
 	idle := &Model{
 		services: services{store: st, keys: keybind.DefaultSession(), listKeys: keybind.DefaultList()},
-		release:  uirelease.State{Version: "0.40.0"},
+		version:  "0.40.0",
 		notices:  noticesPanel{Panel: uinotices.NewPanel(nil, nil)},
 	}
 	idleBar := ansi.Strip(paintLegend([]legendSection{idle.viewLegend()}, 160, presentation.DefaultGlyphMode).Text)
