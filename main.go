@@ -27,6 +27,7 @@ import (
 	"github.com/Doremi203/aghelm/internal/tmux"
 	"github.com/Doremi203/aghelm/internal/ui"
 	"github.com/Doremi203/aghelm/internal/update"
+	semver "github.com/Doremi203/aghelm/internal/version"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/term"
 )
@@ -52,7 +53,7 @@ func resolveVersion(embedded string, info *debug.BuildInfo, ok bool) string {
 	if !ok || info == nil {
 		return devVersion
 	}
-	if !update.IsRelease(info.Main.Version) {
+	if !semver.IsRelease(info.Main.Version) {
 		return devVersion
 	}
 	return strings.TrimPrefix(info.Main.Version, "v")

@@ -6,7 +6,7 @@ import (
 	uinotices "github.com/Doremi203/aghelm/internal/ui/notices"
 	uirelease "github.com/Doremi203/aghelm/internal/ui/notices/release"
 	"github.com/Doremi203/aghelm/internal/ui/presentation"
-	"github.com/Doremi203/aghelm/internal/update"
+	"github.com/Doremi203/aghelm/internal/version"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -82,7 +82,7 @@ func (m *Model) openNotices(id string) {
 // after an update. A dev build is the developer's own tree, not an
 // install, so it never greets and never advances the stored version.
 func (m *Model) openStartupGreeting() {
-	if !update.IsRelease(m.release.Version) {
+	if !version.IsRelease(m.release.Version) {
 		return
 	}
 	switch id := m.startupGreeting(); id {

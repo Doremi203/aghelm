@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/Doremi203/aghelm/internal/update"
+	semver "github.com/Doremi203/aghelm/internal/version"
 )
 
 const usageUpdate = "update [--json]"
@@ -89,7 +90,7 @@ func runUpdate(version string) func(out io.Writer, args []string, configDir stri
 				fmt.Sprintf("updated with %s", manager.String()))
 		}
 
-		if !update.IsRelease(version) {
+		if !semver.IsRelease(version) {
 			// A dev build carries no release tag, so there is nothing to
 			// compare against or download.
 			return errors.New("update: this build is not a release; reinstall to upgrade")

@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/Doremi203/aghelm/internal/deps"
-	"github.com/Doremi203/aghelm/internal/update"
+	"github.com/Doremi203/aghelm/internal/version"
 )
 
 type OutdatedToolError struct {
@@ -68,7 +68,7 @@ func CheckVersion(tool Tool) error {
 	if err != nil {
 		return err
 	}
-	if update.VersionWithin(installed, tool.MinimumVersion, "") {
+	if version.VersionWithin(installed, tool.MinimumVersion, "") {
 		return nil
 	}
 	return OutdatedToolError{Binary: binary, Installed: installed, Minimum: tool.MinimumVersion,
