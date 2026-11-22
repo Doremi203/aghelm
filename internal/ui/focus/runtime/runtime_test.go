@@ -3,7 +3,7 @@ package runtime
 import (
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/ui/focus/watch"
+	"github.com/Doremi203/aghelm/internal/ui/focus/watch"
 )
 
 // The root routes a watcher frame through FrameMessage and applies it to the

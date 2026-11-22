@@ -1,8 +1,8 @@
 package theme
 
 import (
-	"github.com/YoanWai/agent-manager/internal/systheme"
-	uieffects "github.com/YoanWai/agent-manager/internal/ui/effects"
+	"github.com/Doremi203/aghelm/internal/systheme"
+	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
 )
 
 // The settings rows this package reads.

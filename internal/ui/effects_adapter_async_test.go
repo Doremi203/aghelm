@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/store"
-	uieffects "github.com/YoanWai/agent-manager/internal/ui/effects"
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
-	uirailpersist "github.com/YoanWai/agent-manager/internal/ui/rail/persist"
+	"github.com/Doremi203/aghelm/internal/store"
+	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
+	uirailpersist "github.com/Doremi203/aghelm/internal/ui/rail/persist"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

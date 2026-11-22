@@ -6,12 +6,12 @@ import (
 	"maps"
 	"slices"
 
-	"github.com/YoanWai/agent-manager/internal/config"
-	"github.com/YoanWai/agent-manager/internal/store"
-	"github.com/YoanWai/agent-manager/internal/tmux"
-	"github.com/YoanWai/agent-manager/internal/ui/composer"
-	uieffects "github.com/YoanWai/agent-manager/internal/ui/effects"
-	uisession "github.com/YoanWai/agent-manager/internal/ui/session"
+	"github.com/Doremi203/aghelm/internal/config"
+	"github.com/Doremi203/aghelm/internal/store"
+	"github.com/Doremi203/aghelm/internal/tmux"
+	"github.com/Doremi203/aghelm/internal/ui/composer"
+	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
+	uisession "github.com/Doremi203/aghelm/internal/ui/session"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

@@ -4,10 +4,10 @@ import (
 	"strings"
 	"testing"
 
-	uifocus "github.com/YoanWai/agent-manager/internal/ui/focus"
-	uiframe "github.com/YoanWai/agent-manager/internal/ui/frame"
-	"github.com/YoanWai/agent-manager/internal/ui/spawn"
-	uisurface "github.com/YoanWai/agent-manager/internal/ui/surface"
+	uifocus "github.com/Doremi203/aghelm/internal/ui/focus"
+	uiframe "github.com/Doremi203/aghelm/internal/ui/frame"
+	"github.com/Doremi203/aghelm/internal/ui/spawn"
+	uisurface "github.com/Doremi203/aghelm/internal/ui/surface"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/ansi"
 )

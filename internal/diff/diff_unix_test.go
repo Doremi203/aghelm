@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/git"
+	"github.com/Doremi203/aghelm/internal/git"
 	"golang.org/x/sys/unix"
 )
 

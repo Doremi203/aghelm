@@ -1,7 +1,7 @@
 package ui
 
 import (
-	uilifecycle "github.com/YoanWai/agent-manager/internal/ui/session/lifecycle"
+	uilifecycle "github.com/Doremi203/aghelm/internal/ui/session/lifecycle"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -11,11 +11,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/remote"
-	uidialogs "github.com/YoanWai/agent-manager/internal/ui/dialogs"
-	uifocus "github.com/YoanWai/agent-manager/internal/ui/focus"
-	uiinstall "github.com/YoanWai/agent-manager/internal/ui/launchhint/install"
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
+	"github.com/Doremi203/aghelm/internal/remote"
+	uidialogs "github.com/Doremi203/aghelm/internal/ui/dialogs"
+	uifocus "github.com/Doremi203/aghelm/internal/ui/focus"
+	uiinstall "github.com/Doremi203/aghelm/internal/ui/launchhint/install"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

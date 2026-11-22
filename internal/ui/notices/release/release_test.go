@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/feed"
-	"github.com/YoanWai/agent-manager/internal/ui/notices"
-	"github.com/YoanWai/agent-manager/internal/update"
+	"github.com/Doremi203/aghelm/internal/feed"
+	"github.com/Doremi203/aghelm/internal/ui/notices"
+	"github.com/Doremi203/aghelm/internal/update"
 )
 
 func TestDelegatedResult(t *testing.T) {

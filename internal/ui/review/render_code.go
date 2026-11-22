@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	diff "github.com/YoanWai/agent-manager/internal/diff/model"
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
+	diff "github.com/Doremi203/aghelm/internal/diff/model"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 )

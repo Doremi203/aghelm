@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/store"
+	"github.com/Doremi203/aghelm/internal/store"
 	"github.com/google/uuid"
 )
 

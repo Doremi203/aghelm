@@ -3,7 +3,7 @@ package spawn
 import (
 	"slices"
 
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
 )
 
 // EnvPick is the environment profile a spawn launches under: one of the

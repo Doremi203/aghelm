@@ -1,15 +1,15 @@
 package ui
 
 import (
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	"github.com/YoanWai/agent-manager/internal/store"
-	uifocus "github.com/YoanWai/agent-manager/internal/ui/focus"
-	uiframe "github.com/YoanWai/agent-manager/internal/ui/frame"
-	uipreview "github.com/YoanWai/agent-manager/internal/ui/preview"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/store"
+	uifocus "github.com/Doremi203/aghelm/internal/ui/focus"
+	uiframe "github.com/Doremi203/aghelm/internal/ui/frame"
+	uipreview "github.com/Doremi203/aghelm/internal/ui/preview"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/ansi"
 )

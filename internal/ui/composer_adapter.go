@@ -1,9 +1,9 @@
 package ui
 
 import (
-	"github.com/YoanWai/agent-manager/internal/ui/composer"
-	uiframe "github.com/YoanWai/agent-manager/internal/ui/frame"
-	uitheme "github.com/YoanWai/agent-manager/internal/ui/theme"
+	"github.com/Doremi203/aghelm/internal/ui/composer"
+	uiframe "github.com/Doremi203/aghelm/internal/ui/frame"
+	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

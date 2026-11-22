@@ -6,13 +6,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/config"
-	"github.com/YoanWai/agent-manager/internal/diff"
-	"github.com/YoanWai/agent-manager/internal/git"
-	"github.com/YoanWai/agent-manager/internal/status"
-	"github.com/YoanWai/agent-manager/internal/store"
-	uireview "github.com/YoanWai/agent-manager/internal/ui/review"
-	uistartup "github.com/YoanWai/agent-manager/internal/ui/startup"
+	"github.com/Doremi203/aghelm/internal/config"
+	"github.com/Doremi203/aghelm/internal/diff"
+	"github.com/Doremi203/aghelm/internal/git"
+	"github.com/Doremi203/aghelm/internal/status"
+	"github.com/Doremi203/aghelm/internal/store"
+	uireview "github.com/Doremi203/aghelm/internal/ui/review"
+	uistartup "github.com/Doremi203/aghelm/internal/ui/startup"
 	"github.com/charmbracelet/x/ansi"
 )
 

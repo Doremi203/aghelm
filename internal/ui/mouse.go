@@ -3,9 +3,9 @@ package ui
 import (
 	"time"
 
-	uigeometry "github.com/YoanWai/agent-manager/internal/ui/geometry"
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
+	uigeometry "github.com/Doremi203/aghelm/internal/ui/geometry"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

@@ -8,12 +8,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/config"
-	"github.com/YoanWai/agent-manager/internal/store"
-	"github.com/YoanWai/agent-manager/internal/tmux"
-	uifocus "github.com/YoanWai/agent-manager/internal/ui/focus"
-	focusruntime "github.com/YoanWai/agent-manager/internal/ui/focus/runtime"
-	uipreview "github.com/YoanWai/agent-manager/internal/ui/preview"
+	"github.com/Doremi203/aghelm/internal/config"
+	"github.com/Doremi203/aghelm/internal/store"
+	"github.com/Doremi203/aghelm/internal/tmux"
+	uifocus "github.com/Doremi203/aghelm/internal/ui/focus"
+	focusruntime "github.com/Doremi203/aghelm/internal/ui/focus/runtime"
+	uipreview "github.com/Doremi203/aghelm/internal/ui/preview"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

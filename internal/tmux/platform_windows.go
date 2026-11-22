@@ -16,9 +16,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	"github.com/YoanWai/agent-manager/internal/proctree"
-	"github.com/YoanWai/agent-manager/internal/pwsh"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/proctree"
+	"github.com/Doremi203/aghelm/internal/pwsh"
 )
 
 // Binary is the multiplexer the manager drives: psmux speaks tmux's command

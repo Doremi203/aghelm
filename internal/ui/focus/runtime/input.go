@@ -7,10 +7,10 @@ import (
 	"slices"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/status"
-	"github.com/YoanWai/agent-manager/internal/store"
-	"github.com/YoanWai/agent-manager/internal/tmux"
-	"github.com/YoanWai/agent-manager/internal/ui/focus/watch"
+	"github.com/Doremi203/aghelm/internal/status"
+	"github.com/Doremi203/aghelm/internal/store"
+	"github.com/Doremi203/aghelm/internal/tmux"
+	"github.com/Doremi203/aghelm/internal/ui/focus/watch"
 	"github.com/charmbracelet/x/ansi"
 )
 

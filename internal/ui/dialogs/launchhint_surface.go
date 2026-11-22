@@ -3,8 +3,8 @@ package dialogs
 import (
 	"strings"
 
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
-	"github.com/YoanWai/agent-manager/internal/ui/surface"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
+	"github.com/Doremi203/aghelm/internal/ui/surface"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )

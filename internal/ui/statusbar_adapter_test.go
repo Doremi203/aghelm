@@ -1,9 +1,9 @@
 package ui
 
 import (
-	uirelease "github.com/YoanWai/agent-manager/internal/ui/notices/release"
-	uistatusbar "github.com/YoanWai/agent-manager/internal/ui/statusbar"
-	uitheme "github.com/YoanWai/agent-manager/internal/ui/theme"
+	uirelease "github.com/Doremi203/aghelm/internal/ui/notices/release"
+	uistatusbar "github.com/Doremi203/aghelm/internal/ui/statusbar"
+	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	"github.com/charmbracelet/x/ansi"
 	"strings"
 	"testing"

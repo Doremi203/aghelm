@@ -3,7 +3,7 @@ package dialogs
 import (
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
 )
 
 // Follow mode changes the glyph, never the act the card commits.

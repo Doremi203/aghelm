@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/sessionreport"
+	"github.com/Doremi203/aghelm/internal/sessionreport"
 )
 
 func TestDefaultDefinesEveryShippedTool(t *testing.T) {

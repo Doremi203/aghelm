@@ -3,7 +3,7 @@ package persist
 import (
 	"fmt"
 
-	uisettings "github.com/YoanWai/agent-manager/internal/ui/settings"
+	uisettings "github.com/Doremi203/aghelm/internal/ui/settings"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

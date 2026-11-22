@@ -3,7 +3,7 @@ package review_test
 import (
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/ui/review"
+	"github.com/Doremi203/aghelm/internal/ui/review"
 )
 
 // A compiled artifact is dropped on its name alone, which is what a file git

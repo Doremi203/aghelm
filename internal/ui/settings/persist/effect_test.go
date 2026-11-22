@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	uisettings "github.com/YoanWai/agent-manager/internal/ui/settings"
+	uisettings "github.com/Doremi203/aghelm/internal/ui/settings"
 )
 
 // A stored ←→ value rebinds the sessions' keys in the save's own job. A

@@ -19,7 +19,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/status"
+	"github.com/Doremi203/aghelm/internal/status"
 )
 
 const EnvStatusFile = "AGENT_MANAGER_STATUS_FILE"

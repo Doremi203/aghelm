@@ -2,13 +2,13 @@ package dialogs
 
 import (
 	"fmt"
-	uilifecycle "github.com/YoanWai/agent-manager/internal/ui/session/lifecycle"
+	uilifecycle "github.com/Doremi203/aghelm/internal/ui/session/lifecycle"
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	"github.com/YoanWai/agent-manager/internal/status"
-	"github.com/YoanWai/agent-manager/internal/store"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/status"
+	"github.com/Doremi203/aghelm/internal/store"
 )
 
 // view is the decisions' reads over rows the test holds, with the live

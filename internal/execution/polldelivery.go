@@ -8,13 +8,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/mcpreg"
+	"github.com/Doremi203/aghelm/internal/mcpreg"
 
-	"github.com/YoanWai/agent-manager/internal/sessioncmd"
-	"github.com/YoanWai/agent-manager/internal/status"
-	"github.com/YoanWai/agent-manager/internal/store"
+	"github.com/Doremi203/aghelm/internal/sessioncmd"
+	"github.com/Doremi203/aghelm/internal/status"
+	"github.com/Doremi203/aghelm/internal/store"
 
-	"github.com/YoanWai/agent-manager/internal/tmux"
+	"github.com/Doremi203/aghelm/internal/tmux"
 	"github.com/charmbracelet/x/ansi"
 )
 

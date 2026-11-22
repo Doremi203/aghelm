@@ -111,7 +111,7 @@ func packageEffects(t *testing.T) []packageEffect {
 // to this one, to the name the root imports it under.
 func rootImportAliases(t *testing.T) map[string]string {
 	t.Helper()
-	const prefix = "github.com/YoanWai/agent-manager/internal/ui/"
+	const prefix = "github.com/Doremi203/aghelm/internal/ui/"
 	aliases := map[string]string{}
 	for _, file := range parseEffectDeclarations(t).files {
 		for _, spec := range file.Imports {

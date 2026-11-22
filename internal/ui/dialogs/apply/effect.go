@@ -1,6 +1,6 @@
 package apply
 
-import uieffects "github.com/YoanWai/agent-manager/internal/ui/effects"
+import uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
 
 // ForkEffect freezes a fork dialog submission; ForkRequest carries it and Run
 // does the work.

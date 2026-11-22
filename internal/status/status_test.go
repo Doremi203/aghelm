@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/config"
+	"github.com/Doremi203/aghelm/internal/config"
 )
 
 func testEngine(t *testing.T) *Engine {

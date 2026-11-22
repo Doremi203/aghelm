@@ -2,7 +2,7 @@
 
 package sessioncmd
 
-import "github.com/YoanWai/agent-manager/internal/conversation"
+import "github.com/Doremi203/aghelm/internal/conversation"
 
 // agentLiveness tells the follower when the agent is gone, or that it
 // already is. Windows has no process group, so the agent's own pid is what

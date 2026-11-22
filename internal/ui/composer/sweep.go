@@ -3,7 +3,7 @@ package composer
 import (
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/clipboard"
+	"github.com/Doremi203/aghelm/internal/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

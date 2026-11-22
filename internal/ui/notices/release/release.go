@@ -13,11 +13,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/config"
-	"github.com/YoanWai/agent-manager/internal/feed"
-	"github.com/YoanWai/agent-manager/internal/ui/notices"
-	uiterminal "github.com/YoanWai/agent-manager/internal/ui/terminal"
-	"github.com/YoanWai/agent-manager/internal/update"
+	"github.com/Doremi203/aghelm/internal/config"
+	"github.com/Doremi203/aghelm/internal/feed"
+	"github.com/Doremi203/aghelm/internal/ui/notices"
+	uiterminal "github.com/Doremi203/aghelm/internal/ui/terminal"
+	"github.com/Doremi203/aghelm/internal/update"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

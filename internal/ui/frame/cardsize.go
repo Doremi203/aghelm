@@ -1,6 +1,6 @@
 package frame
 
-import "github.com/YoanWai/agent-manager/internal/ui/presentation"
+import "github.com/Doremi203/aghelm/internal/ui/presentation"
 
 // CardSizing is one card's geometry: the terminal it floats in, the status
 // block it paints and the hint tier on its foot.

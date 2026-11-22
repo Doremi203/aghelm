@@ -9,11 +9,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/conversation"
-	"github.com/YoanWai/agent-manager/internal/hooks"
-	"github.com/YoanWai/agent-manager/internal/status"
-	"github.com/YoanWai/agent-manager/internal/store"
-	"github.com/YoanWai/agent-manager/internal/testenv"
+	"github.com/Doremi203/aghelm/internal/conversation"
+	"github.com/Doremi203/aghelm/internal/hooks"
+	"github.com/Doremi203/aghelm/internal/status"
+	"github.com/Doremi203/aghelm/internal/store"
+	"github.com/Doremi203/aghelm/internal/testenv"
 )
 
 func TestSessionsKillKeepsTheScreenAndReviveBringsItBack(t *testing.T) {

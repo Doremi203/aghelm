@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/testenv"
-	"github.com/YoanWai/agent-manager/internal/tmux"
+	"github.com/Doremi203/aghelm/internal/testenv"
+	"github.com/Doremi203/aghelm/internal/tmux"
 )
 
 // TestMain drops an inherited GIT_DIR and its siblings, which would point

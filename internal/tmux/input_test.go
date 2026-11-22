@@ -3,7 +3,7 @@ package tmux
 import (
 	"context"
 	"errors"
-	"github.com/YoanWai/agent-manager/internal/testenv"
+	"github.com/Doremi203/aghelm/internal/testenv"
 	"os"
 	"slices"
 	"strconv"

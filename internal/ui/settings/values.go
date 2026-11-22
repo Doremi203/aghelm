@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
-	uitheme "github.com/YoanWai/agent-manager/internal/ui/theme"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
+	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 )
 
 // Value is one store write in persist order. Proactive writes the

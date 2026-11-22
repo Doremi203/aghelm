@@ -2,7 +2,7 @@
 
 package install
 
-import "github.com/YoanWai/agent-manager/internal/tmux"
+import "github.com/Doremi203/aghelm/internal/tmux"
 
 // Script shows the command, runs it, and records how it ended. The command
 // runs in a subshell so an installer that exits cannot skip the status write,

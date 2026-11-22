@@ -4,11 +4,11 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/remote"
-	"github.com/YoanWai/agent-manager/internal/sessioncmd"
-	uilink "github.com/YoanWai/agent-manager/internal/ui/connections/link"
-	uidialogs "github.com/YoanWai/agent-manager/internal/ui/dialogs"
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
+	"github.com/Doremi203/aghelm/internal/remote"
+	"github.com/Doremi203/aghelm/internal/sessioncmd"
+	uilink "github.com/Doremi203/aghelm/internal/ui/connections/link"
+	uidialogs "github.com/Doremi203/aghelm/internal/ui/dialogs"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

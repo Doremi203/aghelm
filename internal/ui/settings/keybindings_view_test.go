@@ -3,7 +3,7 @@ package settings
 import (
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/keybind"
 )
 
 // keyWindow always fits the room it is given and always shows the cursor's

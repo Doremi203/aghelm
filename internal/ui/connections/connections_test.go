@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	remote "github.com/YoanWai/agent-manager/internal/remote/value"
+	remote "github.com/Doremi203/aghelm/internal/remote/value"
 )
 
 var (

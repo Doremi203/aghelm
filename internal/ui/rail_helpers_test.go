@@ -3,10 +3,10 @@ package ui
 import (
 	"strings"
 
-	"github.com/YoanWai/agent-manager/internal/launch"
-	"github.com/YoanWai/agent-manager/internal/store"
-	uiframe "github.com/YoanWai/agent-manager/internal/ui/frame"
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
+	"github.com/Doremi203/aghelm/internal/launch"
+	"github.com/Doremi203/aghelm/internal/store"
+	uiframe "github.com/Doremi203/aghelm/internal/ui/frame"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

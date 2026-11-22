@@ -7,11 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	uieffects "github.com/YoanWai/agent-manager/internal/ui/effects"
-	uigeometry "github.com/YoanWai/agent-manager/internal/ui/geometry"
-	uigeometrypanes "github.com/YoanWai/agent-manager/internal/ui/geometry/panes"
-	uiinstall "github.com/YoanWai/agent-manager/internal/ui/launchhint/install"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
+	uigeometry "github.com/Doremi203/aghelm/internal/ui/geometry"
+	uigeometrypanes "github.com/Doremi203/aghelm/internal/ui/geometry/panes"
+	uiinstall "github.com/Doremi203/aghelm/internal/ui/launchhint/install"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

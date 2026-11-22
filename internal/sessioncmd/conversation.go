@@ -11,11 +11,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/agentsession"
-	"github.com/YoanWai/agent-manager/internal/conversation"
-	"github.com/YoanWai/agent-manager/internal/hooks"
-	"github.com/YoanWai/agent-manager/internal/status"
-	"github.com/YoanWai/agent-manager/internal/store"
+	"github.com/Doremi203/aghelm/internal/agentsession"
+	"github.com/Doremi203/aghelm/internal/conversation"
+	"github.com/Doremi203/aghelm/internal/hooks"
+	"github.com/Doremi203/aghelm/internal/status"
+	"github.com/Doremi203/aghelm/internal/store"
 )
 
 const trackConversationUsage = "usage: agent-manager track-conversation --tool <tool> (--id <id> | --key <json-field> [--unless <json-field>])"

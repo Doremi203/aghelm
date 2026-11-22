@@ -1,6 +1,6 @@
 package persist
 
-import uisettings "github.com/YoanWai/agent-manager/internal/ui/settings"
+import uisettings "github.com/Doremi203/aghelm/internal/ui/settings"
 
 // StoredTerminalBackground reads the background row. A store error yields
 // the painted default.

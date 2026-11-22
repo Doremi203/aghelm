@@ -1,9 +1,9 @@
 package runtime
 
 import (
-	"github.com/YoanWai/agent-manager/internal/config"
-	"github.com/YoanWai/agent-manager/internal/systheme"
-	"github.com/YoanWai/agent-manager/internal/ui/effects"
+	"github.com/Doremi203/aghelm/internal/config"
+	"github.com/Doremi203/aghelm/internal/systheme"
+	"github.com/Doremi203/aghelm/internal/ui/effects"
 	"maps"
 )
 

@@ -1,14 +1,14 @@
 package ui
 
 import (
-	"github.com/YoanWai/agent-manager/internal/sessioncmd"
-	"github.com/YoanWai/agent-manager/internal/store"
-	"github.com/YoanWai/agent-manager/internal/ui/composer"
-	uidialogs "github.com/YoanWai/agent-manager/internal/ui/dialogs"
-	uieffects "github.com/YoanWai/agent-manager/internal/ui/effects"
-	uiinstall "github.com/YoanWai/agent-manager/internal/ui/launchhint/install"
-	uiquick "github.com/YoanWai/agent-manager/internal/ui/quick"
-	uitheme "github.com/YoanWai/agent-manager/internal/ui/theme"
+	"github.com/Doremi203/aghelm/internal/sessioncmd"
+	"github.com/Doremi203/aghelm/internal/store"
+	"github.com/Doremi203/aghelm/internal/ui/composer"
+	uidialogs "github.com/Doremi203/aghelm/internal/ui/dialogs"
+	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
+	uiinstall "github.com/Doremi203/aghelm/internal/ui/launchhint/install"
+	uiquick "github.com/Doremi203/aghelm/internal/ui/quick"
+	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )

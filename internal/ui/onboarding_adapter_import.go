@@ -2,12 +2,12 @@ package ui
 
 import (
 	"fmt"
-	uilaunch "github.com/YoanWai/agent-manager/internal/ui/spawn/launch"
+	uilaunch "github.com/Doremi203/aghelm/internal/ui/spawn/launch"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/status"
-	uionboarding "github.com/YoanWai/agent-manager/internal/ui/onboarding"
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
+	"github.com/Doremi203/aghelm/internal/status"
+	uionboarding "github.com/Doremi203/aghelm/internal/ui/onboarding"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

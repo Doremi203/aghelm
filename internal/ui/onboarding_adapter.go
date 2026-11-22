@@ -1,17 +1,17 @@
 package ui
 
 import (
-	uiframe "github.com/YoanWai/agent-manager/internal/ui/frame"
+	uiframe "github.com/Doremi203/aghelm/internal/ui/frame"
 	"strings"
 
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	"github.com/YoanWai/agent-manager/internal/systheme"
-	uionboarding "github.com/YoanWai/agent-manager/internal/ui/onboarding"
-	onboardingruntime "github.com/YoanWai/agent-manager/internal/ui/onboarding/runtime"
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
-	uisettings "github.com/YoanWai/agent-manager/internal/ui/settings"
-	uipersist "github.com/YoanWai/agent-manager/internal/ui/settings/persist"
-	uitheme "github.com/YoanWai/agent-manager/internal/ui/theme"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/systheme"
+	uionboarding "github.com/Doremi203/aghelm/internal/ui/onboarding"
+	onboardingruntime "github.com/Doremi203/aghelm/internal/ui/onboarding/runtime"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
+	uisettings "github.com/Doremi203/aghelm/internal/ui/settings"
+	uipersist "github.com/Doremi203/aghelm/internal/ui/settings/persist"
+	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

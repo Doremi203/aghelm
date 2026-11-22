@@ -1,9 +1,9 @@
 package dialogs
 
 import (
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
-	"github.com/YoanWai/agent-manager/internal/ui/spawn"
-	"github.com/YoanWai/agent-manager/internal/ui/surface"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
+	"github.com/Doremi203/aghelm/internal/ui/spawn"
+	"github.com/Doremi203/aghelm/internal/ui/surface"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

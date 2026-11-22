@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/testenv"
-	"github.com/YoanWai/agent-manager/internal/tmux"
+	"github.com/Doremi203/aghelm/internal/testenv"
+	"github.com/Doremi203/aghelm/internal/tmux"
 )
 
 // A serving control client owns an admitted command even when tmux rejects it:

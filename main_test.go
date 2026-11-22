@@ -18,13 +18,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/app"
-	"github.com/YoanWai/agent-manager/internal/cli"
-	"github.com/YoanWai/agent-manager/internal/hooks"
-	"github.com/YoanWai/agent-manager/internal/sessioncmd"
-	"github.com/YoanWai/agent-manager/internal/tmux"
-	uifocus "github.com/YoanWai/agent-manager/internal/ui/focus"
-	uiterminal "github.com/YoanWai/agent-manager/internal/ui/terminal"
+	"github.com/Doremi203/aghelm/internal/app"
+	"github.com/Doremi203/aghelm/internal/cli"
+	"github.com/Doremi203/aghelm/internal/hooks"
+	"github.com/Doremi203/aghelm/internal/sessioncmd"
+	"github.com/Doremi203/aghelm/internal/tmux"
+	uifocus "github.com/Doremi203/aghelm/internal/ui/focus"
+	uiterminal "github.com/Doremi203/aghelm/internal/ui/terminal"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

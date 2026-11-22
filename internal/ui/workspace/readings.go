@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	uiframe "github.com/YoanWai/agent-manager/internal/ui/frame"
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
-	uitheme "github.com/YoanWai/agent-manager/internal/ui/theme"
+	uiframe "github.com/Doremi203/aghelm/internal/ui/frame"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
+	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	"github.com/charmbracelet/x/ansi"
 )
 

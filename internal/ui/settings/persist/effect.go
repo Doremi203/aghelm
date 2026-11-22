@@ -3,8 +3,8 @@ package persist
 import (
 	"slices"
 
-	uieffects "github.com/YoanWai/agent-manager/internal/ui/effects"
-	uisettings "github.com/YoanWai/agent-manager/internal/ui/settings"
+	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
+	uisettings "github.com/Doremi203/aghelm/internal/ui/settings"
 )
 
 // Services is what the Settings effect lane captures for one job: the writer

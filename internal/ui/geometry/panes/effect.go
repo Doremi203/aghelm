@@ -1,6 +1,6 @@
 package panes
 
-import uieffects "github.com/YoanWai/agent-manager/internal/ui/effects"
+import uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
 
 // Services is what the geometry effects run against: the settings store and
 // pane box a resize writes, the tmux server it pins, and the poller's run

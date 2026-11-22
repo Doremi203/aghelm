@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/pwsh"
+	"github.com/Doremi203/aghelm/internal/pwsh"
 )
 
 // psmuxSession creates a managed session running command and waits for its

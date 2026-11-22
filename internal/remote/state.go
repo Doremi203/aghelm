@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/remote/value"
-	"github.com/YoanWai/agent-manager/internal/sessioncmd"
+	"github.com/Doremi203/aghelm/internal/remote/value"
+	"github.com/Doremi203/aghelm/internal/sessioncmd"
 )
 
 // RetryWait is how long a host that failed its last refreshes rests.

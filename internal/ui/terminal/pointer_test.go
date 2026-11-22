@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/termseq"
+	"github.com/Doremi203/aghelm/internal/termseq"
 )
 
 // The pointer is written only when it changes.

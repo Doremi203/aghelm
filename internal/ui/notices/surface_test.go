@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

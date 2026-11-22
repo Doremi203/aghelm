@@ -3,7 +3,7 @@ package apply
 import (
 	"strings"
 
-	"github.com/YoanWai/agent-manager/internal/store"
+	"github.com/Doremi203/aghelm/internal/store"
 )
 
 // Stages says which durable writes a rename committed, in the order it

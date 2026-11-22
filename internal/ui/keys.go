@@ -1,9 +1,9 @@
 package ui
 
 import (
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
-	uisurface "github.com/YoanWai/agent-manager/internal/ui/surface"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
+	uisurface "github.com/Doremi203/aghelm/internal/ui/surface"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

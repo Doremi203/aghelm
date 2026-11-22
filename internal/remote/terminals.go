@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/YoanWai/agent-manager/internal/sessioncmd"
+	"github.com/Doremi203/aghelm/internal/sessioncmd"
 )
 
 // Openers records which local session opened each terminal on a

@@ -3,7 +3,7 @@ package dialogs
 import (
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/ui/spawn"
+	"github.com/Doremi203/aghelm/internal/ui/spawn"
 )
 
 // A group cannot land inside its own subtree, and the picker keeps the row

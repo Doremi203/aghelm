@@ -9,14 +9,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/config"
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	"github.com/YoanWai/agent-manager/internal/sessioncmd"
-	"github.com/YoanWai/agent-manager/internal/status"
-	"github.com/YoanWai/agent-manager/internal/store"
-	"github.com/YoanWai/agent-manager/internal/testfixture"
-	uisession "github.com/YoanWai/agent-manager/internal/ui/session"
-	uilifecycle "github.com/YoanWai/agent-manager/internal/ui/session/lifecycle"
+	"github.com/Doremi203/aghelm/internal/config"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/sessioncmd"
+	"github.com/Doremi203/aghelm/internal/status"
+	"github.com/Doremi203/aghelm/internal/store"
+	"github.com/Doremi203/aghelm/internal/testfixture"
+	uisession "github.com/Doremi203/aghelm/internal/ui/session"
+	uilifecycle "github.com/Doremi203/aghelm/internal/ui/session/lifecycle"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

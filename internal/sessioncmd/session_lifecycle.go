@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/conversation"
-	"github.com/YoanWai/agent-manager/internal/git"
-	"github.com/YoanWai/agent-manager/internal/store"
+	"github.com/Doremi203/aghelm/internal/conversation"
+	"github.com/Doremi203/aghelm/internal/git"
+	"github.com/Doremi203/aghelm/internal/store"
 )
 
 // Kill stops a session's pane and leaves its row dead, keeping the last

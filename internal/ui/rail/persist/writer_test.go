@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/store"
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
+	"github.com/Doremi203/aghelm/internal/store"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
 )
 
 var errLabel = errors.New("status bar refused the label")

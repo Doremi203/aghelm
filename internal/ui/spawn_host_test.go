@@ -3,11 +3,11 @@ package ui
 import (
 	"errors"
 
-	"github.com/YoanWai/agent-manager/internal/config"
-	uidialogs "github.com/YoanWai/agent-manager/internal/ui/dialogs"
-	uisettings "github.com/YoanWai/agent-manager/internal/ui/settings"
-	"github.com/YoanWai/agent-manager/internal/ui/spawn"
-	uilaunch "github.com/YoanWai/agent-manager/internal/ui/spawn/launch"
+	"github.com/Doremi203/aghelm/internal/config"
+	uidialogs "github.com/Doremi203/aghelm/internal/ui/dialogs"
+	uisettings "github.com/Doremi203/aghelm/internal/ui/settings"
+	"github.com/Doremi203/aghelm/internal/ui/spawn"
+	uilaunch "github.com/Doremi203/aghelm/internal/ui/spawn/launch"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/ansi"
 	"os"

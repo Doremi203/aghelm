@@ -3,12 +3,12 @@ package ui
 import (
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/systheme"
-	uionboarding "github.com/YoanWai/agent-manager/internal/ui/onboarding"
-	onboardingruntime "github.com/YoanWai/agent-manager/internal/ui/onboarding/runtime"
-	uisettings "github.com/YoanWai/agent-manager/internal/ui/settings"
-	uiterminal "github.com/YoanWai/agent-manager/internal/ui/terminal"
-	uitheme "github.com/YoanWai/agent-manager/internal/ui/theme"
+	"github.com/Doremi203/aghelm/internal/systheme"
+	uionboarding "github.com/Doremi203/aghelm/internal/ui/onboarding"
+	onboardingruntime "github.com/Doremi203/aghelm/internal/ui/onboarding/runtime"
+	uisettings "github.com/Doremi203/aghelm/internal/ui/settings"
+	uiterminal "github.com/Doremi203/aghelm/internal/ui/terminal"
+	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 )
 
 func followModel(t *testing.T, auto, theme string) *Model {

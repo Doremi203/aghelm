@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/tmux"
+	"github.com/Doremi203/aghelm/internal/tmux"
 )
 
 // Frame is a pane snapshot pushed by the watcher, with the pane's cursor

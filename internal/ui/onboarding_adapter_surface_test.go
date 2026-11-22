@@ -1,8 +1,8 @@
 package ui
 
 import (
-	uionboarding "github.com/YoanWai/agent-manager/internal/ui/onboarding"
-	onboardingruntime "github.com/YoanWai/agent-manager/internal/ui/onboarding/runtime"
+	uionboarding "github.com/Doremi203/aghelm/internal/ui/onboarding"
+	onboardingruntime "github.com/Doremi203/aghelm/internal/ui/onboarding/runtime"
 	"testing"
 )
 

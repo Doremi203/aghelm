@@ -1,16 +1,16 @@
 package ui
 
 import (
-	uistartup "github.com/YoanWai/agent-manager/internal/ui/startup"
+	uistartup "github.com/Doremi203/aghelm/internal/ui/startup"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/status"
-	"github.com/YoanWai/agent-manager/internal/store"
-	uifocus "github.com/YoanWai/agent-manager/internal/ui/focus"
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
-	uicapture "github.com/YoanWai/agent-manager/internal/ui/preview/capture"
+	"github.com/Doremi203/aghelm/internal/status"
+	"github.com/Doremi203/aghelm/internal/store"
+	uifocus "github.com/Doremi203/aghelm/internal/ui/focus"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
+	uicapture "github.com/Doremi203/aghelm/internal/ui/preview/capture"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/muesli/termenv"

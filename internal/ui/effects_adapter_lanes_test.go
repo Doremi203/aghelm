@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/store"
-	uidialogs "github.com/YoanWai/agent-manager/internal/ui/dialogs"
-	uieffects "github.com/YoanWai/agent-manager/internal/ui/effects"
-	focusruntime "github.com/YoanWai/agent-manager/internal/ui/focus/runtime"
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
-	uilifecycle "github.com/YoanWai/agent-manager/internal/ui/session/lifecycle"
+	"github.com/Doremi203/aghelm/internal/store"
+	uidialogs "github.com/Doremi203/aghelm/internal/ui/dialogs"
+	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
+	focusruntime "github.com/Doremi203/aghelm/internal/ui/focus/runtime"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
+	uilifecycle "github.com/Doremi203/aghelm/internal/ui/session/lifecycle"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

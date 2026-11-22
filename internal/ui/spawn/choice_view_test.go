@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	catalog "github.com/YoanWai/agent-manager/internal/catalog/value"
+	catalog "github.com/Doremi203/aghelm/internal/catalog/value"
 	"github.com/charmbracelet/x/ansi"
 )
 

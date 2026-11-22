@@ -5,7 +5,7 @@ package workspace
 
 import (
 	"fmt"
-	"github.com/YoanWai/agent-manager/internal/sysstat"
+	"github.com/Doremi203/aghelm/internal/sysstat"
 	"time"
 )
 

@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/testenv"
+	"github.com/Doremi203/aghelm/internal/testenv"
 )
 
 // testSocket is an isolated tmux server for this package's tests, so they

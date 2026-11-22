@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/testenv"
+	"github.com/Doremi203/aghelm/internal/testenv"
 )
 
 // TestMain drops an inherited GIT_DIR and its siblings, which would point

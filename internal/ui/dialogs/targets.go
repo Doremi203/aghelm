@@ -3,7 +3,7 @@ package dialogs
 import (
 	"strings"
 
-	"github.com/YoanWai/agent-manager/internal/ui/spawn"
+	"github.com/Doremi203/aghelm/internal/ui/spawn"
 )
 
 type Agent struct {

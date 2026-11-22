@@ -3,7 +3,7 @@ package status
 import (
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/config"
+	"github.com/Doremi203/aghelm/internal/config"
 )
 
 // InputDraft reads what the user has typed after the composer marker, and

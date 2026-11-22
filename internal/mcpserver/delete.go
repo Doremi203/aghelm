@@ -3,8 +3,8 @@ package mcpserver
 import (
 	"context"
 
-	"github.com/YoanWai/agent-manager/internal/remote"
-	"github.com/YoanWai/agent-manager/internal/sessioncmd"
+	"github.com/Doremi203/aghelm/internal/remote"
+	"github.com/Doremi203/aghelm/internal/sessioncmd"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 

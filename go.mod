@@ -1,4 +1,4 @@
-module github.com/YoanWai/agent-manager
+module github.com/Doremi203/aghelm
 
 go 1.27.4
 

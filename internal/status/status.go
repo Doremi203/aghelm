@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/YoanWai/agent-manager/internal/config"
+	"github.com/Doremi203/aghelm/internal/config"
 )
 
 const (

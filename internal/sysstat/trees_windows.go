@@ -3,7 +3,7 @@
 package sysstat
 
 import (
-	"github.com/YoanWai/agent-manager/internal/proctree"
+	"github.com/Doremi203/aghelm/internal/proctree"
 	"github.com/shirou/gopsutil/v4/process"
 )
 

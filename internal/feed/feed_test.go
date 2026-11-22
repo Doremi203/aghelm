@@ -15,8 +15,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/atomicfile"
-	"github.com/YoanWai/agent-manager/internal/update"
+	"github.com/Doremi203/aghelm/internal/atomicfile"
+	"github.com/Doremi203/aghelm/internal/update"
 )
 
 func serve(t *testing.T, body string) *httptest.Server {

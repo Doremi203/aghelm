@@ -3,7 +3,7 @@ package tmux
 import (
 	"strings"
 
-	"github.com/YoanWai/agent-manager/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/keybind"
 )
 
 func (d *Driver) installSessionUX(name string) error {

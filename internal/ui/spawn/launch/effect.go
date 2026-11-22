@@ -3,7 +3,7 @@ package launch
 import (
 	"slices"
 
-	uieffects "github.com/YoanWai/agent-manager/internal/ui/effects"
+	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
 )
 
 // Request is the effect a form, the quick bar or the terminal key queues: it

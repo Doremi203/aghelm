@@ -1,6 +1,6 @@
 package help
 
-import "github.com/YoanWai/agent-manager/internal/keybind"
+import "github.com/Doremi203/aghelm/internal/keybind"
 
 // Tables are the copied key tables the key map lists, whether the ←→ pair
 // is on, whether its → attaches, and whether ← comes back from an attach.

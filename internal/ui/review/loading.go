@@ -3,7 +3,7 @@ package review
 import (
 	"maps"
 
-	git "github.com/YoanWai/agent-manager/internal/git/value"
+	git "github.com/Doremi203/aghelm/internal/git/value"
 )
 
 // StoredScope reads a scope saved as a review preference; anything unknown

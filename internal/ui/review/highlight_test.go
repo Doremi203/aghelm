@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	diff "github.com/YoanWai/agent-manager/internal/diff/model"
-	git "github.com/YoanWai/agent-manager/internal/git/value"
+	diff "github.com/Doremi203/aghelm/internal/diff/model"
+	git "github.com/Doremi203/aghelm/internal/git/value"
 	"github.com/charmbracelet/x/ansi"
 )
 

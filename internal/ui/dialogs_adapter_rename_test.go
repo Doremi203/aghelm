@@ -2,7 +2,7 @@ package ui
 
 import (
 	"errors"
-	"github.com/YoanWai/agent-manager/internal/ui/pathcomplete"
+	"github.com/Doremi203/aghelm/internal/ui/pathcomplete"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -11,11 +11,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/sessioncmd"
-	"github.com/YoanWai/agent-manager/internal/store"
-	uidialogs "github.com/YoanWai/agent-manager/internal/ui/dialogs"
-	uiapply "github.com/YoanWai/agent-manager/internal/ui/dialogs/apply"
-	uieffects "github.com/YoanWai/agent-manager/internal/ui/effects"
+	"github.com/Doremi203/aghelm/internal/sessioncmd"
+	"github.com/Doremi203/aghelm/internal/store"
+	uidialogs "github.com/Doremi203/aghelm/internal/ui/dialogs"
+	uiapply "github.com/Doremi203/aghelm/internal/ui/dialogs/apply"
+	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

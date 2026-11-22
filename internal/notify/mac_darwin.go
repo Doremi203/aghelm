@@ -20,7 +20,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/YoanWai/agent-manager/internal/atomicfile"
+	"github.com/Doremi203/aghelm/internal/atomicfile"
 	"github.com/ebitengine/purego"
 	"github.com/ebitengine/purego/objc"
 )

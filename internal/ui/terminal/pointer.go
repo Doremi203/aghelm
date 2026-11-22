@@ -1,6 +1,6 @@
 package terminal
 
-import "github.com/YoanWai/agent-manager/internal/termseq"
+import "github.com/Doremi203/aghelm/internal/termseq"
 
 // The hand goes out under its CSS name, then its X11 one: Ghostty and kitty
 // skip a name they do not know, iTerm2 resets on one, so X11 comes last. The

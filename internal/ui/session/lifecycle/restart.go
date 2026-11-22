@@ -1,8 +1,8 @@
 package lifecycle
 
 import (
-	"github.com/YoanWai/agent-manager/internal/config"
-	uisession "github.com/YoanWai/agent-manager/internal/ui/session"
+	"github.com/Doremi203/aghelm/internal/config"
+	uisession "github.com/Doremi203/aghelm/internal/ui/session"
 	"github.com/google/uuid"
 )
 

@@ -3,8 +3,8 @@ package help
 import (
 	"strings"
 
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
 )
 
 // The key map is grouped the way its bindings are learned: by what is under

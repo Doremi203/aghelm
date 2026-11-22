@@ -3,8 +3,8 @@ package preview
 import (
 	"time"
 
-	uiframe "github.com/YoanWai/agent-manager/internal/ui/frame"
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
+	uiframe "github.com/Doremi203/aghelm/internal/ui/frame"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
 	"github.com/charmbracelet/x/ansi"
 )
 

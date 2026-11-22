@@ -1,8 +1,8 @@
 package model_test
 
 import (
-	"github.com/YoanWai/agent-manager/internal/diff/model"
-	"github.com/YoanWai/agent-manager/internal/git/value"
+	"github.com/Doremi203/aghelm/internal/diff/model"
+	"github.com/Doremi203/aghelm/internal/git/value"
 	"testing"
 )
 

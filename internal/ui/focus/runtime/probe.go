@@ -1,10 +1,10 @@
 package runtime
 
 import (
-	"github.com/YoanWai/agent-manager/internal/status"
-	"github.com/YoanWai/agent-manager/internal/store"
-	"github.com/YoanWai/agent-manager/internal/tmux"
-	uisession "github.com/YoanWai/agent-manager/internal/ui/session"
+	"github.com/Doremi203/aghelm/internal/status"
+	"github.com/Doremi203/aghelm/internal/store"
+	"github.com/Doremi203/aghelm/internal/tmux"
+	uisession "github.com/Doremi203/aghelm/internal/ui/session"
 )
 
 type Prober struct {

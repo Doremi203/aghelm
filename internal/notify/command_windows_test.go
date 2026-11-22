@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/pwsh"
+	"github.com/Doremi203/aghelm/internal/pwsh"
 )
 
 // The command reads the event from its environment under PowerShell too,

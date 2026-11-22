@@ -1,10 +1,10 @@
 package ui
 
 import (
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	uigeometry "github.com/YoanWai/agent-manager/internal/ui/geometry"
-	uigeometrypanes "github.com/YoanWai/agent-manager/internal/ui/geometry/panes"
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	uigeometry "github.com/Doremi203/aghelm/internal/ui/geometry"
+	uigeometrypanes "github.com/Doremi203/aghelm/internal/ui/geometry/panes"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )

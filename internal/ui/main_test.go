@@ -9,10 +9,10 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/notify"
-	"github.com/YoanWai/agent-manager/internal/testenv"
-	"github.com/YoanWai/agent-manager/internal/testfixture"
-	"github.com/YoanWai/agent-manager/internal/tmux"
+	"github.com/Doremi203/aghelm/internal/notify"
+	"github.com/Doremi203/aghelm/internal/testenv"
+	"github.com/Doremi203/aghelm/internal/testfixture"
+	"github.com/Doremi203/aghelm/internal/tmux"
 )
 
 // testSocket is an isolated tmux server for this package's tests, so they

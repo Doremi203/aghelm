@@ -1,7 +1,7 @@
 package onboarding
 
 import (
-	uitheme "github.com/YoanWai/agent-manager/internal/ui/theme"
+	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	tea "github.com/charmbracelet/bubbletea"
 	"testing"
 )

@@ -7,12 +7,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/status"
-	"github.com/YoanWai/agent-manager/internal/store"
-	uigeometrypanes "github.com/YoanWai/agent-manager/internal/ui/geometry/panes"
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
-	uirailpersist "github.com/YoanWai/agent-manager/internal/ui/rail/persist"
-	uilifecycle "github.com/YoanWai/agent-manager/internal/ui/session/lifecycle"
+	"github.com/Doremi203/aghelm/internal/status"
+	"github.com/Doremi203/aghelm/internal/store"
+	uigeometrypanes "github.com/Doremi203/aghelm/internal/ui/geometry/panes"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
+	uirailpersist "github.com/Doremi203/aghelm/internal/ui/rail/persist"
+	uilifecycle "github.com/Doremi203/aghelm/internal/ui/session/lifecycle"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/ansi"
 )

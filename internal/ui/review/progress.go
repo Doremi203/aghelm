@@ -3,7 +3,7 @@ package review
 import (
 	"strings"
 
-	diff "github.com/YoanWai/agent-manager/internal/diff/model"
+	diff "github.com/Doremi203/aghelm/internal/diff/model"
 )
 
 func (m *Model) ToggleReviewed() Requests {

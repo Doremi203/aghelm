@@ -1,14 +1,14 @@
 package ui
 
 import (
-	uiframe "github.com/YoanWai/agent-manager/internal/ui/frame"
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
-	uitheme "github.com/YoanWai/agent-manager/internal/ui/theme"
+	uiframe "github.com/Doremi203/aghelm/internal/ui/frame"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
+	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	"strings"
 
-	diffmodel "github.com/YoanWai/agent-manager/internal/diff/model"
-	gitvalue "github.com/YoanWai/agent-manager/internal/git/value"
-	uireview "github.com/YoanWai/agent-manager/internal/ui/review"
+	diffmodel "github.com/Doremi203/aghelm/internal/diff/model"
+	gitvalue "github.com/Doremi203/aghelm/internal/git/value"
+	uireview "github.com/Doremi203/aghelm/internal/ui/review"
 )
 
 const (

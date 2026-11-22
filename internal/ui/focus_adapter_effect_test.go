@@ -8,13 +8,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	"github.com/YoanWai/agent-manager/internal/status"
-	"github.com/YoanWai/agent-manager/internal/testenv"
-	"github.com/YoanWai/agent-manager/internal/tmux"
-	focusruntime "github.com/YoanWai/agent-manager/internal/ui/focus/runtime"
-	uisession "github.com/YoanWai/agent-manager/internal/ui/session"
-	uilifecycle "github.com/YoanWai/agent-manager/internal/ui/session/lifecycle"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	"github.com/Doremi203/aghelm/internal/status"
+	"github.com/Doremi203/aghelm/internal/testenv"
+	"github.com/Doremi203/aghelm/internal/tmux"
+	focusruntime "github.com/Doremi203/aghelm/internal/ui/focus/runtime"
+	uisession "github.com/Doremi203/aghelm/internal/ui/session"
+	uilifecycle "github.com/Doremi203/aghelm/internal/ui/session/lifecycle"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

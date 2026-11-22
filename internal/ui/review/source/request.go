@@ -4,9 +4,9 @@ import (
 	"maps"
 	"slices"
 
-	"github.com/YoanWai/agent-manager/internal/store"
-	"github.com/YoanWai/agent-manager/internal/tmux"
-	uieffects "github.com/YoanWai/agent-manager/internal/ui/effects"
+	"github.com/Doremi203/aghelm/internal/store"
+	"github.com/Doremi203/aghelm/internal/tmux"
+	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
 )
 
 // Change is one captured Review change on the effect lane: the store and

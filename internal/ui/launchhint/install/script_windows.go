@@ -5,7 +5,7 @@ package install
 import (
 	"path/filepath"
 
-	"github.com/YoanWai/agent-manager/internal/pwsh"
+	"github.com/Doremi203/aghelm/internal/pwsh"
 )
 
 // Script shows the command, runs it, and records how it ended. The status

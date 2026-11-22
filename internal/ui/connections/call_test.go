@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/YoanWai/agent-manager/internal/keybind"
-	uidialogs "github.com/YoanWai/agent-manager/internal/ui/dialogs"
-	uirail "github.com/YoanWai/agent-manager/internal/ui/rail"
+	"github.com/Doremi203/aghelm/internal/keybind"
+	uidialogs "github.com/Doremi203/aghelm/internal/ui/dialogs"
+	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
 )
 
 // A remote row's action either names the call it makes, the question it asks

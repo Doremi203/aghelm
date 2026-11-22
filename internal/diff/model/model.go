@@ -2,7 +2,7 @@ package model
 
 import (
 	"fmt"
-	"github.com/YoanWai/agent-manager/internal/git/value"
+	"github.com/Doremi203/aghelm/internal/git/value"
 	udiff "github.com/aymanbagabas/go-udiff"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"hash/fnv"

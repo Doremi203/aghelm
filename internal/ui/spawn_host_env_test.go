@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	uidialogs "github.com/YoanWai/agent-manager/internal/ui/dialogs"
+	uidialogs "github.com/Doremi203/aghelm/internal/ui/dialogs"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

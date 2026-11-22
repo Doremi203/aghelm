@@ -3,9 +3,9 @@ package link
 import (
 	"context"
 
-	"github.com/YoanWai/agent-manager/internal/remote"
-	"github.com/YoanWai/agent-manager/internal/sessioncmd"
-	uiframe "github.com/YoanWai/agent-manager/internal/ui/frame"
+	"github.com/Doremi203/aghelm/internal/remote"
+	"github.com/Doremi203/aghelm/internal/sessioncmd"
+	uiframe "github.com/Doremi203/aghelm/internal/ui/frame"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

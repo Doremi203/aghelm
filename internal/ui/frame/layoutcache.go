@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"slices"
 
-	"github.com/YoanWai/agent-manager/internal/ui/presentation"
+	"github.com/Doremi203/aghelm/internal/ui/presentation"
 )
 
 type Measurement struct {

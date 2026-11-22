@@ -16,7 +16,7 @@ import (
 	"time"
 	"unicode/utf16"
 
-	"github.com/YoanWai/agent-manager/internal/status"
+	"github.com/Doremi203/aghelm/internal/status"
 )
 
 // hookScript is the script a hook command runs: the command itself, or on

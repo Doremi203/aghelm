@@ -18,7 +18,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/YoanWai/agent-manager/internal/catalog/value"
+	"github.com/Doremi203/aghelm/internal/catalog/value"
 )
 
 // Model is one model a CLI offers.
