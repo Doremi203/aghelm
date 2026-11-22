@@ -16,18 +16,18 @@ import (
 
 type Session struct {
 	ID             string `json:"id" jsonschema:"agent session id"`
-	Name           string `json:"name" jsonschema:"session name shown in Agent Manager"`
+	Name           string `json:"name" jsonschema:"session name shown in aghelm"`
 	Tool           string `json:"tool" jsonschema:"agent CLI the session runs"`
 	Group          string `json:"group" jsonschema:"group path holding the session; empty is the root"`
 	Directory      string `json:"directory" jsonschema:"session's current working directory, or its launch directory when stopped"`
-	Status         string `json:"status" jsonschema:"Agent Manager status: starting, working, waiting, finished, idle, errored or dead"`
+	Status         string `json:"status" jsonschema:"aghelm status: starting, working, waiting, finished, idle, errored or dead"`
 	Running        bool   `json:"running" jsonschema:"whether the session currently has a live tmux pane"`
 	Archived       bool   `json:"archived" jsonschema:"whether the session is archived out of the active list"`
-	Branch         string `json:"branch,omitempty" jsonschema:"branch of the worktree Agent Manager created for this session, when it has one"`
+	Branch         string `json:"branch,omitempty" jsonschema:"branch of the worktree aghelm created for this session, when it has one"`
 	Environment    string `json:"environment,omitempty" jsonschema:"environment profile the session launches under, when it has one"`
 	AgentSessionID string `json:"agent_session_id,omitempty" jsonschema:"the agent CLI's own id for the conversation this session holds, once known"`
 	Self           bool   `json:"self" jsonschema:"whether this row is the calling session itself"`
-	Warning        string `json:"warning,omitempty" jsonschema:"set when the session started without the agent-manager tools because registering them timed out; it registers again on the next launch"`
+	Warning        string `json:"warning,omitempty" jsonschema:"set when the session started without the aghelm tools because registering them timed out; it registers again on the next launch"`
 }
 
 type SessionScreen struct {

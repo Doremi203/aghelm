@@ -25,7 +25,7 @@ type BackgroundStart struct {
 	PID     int  `json:"pid,omitempty"`
 }
 
-// Starter starts `agent-manager <args>` detached from the caller, appending
+// Starter starts `aghelm <args>` detached from the caller, appending
 // its output to logPath, and returns its pid without waiting for it.
 type Starter func(args []string, logPath string) (int, error)
 
@@ -36,12 +36,12 @@ type Starter func(args []string, logPath string) (int, error)
 func (l *Local) Serve(ctx context.Context, errs io.Writer) {
 	for result := range l.Execution.Run(ctx) {
 		if result.Err != nil {
-			fmt.Fprintln(errs, "agent-manager serve:", result.Err)
+			fmt.Fprintln(errs, "aghelm serve:", result.Err)
 			continue
 		}
 		for _, id := range result.Snapshot.TurnsEnded {
 			if _, err := l.Lifecycle.EndAfterTurn(id); err != nil {
-				fmt.Fprintf(errs, "agent-manager serve: end session %s after its turn: %v\n", id, err)
+				fmt.Fprintf(errs, "aghelm serve: end session %s after its turn: %v\n", id, err)
 			}
 		}
 	}

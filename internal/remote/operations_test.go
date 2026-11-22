@@ -149,7 +149,7 @@ func TestOperationArgv(t *testing.T) {
 			if err := tc.run(context.Background(), c); err != nil {
 				t.Fatal(err)
 			}
-			want := append([]string{"agent-manager"}, tc.want...)
+			want := append([]string{"aghelm"}, tc.want...)
 			if len(*calls) != 1 || !slices.Equal((*calls)[0], want) {
 				t.Fatalf("ran %q, want %q", *calls, want)
 			}
@@ -233,7 +233,7 @@ func TestOperationsDecodeTheRemoteJSON(t *testing.T) {
 }
 
 func TestSnapshot(t *testing.T) {
-	const tooOld = "gpu: agent-manager there is too old for SSH connections; update agent-manager on that host"
+	const tooOld = "gpu: aghelm there is too old for SSH connections; update aghelm on that host"
 	cases := []struct {
 		name    string
 		stdout  string
@@ -244,12 +244,12 @@ func TestSnapshot(t *testing.T) {
 	}{
 		{"current", `{"version":1,"manager_awake":true,"sessions":[{"id":"a1","name":"fix"}],"terminals":[],"groups":[{"path":"team"}]}`, "", nil, "", TroubleFailed},
 		{"no version", `{"sessions":[]}`, "", nil, tooOld, TroubleOutdated},
-		{"newer", `{"version":2}`, "", nil, "gpu: agent-manager there is newer than this one; update agent-manager on this machine", TroubleNewer},
-		{"interactive manager instead", "\x1b[?1007l\x1b]10;#ffffff\x07", "agent-manager: could not open a new TTY: open /dev/tty: device not configured\n", exitStatus(1), tooOld, TroubleOutdated},
-		{"not json", "Usage: agent-manager", "", nil, "gpu: unreadable answer to snapshot: invalid character 'U' looking for beginning of value", TroubleFailed},
-		{"remote failure", "", "agent-manager: database is locked\n", exitStatus(1), "gpu: database is locked", TroubleFailed},
+		{"newer", `{"version":2}`, "", nil, "gpu: aghelm there is newer than this one; update aghelm on this machine", TroubleNewer},
+		{"interactive manager instead", "\x1b[?1007l\x1b]10;#ffffff\x07", "aghelm: could not open a new TTY: open /dev/tty: device not configured\n", exitStatus(1), tooOld, TroubleOutdated},
+		{"not json", "Usage: aghelm", "", nil, "gpu: unreadable answer to snapshot: invalid character 'U' looking for beginning of value", TroubleFailed},
+		{"remote failure", "", "aghelm: database is locked\n", exitStatus(1), "gpu: database is locked", TroubleFailed},
 		{"cut at the cap", `{"version":1,"sessions":[{"id":"a1","name":"`, "", errTooLong, "gpu: answered with more than 8 MiB", TroubleFailed},
-		{"missing", "", "sh: agent-manager: not found\n", exitStatus(127), "gpu: agent-manager is not on the login shell's PATH there; install it, add it to PATH in the login profile, or set the connection's path", TroubleMissing},
+		{"missing", "", "sh: aghelm: not found\n", exitStatus(127), "gpu: aghelm is not on the login shell's PATH there; install it, add it to PATH in the login profile, or set the connection's path", TroubleMissing},
 		{"unreachable", "", "ssh: Could not resolve hostname gpu\n", exitStatus(255), "gpu: unreachable over SSH: ssh: Could not resolve hostname gpu", TroubleUnreachable},
 	}
 	for _, tc := range cases {
@@ -286,7 +286,7 @@ func TestLoginProfileOutputIsSkipped(t *testing.T) {
 	}{
 		{"noise before the marker", "(base) conda activated {\n" + outputMarker + current, "", nil, ""},
 		{"a marker in the noise", "echo " + outputMarker + " [\n" + outputMarker + current, "", nil, ""},
-		{"profile exited first", "(base) conda activated {\n", "", nil, "gpu: the login shell there exited before it ran agent-manager"},
+		{"profile exited first", "(base) conda activated {\n", "", nil, "gpu: the login shell there exited before it ran aghelm"},
 		{"profile failed first", "nvm: now using node [", "nvm: command not found\n", exitStatus(1), "gpu: nvm: command not found"},
 	}
 	for _, tc := range cases {
@@ -309,24 +309,24 @@ func TestLoginProfileOutputIsSkipped(t *testing.T) {
 	}
 }
 
-// A command an older agent-manager does not know falls through to its
+// A command an older aghelm does not know falls through to its
 // interactive manager, which fails without a terminal after printing escape
 // sequences.
 func TestUnknownCommandIsTooOldNotUnreadable(t *testing.T) {
 	c := newTestClient(t, func(context.Context, []string) ([]byte, []byte, error) {
-		return []byte("\x1b[?1007l\x1b]10;#ffffff\x07"), []byte("agent-manager: could not open a new TTY\n"), exitStatus(1)
+		return []byte("\x1b[?1007l\x1b]10;#ffffff\x07"), []byte("aghelm: could not open a new TTY\n"), exitStatus(1)
 	})
 	_, err := c.TerminalSend(context.Background(), Ref{Host: "gpu", ID: "a1"}, "ls", nil)
-	if err == nil || err.Error() != "gpu: agent-manager there is too old for SSH connections; update agent-manager on that host" {
+	if err == nil || err.Error() != "gpu: aghelm there is too old for SSH connections; update aghelm on that host" {
 		t.Fatalf("unknown command = %v", err)
 	}
-	if _, err := c.Type(context.Background(), Ref{Host: "gpu", ID: "a1"}, "yes"); err == nil || err.Error() != "gpu: agent-manager there is too old for SSH connections; update agent-manager on that host" {
+	if _, err := c.Type(context.Background(), Ref{Host: "gpu", ID: "a1"}, "yes"); err == nil || err.Error() != "gpu: aghelm there is too old for SSH connections; update aghelm on that host" {
 		t.Fatalf("type on a host that predates it = %v", err)
 	}
-	if _, err := c.Delete(context.Background(), Ref{Host: "gpu", ID: "a1"}); err == nil || err.Error() != "gpu: agent-manager there is too old for SSH connections; update agent-manager on that host" {
+	if _, err := c.Delete(context.Background(), Ref{Host: "gpu", ID: "a1"}); err == nil || err.Error() != "gpu: aghelm there is too old for SSH connections; update aghelm on that host" {
 		t.Fatalf("delete on a host that predates it = %v", err)
 	}
-	if _, err := c.Move(context.Background(), Ref{Host: "gpu", ID: "a1"}, "ops"); err == nil || err.Error() != "gpu: agent-manager there is too old for SSH connections; update agent-manager on that host" {
+	if _, err := c.Move(context.Background(), Ref{Host: "gpu", ID: "a1"}, "ops"); err == nil || err.Error() != "gpu: aghelm there is too old for SSH connections; update aghelm on that host" {
 		t.Fatalf("move on a host that predates it = %v", err)
 	}
 	c = newTestClient(t, func(context.Context, []string) ([]byte, []byte, error) {
@@ -339,8 +339,8 @@ func TestUnknownCommandIsTooOldNotUnreadable(t *testing.T) {
 }
 
 // A type is uncertain when the host saw its paste start, or when the call
-// was cut off after agent-manager started there; a refusal, or a failure
-// before agent-manager ran, is not.
+// was cut off after aghelm started there; a refusal, or a failure
+// before aghelm ran, is not.
 func TestTypeThatMayHaveReachedTheAgent(t *testing.T) {
 	failing := func(code int, stderr string) Runner {
 		return func(context.Context, []string) ([]byte, []byte, error) {
@@ -353,10 +353,10 @@ func TestTypeThatMayHaveReachedTheAgent(t *testing.T) {
 		c    *Client
 		want bool
 	}{
-		{"the host saw the paste start", newTestClient(t, failing(3, "agent-manager: prompt may have reached api and was not sent again: boom")), true},
-		{"ssh dropped after agent-manager started", newTestClient(t, failing(255, "Connection to gpu closed by remote host.")), true},
-		{"the host refused it", newTestClient(t, failing(1, "agent-manager: prompt was not sent to api: boom")), false},
-		{"ssh never reached agent-manager", newRawTestClient(t, failing(255, "ssh: connect to host gpu port 22: Connection refused")), false},
+		{"the host saw the paste start", newTestClient(t, failing(3, "aghelm: prompt may have reached api and was not sent again: boom")), true},
+		{"ssh dropped after aghelm started", newTestClient(t, failing(255, "Connection to gpu closed by remote host.")), true},
+		{"the host refused it", newTestClient(t, failing(1, "aghelm: prompt was not sent to api: boom")), false},
+		{"ssh never reached aghelm", newRawTestClient(t, failing(255, "ssh: connect to host gpu port 22: Connection refused")), false},
 	} {
 		_, err := tc.c.Type(context.Background(), ref, "hi")
 		if err == nil || MayHaveReached(err) != tc.want {

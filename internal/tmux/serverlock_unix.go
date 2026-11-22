@@ -20,7 +20,7 @@ func lockServerContext(ctx context.Context, socket string, exclusive bool) (unlo
 }
 
 // lockPaneSend holds one pane's send lock across processes: a manager's
-// poller and an `agent-manager type` run as separate processes on one host,
+// poller and an `aghelm type` run as separate processes on one host,
 // and the in-process gate alone cannot keep their pastes apart.
 func lockPaneSend(ctx context.Context, socket, target string) (unlock func(), err error) {
 	name := strings.Map(func(r rune) rune {

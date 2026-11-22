@@ -394,7 +394,7 @@ func TestMissingSessionIDIsAUsageError(t *testing.T) {
 			if err == nil {
 				t.Fatal("a command with no session id should not reach the layer")
 			}
-			if !strings.HasPrefix(err.Error(), "usage: agent-manager "+name) {
+			if !strings.HasPrefix(err.Error(), "usage: aghelm "+name) {
 				t.Fatalf("error = %q, want the usage line", err)
 			}
 			if fake.callerID != "" {
@@ -411,7 +411,7 @@ func TestHelpFlagPrintsUsageAndStops(t *testing.T) {
 	if !errors.Is(err, ErrUsageShown) {
 		t.Fatalf("-h should return ErrUsageShown, got %v", err)
 	}
-	if !strings.Contains(out.String(), "usage: agent-manager "+usageSessions) {
+	if !strings.Contains(out.String(), "usage: aghelm "+usageSessions) {
 		t.Fatalf("-h output = %q", out.String())
 	}
 	if fake.callCount != 0 {
@@ -438,7 +438,7 @@ func TestTaskGroupRejectsAnUnknownVerb(t *testing.T) {
 	}
 
 	bare := dispatch(&bytes.Buffer{}, "task", taskVerbs(), nil, func() string { return "cafe0001" }, t.TempDir())
-	if bare == nil || bare.Error() != "usage: agent-manager task <list|create|claim|finish|release|delete>" {
+	if bare == nil || bare.Error() != "usage: aghelm task <list|create|claim|finish|release|delete>" {
 		t.Fatalf("a bare group should print its verbs, got %v", bare)
 	}
 }

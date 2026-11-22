@@ -684,7 +684,7 @@ func TestDirHonorsOverrideThenXDGThenUserConfig(t *testing.T) {
 
 	t.Setenv("AGENT_MANAGER_CONFIG_DIR", "")
 	got, err = Dir()
-	want := filepath.Join(xdg, "agent-manager")
+	want := filepath.Join(xdg, "aghelm")
 	if err != nil || got != want {
 		t.Fatalf("Dir() = %q, %v; want %q", got, err, want)
 	}
@@ -711,7 +711,7 @@ func TestDirHonorsOverrideThenXDGThenUserConfig(t *testing.T) {
 	if berr != nil {
 		t.Fatal(berr)
 	}
-	want = filepath.Join(base, "agent-manager")
+	want = filepath.Join(base, "aghelm")
 	if err != nil || got != want {
 		t.Fatalf("Dir() = %q, %v; want %q", got, err, want)
 	}

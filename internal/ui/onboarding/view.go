@@ -261,7 +261,7 @@ func (m *Model) column(ctx ViewContext, p palette, width, rows int) ([]string, [
 func copyFor(step Step) (string, string) {
 	switch step {
 	case Welcome:
-		return "Welcome to agent-manager", "Every coding agent you run, in one list. A few quick choices and a short tour, about a minute. Everything can change later."
+		return "Welcome to aghelm", "Every coding agent you run, in one list. A few quick choices and a short tour, about a minute. Everything can change later."
 	case Agents:
 		return "Which agents do you use?", "Checked ones show up when you start a session."
 	case Layout:

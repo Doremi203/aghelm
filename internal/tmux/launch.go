@@ -56,7 +56,7 @@ func (d *Driver) Create(id, cwd, command string, env map[string]string, width, h
 // relaunchHint lands in the pane the moment the agent exits, which is where
 // the user is looking when they wonder how to get it back. It names no key:
 // the text is fixed at launch, and the revive key can be rebound after.
-const relaunchHint = "agent-manager: agent exited - revive it in Agent Manager to relaunch it here."
+const relaunchHint = "aghelm: agent exited - revive it in aghelm to relaunch it here."
 
 // envKeysVar lists the keys a launch exported into the pane's shell, so the
 // next launch in that pane can unset the ones its environment dropped.

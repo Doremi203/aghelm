@@ -15,7 +15,7 @@ func viewContext(width, height int) ViewContext {
 		Height:    height,
 		GlyphMode: presentation.GlyphModeAdvanced,
 		Theme:     uitheme.Palettes[0],
-		Wordmark:  "agent-manager",
+		Wordmark:  "aghelm",
 		Keys:      Keys{Prompt: "space", Focus: "→", Back: "←", Review: "ctrl+r", Settings: "s", Messages: "M", Help: "?"},
 		Preview: func(p Preview) []string {
 			lines := make([]string, p.Height)

@@ -4,22 +4,22 @@ import "testing"
 
 func TestCLIVocabulary(t *testing.T) {
 	want := Vocabulary{
-		ListSessions:   "agent-manager sessions",
-		ListTerminals:  "agent-manager terminal list",
-		ListTasks:      "agent-manager task list",
-		ListGroups:     "agent-manager groups",
-		CreateGroup:    "agent-manager create-group",
-		CreateTerminal: "agent-manager terminal create",
-		SpawnTool:      "agent-manager spawn --tool",
-		SpawnModel:     "agent-manager spawn --model",
-		SpawnEffort:    "agent-manager spawn --effort",
-		SpawnProfile:   "agent-manager spawn --profile",
-		Revive:         "agent-manager revive",
-		Restore:        "agent-manager archive --restore",
-		Send:           "agent-manager send",
-		Read:           "agent-manager read",
-		ArchiveSelf:    "agent-manager archive-self",
-		KillSelf:       "agent-manager kill-self",
+		ListSessions:   "aghelm sessions",
+		ListTerminals:  "aghelm terminal list",
+		ListTasks:      "aghelm task list",
+		ListGroups:     "aghelm groups",
+		CreateGroup:    "aghelm create-group",
+		CreateTerminal: "aghelm terminal create",
+		SpawnTool:      "aghelm spawn --tool",
+		SpawnModel:     "aghelm spawn --model",
+		SpawnEffort:    "aghelm spawn --effort",
+		SpawnProfile:   "aghelm spawn --profile",
+		Revive:         "aghelm revive",
+		Restore:        "aghelm archive --restore",
+		Send:           "aghelm send",
+		Read:           "aghelm read",
+		ArchiveSelf:    "aghelm archive-self",
+		KillSelf:       "aghelm kill-self",
 	}
 	if got := CLIVocabulary(); got != want {
 		t.Fatalf("CLIVocabulary() = %+v, want %+v", got, want)

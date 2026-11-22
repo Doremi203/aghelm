@@ -54,7 +54,7 @@ type Tool struct {
 	// instead of opening the picker.
 	ResumePickerKeys string `toml:"resume_picker_keys"`
 	// ForkCommand creates a new conversation from an existing one. Templates
-	// can use {id}, {session_file}, {new_id}, and {name}; Agent Manager quotes
+	// can use {id}, {session_file}, {new_id}, and {name}; aghelm quotes
 	// each value. {session_file} needs SessionStore to keep one ("gemini").
 	// With {new_id} and no {id}, SessionStore makes the copy and names it
 	// ("opencode"), and the command opens it.
@@ -69,7 +69,7 @@ type Tool struct {
 	// "gemini", "hermes", "command-code", "muse", "antigravity", "omp", "cursor"
 	// or "kiro").
 	SessionStore string `toml:"session_store"`
-	// MCP picks how the agent-manager MCP server is registered into this
+	// MCP picks how the aghelm MCP server is registered into this
 	// tool's sessions: "claude", "codex", "opencode", "grok", "gemini",
 	// "hermes", "command-code", "muse", "antigravity", "cursor", "kiro",
 	// "copilot" or "none".
@@ -217,7 +217,7 @@ func init() {
 	if err != nil {
 		return
 	}
-	dir, err := os.MkdirTemp("", "agent-manager-test-")
+	dir, err := os.MkdirTemp("", "aghelm-test-")
 	if err != nil {
 		panic(err)
 	}
@@ -239,7 +239,7 @@ func Dir() (string, error) {
 		if !filepath.IsAbs(base) {
 			return "", errors.New("path in $XDG_CONFIG_HOME is relative")
 		}
-		return filepath.Join(base, "agent-manager"), nil
+		return filepath.Join(base, "aghelm"), nil
 	}
 	base, err := os.UserConfigDir()
 	if err != nil {
@@ -248,7 +248,7 @@ func Dir() (string, error) {
 	if dir := harnessConfigDir(base); dir != "" {
 		return dir, nil
 	}
-	return filepath.Join(base, "agent-manager"), nil
+	return filepath.Join(base, "aghelm"), nil
 }
 
 // chosenConfigDir is AGENT_MANAGER_CONFIG_DIR when this process asked for

@@ -22,7 +22,7 @@ const prefix = "am_"
 // on. A dedicated -L socket keeps agent sessions off the user's default
 // socket, where a shell tmux, a `go test`, or a stray kill-server would
 // otherwise share a server with the live agents and take them all down at once.
-const defaultSocket = "agentmgr"
+const defaultSocket = "aghelm"
 
 // requestOption is the global tmux user option the in-session bindings set
 // on their way out, naming what the manager should do with the session they

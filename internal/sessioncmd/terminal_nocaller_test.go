@@ -64,15 +64,15 @@ func TestTerminalsWithNoCallingSessionDriveOnlyLooseTerminals(t *testing.T) {
 	if opened.ParentID != "" {
 		t.Fatalf("un-nested terminal = %+v", opened)
 	}
-	want = "terminal " + opened.ID + " was opened in Agent Manager, not by a caller with no session; only Agent Manager and its sessions can drive it"
+	want = "terminal " + opened.ID + " was opened in aghelm, not by a caller with no session; only aghelm and its sessions can drive it"
 	if _, err := h.terminals.Send("", opened.ID, "echo hi", nil); err == nil || err.Error() != want {
-		t.Fatalf("Send to a terminal opened in Agent Manager with no caller = %v", err)
+		t.Fatalf("Send to a terminal opened in aghelm with no caller = %v", err)
 	}
 	if _, err := h.terminals.Read("", opened.ID); err == nil || err.Error() != want {
-		t.Fatalf("Read of a terminal opened in Agent Manager with no caller = %v", err)
+		t.Fatalf("Read of a terminal opened in aghelm with no caller = %v", err)
 	}
 	if err := h.terminals.Close("", opened.ID); err == nil || err.Error() != want {
-		t.Fatalf("Close of a terminal opened in Agent Manager with no caller = %v", err)
+		t.Fatalf("Close of a terminal opened in aghelm with no caller = %v", err)
 	}
 	if _, err := h.terminals.Read(h.caller.ID, opened.ID); err != nil {
 		t.Fatalf("a session reading a loose terminal: %v", err)

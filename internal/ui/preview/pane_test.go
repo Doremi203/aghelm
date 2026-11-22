@@ -113,7 +113,7 @@ func TestLineSanitizesAndPadsARow(t *testing.T) {
 // footer and stat rows off their positions.
 func TestExactExpandsTabs(t *testing.T) {
 	const width = 60
-	rows := Exact("ok  \tgithub.com/YoanWai/agent-manager/internal/ui\t73.163s\n", 4, width, -1)
+	rows := Exact("ok  \tgithub.com/Doremi203/aghelm/internal/ui\t73.163s\n", 4, width, -1)
 	if len(rows) != 1 || strings.ContainsRune(rows[0], '\t') {
 		t.Fatalf("tab reached the frame: %q", rows)
 	}

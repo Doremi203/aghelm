@@ -29,7 +29,7 @@ func MissingText(missing Tool, hint string) string {
 // asks for the update the way the user installed it.
 func OutdatedText(outdated Tool, command string) string {
 	head := outdated.Binary + " " + outdated.Installed + " is older than " + outdated.Minimum +
-		", the oldest version Agent Manager supports."
+		", the oldest version aghelm supports."
 	if command != "" {
 		return head + "\n\nUpdate it with: " + command
 	}
@@ -40,10 +40,10 @@ func OutdatedText(outdated Tool, command string) string {
 // the package it cannot load.
 func HermesText(pipCommand string) string {
 	if pipCommand == "" {
-		return "Hermes sessions carry the agent-manager MCP tools, and this Hermes cannot load them: its MCP SDK is not installed.\n\n" +
+		return "Hermes sessions carry the aghelm MCP tools, and this Hermes cannot load them: its MCP SDK is not installed.\n\n" +
 			"Install the mcp package into the Python that runs Hermes, then spawn again."
 	}
-	return "Hermes sessions carry the agent-manager MCP tools, and this Hermes cannot load them: its MCP SDK is not installed.\n\n" +
+	return "Hermes sessions carry the aghelm MCP tools, and this Hermes cannot load them: its MCP SDK is not installed.\n\n" +
 		"Run `" + pipCommand + "` to add the mcp package to the Python that runs Hermes, then spawn again."
 }
 

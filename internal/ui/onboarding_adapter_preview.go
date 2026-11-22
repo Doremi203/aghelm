@@ -91,7 +91,7 @@ func previewSessions(agents []string) []uirail.Session {
 
 // previewHeader is the window's own wordmark and its agents by state.
 func (m *Model) previewHeader(sessions []uirail.Session, width int) string {
-	left := " " + lipgloss.NewStyle().Foreground(uitheme.ColorAccent()).Bold(true).Render("agent-manager")
+	left := " " + lipgloss.NewStyle().Foreground(uitheme.ColorAccent()).Bold(true).Render("aghelm")
 	tally := map[string]int{}
 	for _, session := range sessions {
 		tally[session.Status]++

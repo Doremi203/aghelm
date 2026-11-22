@@ -299,7 +299,7 @@ func TestMarkDroppedRetiresTheMessageForGood(t *testing.T) {
 func TestClaimPollerHoldsForOneManagerAtATime(t *testing.T) {
 	st := newTestStore(t)
 	now := time.Now()
-	const first, second = "/tmp/first/agentmgr", "/tmp/second/agentmgr"
+	const first, second = "/tmp/first/aghelm", "/tmp/second/aghelm"
 
 	holder, err := st.ClaimPoller(first, now)
 	if err != nil {
@@ -356,7 +356,7 @@ func TestClaimPollerSettlesOneHolderUnderARace(t *testing.T) {
 	for _, claim := range []struct {
 		store  *Store
 		socket string
-	}{{first, "/tmp/first/agentmgr"}, {second, "/tmp/second/agentmgr"}} {
+	}{{first, "/tmp/first/aghelm"}, {second, "/tmp/second/aghelm"}} {
 		go func() {
 			<-start
 			holder, err := claim.store.ClaimPoller(claim.socket, now)

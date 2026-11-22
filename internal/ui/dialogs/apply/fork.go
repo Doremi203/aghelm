@@ -61,7 +61,7 @@ type ForkOutcome struct {
 	Launched       store.Session
 	RecordedForkID string
 	// Warning is a caveat on a fork that went through: the child started
-	// without the agent-manager tools. It is not a launch failure, so it
+	// without the aghelm tools. It is not a launch failure, so it
 	// must not open the retry dialog.
 	Warning error
 }

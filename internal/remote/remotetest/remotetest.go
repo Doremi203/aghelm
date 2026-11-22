@@ -11,11 +11,11 @@ import (
 
 const (
 	loginShell = `exec "$SHELL" -lc `
-	marker     = "\x1eagent-manager\x1e"
+	marker     = "\x1eaghelm\x1e"
 )
 
 // Words splits the remote command, argv's last element, back into the
-// words the host runs: agent-manager and its arguments, or tmux for an
+// words the host runs: aghelm and its arguments, or tmux for an
 // attach.
 func Words(argv []string) ([]string, error) {
 	command := argv[len(argv)-1]
@@ -38,7 +38,7 @@ func Words(argv []string) ([]string, error) {
 }
 
 // Answer is stdout as a host prints it: the marker its login shell prints
-// once the profile has run, then agent-manager's own output.
+// once the profile has run, then aghelm's own output.
 func Answer(stdout []byte) []byte {
 	return append([]byte(marker), stdout...)
 }

@@ -632,7 +632,7 @@ func focusedMouseApp(t *testing.T, tool, name string) (*Model, store.Session) {
 	return m, sess
 }
 
-// Ordinary clicks still select and copy inside agent-manager. Holding Alt is
+// Ordinary clicks still select and copy inside aghelm. Holding Alt is
 // the deliberate handoff gesture for an agent that owns the mouse.
 func TestAltClickReachesMouseTrackingApp(t *testing.T) {
 	m, sess := focusedMouseApp(t, "mouse-tool", "clickapp")

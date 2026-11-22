@@ -41,8 +41,8 @@ func TestDialogAddsAValidConnection(t *testing.T) {
 
 func TestDialogSavesTheBinaryPathOnce(t *testing.T) {
 	var d Dialog
-	d.Open(remote.Connection{Name: "box", Destination: "me@box", Binary: "/opt/am/agent-manager"})
-	if d.binary.Value() != "/opt/am/agent-manager" {
+	d.Open(remote.Connection{Name: "box", Destination: "me@box", Binary: "/opt/am/aghelm"})
+	if d.binary.Value() != "/opt/am/aghelm" {
 		t.Fatalf("edit did not fill the path: %q", d.binary.Value())
 	}
 	d.binary.SetValue("")
@@ -59,7 +59,7 @@ func TestDialogSavesTheBinaryPathOnce(t *testing.T) {
 	}
 	d.SaveFailed(d.Gen())
 	d.binary.SetValue("bin/am")
-	if refused := d.Key(tea.KeyMsg{Type: tea.KeyEnter}, nil); refused.Action != DialogRefused || refused.Refusal != "an agent-manager path starts with / or ~/" {
+	if refused := d.Key(tea.KeyMsg{Type: tea.KeyEnter}, nil); refused.Action != DialogRefused || refused.Refusal != "an aghelm path starts with / or ~/" {
 		t.Fatalf("relative path = %+v", refused)
 	}
 	if d.saving {

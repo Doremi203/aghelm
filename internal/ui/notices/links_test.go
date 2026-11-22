@@ -7,24 +7,17 @@ import (
 
 func TestBugReportURLPrefillsVersion(t *testing.T) {
 	got := BugReportURL("v0.2.0")
-	if !strings.HasPrefix(got, "https://github.com/wainmann/agent-manager/issues/new") {
+	if !strings.HasPrefix(got, "https://github.com/Doremi203/aghelm/issues/new") {
 		t.Fatalf("bug report should open the new-issue page, got %q", got)
-	}
-	if !strings.Contains(got, "template=bug_report.yml") {
-		t.Fatalf("bug report should use the bug form, got %q", got)
 	}
 	if !strings.Contains(got, "version=v0.2.0") {
 		t.Fatalf("issue URL should carry the version, got %q", got)
 	}
 }
 
-func TestFeatureRequestURLUsesFeatureTemplate(t *testing.T) {
-	got := FeatureRequestURL()
-	if !strings.Contains(got, "template=feature_request.yml") {
-		t.Fatalf("feature request should use the feature form, got %q", got)
-	}
-	if strings.Contains(got, "template=bug_report.yml") {
-		t.Fatalf("feature request opened the bug form: %q", got)
+func TestFeatureRequestURLOpensABlankIssue(t *testing.T) {
+	if got := FeatureRequestURL(); got != RepoURL+"/issues/new" {
+		t.Fatalf("feature request should open the new-issue page, got %q", got)
 	}
 }
 

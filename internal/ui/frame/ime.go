@@ -17,7 +17,7 @@ import (
 
 const (
 	cursorAnchorValid  = uint64(1) << 63
-	cursorAnchorMarker = "\x1b]1337;agent-manager-ime-cursor\x07"
+	cursorAnchorMarker = "\x1b]1337;aghelm-ime-cursor\x07"
 )
 
 var (

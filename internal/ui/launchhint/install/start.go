@@ -116,7 +116,7 @@ func RunStart(services Services, request StartRequest) (StartResult, error) {
 	result.Pending = pending
 	if sendErr != nil {
 		return result, fmt.Errorf(
-			"%s install may be running in %s; inspect that shell before retrying or quitting; Agent Manager will not send it again: %w",
+			"%s install may be running in %s; inspect that shell before retrying or quitting; aghelm will not send it again: %w",
 			request.Binary, sess.Name, sendErr,
 		)
 	}

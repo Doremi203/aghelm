@@ -113,7 +113,7 @@ func (r *runtime) caller(sessionID string) (store.Session, error) {
 }
 
 // optionalCaller serves commands that never act on the caller's own row, which
-// a script outside Agent Manager may run with no session at all.
+// a script outside aghelm may run with no session at all.
 func (r *runtime) optionalCaller(sessionID string) (store.Session, error) {
 	if sessionID == "" {
 		return store.Session{}, nil

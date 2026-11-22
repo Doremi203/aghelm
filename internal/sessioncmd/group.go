@@ -176,7 +176,7 @@ func (s *Sessions) Move(sessionID, targetID, group string) (Session, error) {
 			return Session{}, fmt.Errorf("group %q does not exist; call %s for the existing ones or %s to add it", group, runtime.words.ListGroups, runtime.words.CreateGroup)
 		}
 		if store.EffectivelyArchived(store.ArchivedGroups(groups), group) {
-			return Session{}, fmt.Errorf("group %q is archived; restore it in Agent Manager first", group)
+			return Session{}, fmt.Errorf("group %q is archived; restore it in aghelm first", group)
 		}
 	}
 	// The move key leaves a row already filed there in its place.

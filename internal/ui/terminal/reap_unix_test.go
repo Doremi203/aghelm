@@ -33,7 +33,7 @@ func TestStartReapedReapsTheExitedChild(t *testing.T) {
 }
 
 func TestStartReapedReturnsTheStartError(t *testing.T) {
-	if err := StartReaped(exec.Command("/nonexistent/agent-manager-test-binary")); err == nil {
+	if err := StartReaped(exec.Command("/nonexistent/aghelm-test-binary")); err == nil {
 		t.Fatal("StartReaped of a missing binary returned nil")
 	}
 }

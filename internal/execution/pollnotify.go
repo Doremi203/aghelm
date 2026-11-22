@@ -21,7 +21,7 @@ import (
 // at the manager, and the session they are watching is precisely the one
 // whose ping they must not miss. The banner quotes what the row shows:
 // a waiting session's question, a finished session's prompt. The notify
-// command set with agent-manager settings runs for the same transitions,
+// command set with aghelm settings runs for the same transitions,
 // after the native banner and never instead of it.
 func (p *Runner) notifyTransition(sess store.Session, newStatus, prompt, quote string) {
 	if p.notifyFn == nil {

@@ -116,7 +116,7 @@ func (d *Driver) styleStatusBar(name string) error {
 // and every way back. A detach key the inner prefix shadows is left off,
 // since the prefix takes it first, and the prefix itself follows with d.
 func attachStatusRight(primary, secondary string, keys keybind.Table) string {
-	parts := []string{"agent-manager"}
+	parts := []string{"aghelm"}
 	if label := titledLabel(keys.Binding(keybind.Review)); label != "" {
 		parts = append(parts, label+" = review")
 	}

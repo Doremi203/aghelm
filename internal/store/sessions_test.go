@@ -1047,7 +1047,7 @@ func TestPlaceSessionMovesAgentChildren(t *testing.T) {
 // to write, however recent its own listing is.
 func TestUpdateStatusOnSocketWritesOnlyWhatThisServerOwns(t *testing.T) {
 	st := newTestStore(t)
-	const mine, theirs = "/tmp/mine/agentmgr", "/tmp/theirs/agentmgr"
+	const mine, theirs = "/tmp/mine/aghelm", "/tmp/theirs/aghelm"
 	sess := Session{ID: "sess-1", Name: "one", Tool: "claude", Cwd: "/tmp", Status: "working"}
 	if err := st.CreateSession(sess); err != nil {
 		t.Fatal(err)
@@ -1104,7 +1104,7 @@ func TestUpdateStatusOnSocketReportsWhichWriteMovedTheStatus(t *testing.T) {
 		return st
 	}
 	holder, managers := open(), []*Store{open(), open()}
-	const socket = "/tmp/shared/agentmgr"
+	const socket = "/tmp/shared/aghelm"
 	sess := Session{ID: "sess-1", Name: "one", Tool: "claude", Cwd: "/tmp", Status: "working"}
 	if err := holder.CreateSession(sess); err != nil {
 		t.Fatal(err)

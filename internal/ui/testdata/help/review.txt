@@ -1,7 +1,7 @@
               ╭── ? Review keys ─────────────────────────────────────────────────────────────────────────╮
               │                                                                                          │
               │   ▍review (ctrl+r) ───────────────────────────────────────────────────────────────────   │
-              │                    Tell your agent what to review in Agent Manager; they set it up.      │
+              │                    Tell your agent what to review in aghelm; they set it up.             │
               │   click            open a file, move to a code line, or run a header key                 │
               │   c                comment on the line                                                   │
               │   d                remove a draft, or mark sent feedback handled / open                  │

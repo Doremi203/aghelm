@@ -230,7 +230,7 @@ func TestATerminalHasNoTurnToEndItselfAfter(t *testing.T) {
 	if _, err := h.sessions.EndAfterTurn(terminal.ID, store.AfterTurnKill); err == nil || !strings.Contains(err.Error(), "terminal") {
 		t.Fatalf("a terminal asking to be killed after its turn = %v", err)
 	}
-	if _, err := h.sessions.EndAfterTurn("", store.AfterTurnArchive); err == nil || !strings.Contains(err.Error(), "not inside an Agent Manager session") {
+	if _, err := h.sessions.EndAfterTurn("", store.AfterTurnArchive); err == nil || !strings.Contains(err.Error(), "not inside an aghelm session") {
 		t.Fatalf("no caller = %v, want the missing caller named", err)
 	}
 }

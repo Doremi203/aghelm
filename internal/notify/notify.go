@@ -157,7 +157,7 @@ func describe(kind Kind) (presentation, bool) {
 			linuxSound:    "dialog-question",
 			linuxUrgency:  "normal",
 			linuxIcon:     "dialog-question",
-			linuxCategory: "x-agent-manager.session.waiting",
+			linuxCategory: "x-aghelm.session.waiting",
 		}, true
 	case Finished:
 		return presentation{
@@ -169,7 +169,7 @@ func describe(kind Kind) (presentation, bool) {
 			linuxSound:    "complete-download",
 			linuxUrgency:  "low",
 			linuxIcon:     "emblem-default",
-			linuxCategory: "x-agent-manager.session.finished",
+			linuxCategory: "x-aghelm.session.finished",
 		}, true
 	case Errored:
 		return presentation{
@@ -181,7 +181,7 @@ func describe(kind Kind) (presentation, bool) {
 			linuxSound:    "dialog-error",
 			linuxUrgency:  "critical",
 			linuxIcon:     "dialog-error",
-			linuxCategory: "x-agent-manager.session.errored",
+			linuxCategory: "x-aghelm.session.errored",
 		}, true
 	default:
 		return presentation{}, false
@@ -206,7 +206,7 @@ func deliver(sessionID, subtitle, body string, detail presentation) {
 	// notification wherever the terminal actually is — including at the
 	// far end of an SSH session, which the remote host's desktop daemon
 	// could never reach.
-	if ghostty() && emitSeq(osc777("agent-manager", terminalBody)) == nil {
+	if ghostty() && emitSeq(osc777("aghelm", terminalBody)) == nil {
 		return
 	}
 	switch goos {
@@ -222,7 +222,7 @@ func deliver(sessionID, subtitle, body string, detail presentation) {
 		// no AppleScript quoting is needed.
 		if runCmd("osascript", "-e", "on run argv",
 			"-e", `display notification (item 3 of argv) with title (item 1 of argv) subtitle (item 2 of argv) sound name (item 4 of argv)`,
-			"-e", "end run", "--", "agent-manager", subtitle, body, detail.macSound) == nil {
+			"-e", "end run", "--", "aghelm", subtitle, body, detail.macSound) == nil {
 			return
 		}
 	case "linux":
@@ -303,7 +303,7 @@ func bodyLine(kind Kind, detail presentation, text string) string {
 // way the click reaches the manager.
 func notifySend(sessionID, body string, detail presentation) error {
 	args := []string{
-		"--app-name=agent-manager",
+		"--app-name=aghelm",
 		"--urgency=" + detail.linuxUrgency,
 		"--category=" + detail.linuxCategory,
 		"--icon=" + detail.linuxIcon,
@@ -313,7 +313,7 @@ func notifySend(sessionID, body string, detail presentation) error {
 	// wrote has to arrive as text.
 	body = markupEscaper.Replace(body)
 	if !notifySendReportsActions() {
-		return runCmd("notify-send", append(args, "--", "agent-manager", body)...)
+		return runCmd("notify-send", append(args, "--", "aghelm", body)...)
 	}
 	// A banner nobody dismisses holds its notify-send until the click
 	// window runs out, so the ones that wait for a click are capped. Past
@@ -321,9 +321,9 @@ func notifySend(sessionID, body string, detail presentation) error {
 	select {
 	case clickWaiters <- struct{}{}:
 	default:
-		return runCmd("notify-send", append(args, "--", "agent-manager", body)...)
+		return runCmd("notify-send", append(args, "--", "aghelm", body)...)
 	}
-	args = append(args, "--action=default=Open", "--", "agent-manager", body)
+	args = append(args, "--action=default=Open", "--", "aghelm", body)
 	type reply struct {
 		action string
 		err    error

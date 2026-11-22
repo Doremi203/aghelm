@@ -98,7 +98,7 @@ func Changes(request Request, result Result, err error) Change {
 	notice := result.Notice
 	if result.Warning != nil && err != nil {
 		// A failure must not hide that a session that did start runs without
-		// the agent-manager tools.
+		// the aghelm tools.
 		if notice != "" && request.Target.Batch {
 			// A batch with a notice reports it instead of the error.
 			notice += "; " + result.Warning.Error()

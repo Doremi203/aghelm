@@ -24,7 +24,7 @@ type OutdatedToolError struct {
 }
 
 func (e OutdatedToolError) Error() string {
-	head := e.Binary + " " + e.Installed + " is older than " + e.Minimum + ", the oldest version agent-manager supports."
+	head := e.Binary + " " + e.Installed + " is older than " + e.Minimum + ", the oldest version aghelm supports."
 	if command := deps.Command(e.Binary); command != "" && !e.ManagedExternally {
 		return head + " Update it with: " + command
 	}

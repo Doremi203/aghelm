@@ -7,7 +7,7 @@ import (
 )
 
 // A CLI registers this server at user scope, so with no caller it is that
-// CLI running outside Agent Manager, and no tool reaches the workspace:
+// CLI running outside aghelm, and no tool reaches the workspace:
 // neither this machine's rows nor a connection's.
 func TestServerWithNoCallerKeepsTheWorkspaceClosed(t *testing.T) {
 	terminals, sessions := &fakeTerminalCommands{}, &fakeSessionCommands{}
@@ -62,7 +62,7 @@ func TestServerWithNoCallerKeepsTheWorkspaceClosed(t *testing.T) {
 	for _, call := range calls {
 		checked[call.name] = true
 		text, isError := callText(t, session, call.name, call.args)
-		if !isError || !strings.Contains(text, "not inside an Agent Manager session") {
+		if !isError || !strings.Contains(text, "not inside an aghelm session") {
 			t.Errorf("%s %v with no caller = %q, isError=%v", call.name, call.args, text, isError)
 		}
 	}

@@ -145,7 +145,7 @@ func lookupSetting(specs settingSpecs, key string) (store.SettingSpec, error) {
 			return spec, nil
 		}
 	}
-	return store.SettingSpec{}, fmt.Errorf("no setting is called %q; agent-manager settings list names them", key)
+	return store.SettingSpec{}, fmt.Errorf("no setting is called %q; aghelm settings list names them", key)
 }
 
 // openSettingsStore makes the directory too, so a setup script can set a

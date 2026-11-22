@@ -170,7 +170,7 @@ func TestShowCommandReachesGhostty(t *testing.T) {
 		return nil
 	}
 	ShowCommand("say done")
-	if !slices.Equal(emitted, []string{"\x1b]777;notify;agent-manager;say done — New notify command\a"}) {
+	if !slices.Equal(emitted, []string{"\x1b]777;notify;aghelm;say done — New notify command\a"}) {
 		t.Fatalf("want one OSC 777 sequence, got %q", emitted)
 	}
 }

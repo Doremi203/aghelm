@@ -67,7 +67,7 @@ func TestStatusToastKeepsLayoutStill(t *testing.T) {
 
 			noticed := shotModel()
 			noticed.layout.width, noticed.layout.height = width, height
-			noticed.errBar.text = "worktree kept (has work): /Users/someone/projects/agent-manager"
+			noticed.errBar.text = "worktree kept (has work): /Users/someone/projects/aghelm"
 			noticedRows := strings.Split(noticed.viewListFrame(), "\n")
 
 			if len(noticedRows) != len(quietRows) {

@@ -116,7 +116,7 @@ func (d *Driver) OpenRepo(dir string) (Repo, error) {
 const maxRepoDepth = 3
 
 // skipDirs are directories ResolveRepos never descends into while hunting for
-// nested repos: dependency trees, build output, and agent-manager's own
+// nested repos: dependency trees, build output, and aghelm's own
 // worktree scratch dirs would only add noise or duplicate a repo already found.
 var skipDirs = map[string]bool{
 	"node_modules":    true,

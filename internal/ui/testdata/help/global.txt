@@ -1,7 +1,7 @@
               ╭── ? Keys ────────────────────────────────────────────────────────────────────────────────╮
               │                                                                                          │
               │   ▍list ──────────────────────────────────────────────────────────────────────────────   │
-              │                    Tell your agent to manage sessions and terminals in Agent Manager.    │
+              │                    Tell your agent to manage sessions and terminals in aghelm.           │
               │   ↑ / k            move the cursor up                                                    │
               │   ↓ / j            move the cursor down                                                  │
               │   click            focus from a row or the preview in the split, select otherwise        │

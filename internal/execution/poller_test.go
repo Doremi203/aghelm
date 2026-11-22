@@ -1875,7 +1875,7 @@ func TestPendingInputWaitsForTheLaunchPrompt(t *testing.T) {
 	if err != nil {
 		t.Fatalf("capture: %v", err)
 	}
-	if !strings.Contains(pane, "agent-manager rename") {
+	if !strings.Contains(pane, "aghelm rename") {
 		t.Fatalf("pane should hold the directive, got:\n%s", pane)
 	}
 }
@@ -1933,7 +1933,7 @@ func TestPendingInputWaitsForBetweenTurn(t *testing.T) {
 				time.Sleep(50 * time.Millisecond)
 				m.applyCmd(t, m.refreshCmd())
 			}
-			settledPane(t, m, sess.ID, "agent-manager rename")
+			settledPane(t, m, sess.ID, "aghelm rename")
 		})
 	}
 }
@@ -1973,7 +1973,7 @@ func TestPendingInputWaitsForTypedText(t *testing.T) {
 		time.Sleep(50 * time.Millisecond)
 		m.applyCmd(t, m.refreshCmd())
 	}
-	settledPane(t, m, sess.ID, "agent-manager rename")
+	settledPane(t, m, sess.ID, "aghelm rename")
 }
 
 func TestPendingInputLandsOnAnErroredPane(t *testing.T) {
@@ -2011,7 +2011,7 @@ func TestPendingInputLandsOnAnErroredPane(t *testing.T) {
 		time.Sleep(50 * time.Millisecond)
 		m.applyCmd(t, m.refreshCmd())
 	}
-	settledPane(t, m, sess.ID, "agent-manager rename")
+	settledPane(t, m, sess.ID, "aghelm rename")
 }
 
 // A prompt that never reaches the pane, because it scrolled out or the agent
@@ -2127,7 +2127,7 @@ func TestUnstampedSessionsFollowTheLeadingManager(t *testing.T) {
 	if err := m.store.SetTmuxSocket(sess.ID, ""); err != nil {
 		t.Fatal(err)
 	}
-	if err := m.store.SetSetting(store.PollerSocketKey, "/tmp/another-manager/agentmgr"); err != nil {
+	if err := m.store.SetSetting(store.PollerSocketKey, "/tmp/another-manager/aghelm"); err != nil {
 		t.Fatal(err)
 	}
 	stampHeartbeat(t, m.store, time.Now())

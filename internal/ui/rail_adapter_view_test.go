@@ -1048,7 +1048,7 @@ func TestInboxBadgeOutlivesTheNameAndTheFocusBadge(t *testing.T) {
 }
 
 func TestRowMarksSessionsOnAnotherServer(t *testing.T) {
-	const here, there = "/tmp/tmux-501/agentmgr", "/tmp/another-manager/agentmgr"
+	const here, there = "/tmp/tmux-501/aghelm", "/tmp/another-manager/aghelm"
 	for _, tc := range []struct {
 		name     string
 		socket   string
@@ -1091,7 +1091,7 @@ func TestRowsAreUnmarkedBeforeTheFirstPoll(t *testing.T) {
 	now := time.Now()
 	sess := store.Session{
 		ID: "away-1", Name: "away", Tool: "claude", Status: status.Working,
-		CreatedAt: now, LastStatusAt: now, TmuxSocket: "/tmp/another-manager/agentmgr",
+		CreatedAt: now, LastStatusAt: now, TmuxSocket: "/tmp/another-manager/aghelm",
 	}
 	m := &Model{
 		layout: layoutState{
@@ -1295,7 +1295,7 @@ func TestAWaitingRowNeverShowsTheRenameDirective(t *testing.T) {
 	sess := spawnUnnamed(t, m, "rate limit the public search route")
 
 	got := ansi.Strip(m.displayName(sess))
-	for _, leaked := range []string{"Run this exact", "agent-manager rename", "Other agent sessions"} {
+	for _, leaked := range []string{"Run this exact", "aghelm rename", "Other agent sessions"} {
 		if strings.Contains(got, leaked) {
 			t.Fatalf("displayName = %q, leaked the launch directive %q", got, leaked)
 		}

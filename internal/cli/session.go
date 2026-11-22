@@ -267,7 +267,7 @@ func runRead(out io.Writer, sessions sessionCommands, args []string, sessionID s
 }
 
 // runWait exits non-zero when the session never reached an awaited state, so
-// `agent-manager wait <id> && next-step` reads the outcome the way a shell
+// `aghelm wait <id> && next-step` reads the outcome the way a shell
 // caller expects. The result still goes out first, JSON included.
 func runWait(out io.Writer, sessions sessionCommands, args []string, sessionID string) error {
 	set := newFlagSet(usageWait)
@@ -304,7 +304,7 @@ func runMessageStatus(out io.Writer, sessions sessionCommands, args []string, se
 	}
 	messageID, err := strconv.ParseInt(operands[0], 10, 64)
 	if err != nil {
-		return fmt.Errorf("message id %q is not a number; agent-manager send prints the id it queued", operands[0])
+		return fmt.Errorf("message id %q is not a number; aghelm send prints the id it queued", operands[0])
 	}
 	state, err := sessions.MessageStatus(sessionID, messageID)
 	if err != nil {
@@ -390,7 +390,7 @@ func runMove(out io.Writer, layer moveLayer, args []string, sessionID string) er
 }
 
 // moveOnHost runs the host's own move, which checks the group there. Like
-// the MCP tools, it reaches a host only for a caller inside Agent Manager.
+// the MCP tools, it reaches a host only for a caller inside aghelm.
 func moveOnHost(layer moveLayer, ref remote.Ref, group, sessionID string) (sessioncmd.Session, error) {
 	if err := sessioncmd.RequireCaller(sessionID); err != nil {
 		return sessioncmd.Session{}, err

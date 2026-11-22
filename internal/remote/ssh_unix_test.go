@@ -83,8 +83,8 @@ func TestSSHArgv(t *testing.T) {
 		"-o", "ControlPath=" + filepath.Join(c.controlDir, "%C"),
 		"-T",
 		"me@gpu",
-		`exec "$SHELL" -lc 'printf %s '\''` + "\x1eagent-manager\x1e" +
-			`'\''; exec '\''agent-manager'\'' '\''snapshot'\'' '\''--json'\'''`,
+		`exec "$SHELL" -lc 'printf %s '\''` + "\x1eaghelm\x1e" +
+			`'\''; exec '\''aghelm'\'' '\''snapshot'\'' '\''--json'\'''`,
 	}
 	if !slices.Equal(got, want) {
 		t.Fatalf("argv:\n got %q\nwant %q", got, want)

@@ -158,7 +158,7 @@ func TestSettingsSetJSONEchoesTheWrite(t *testing.T) {
 }
 
 func TestSettingsCreatesTheStoreBeforeTheFirstRun(t *testing.T) {
-	configDir := filepath.Join(t.TempDir(), "agent-manager")
+	configDir := filepath.Join(t.TempDir(), "aghelm")
 	if err := runSettingsSet(&bytes.Buffer{}, sampleSpecs, []string{"theme", "nord"}, configDir); err != nil {
 		t.Fatalf("settings set with no config dir yet: %v", err)
 	}
@@ -181,7 +181,7 @@ func TestSettingsVerbsCheckTheirOperands(t *testing.T) {
 		}},
 	}
 	for _, tc := range cases {
-		if err := tc.run(); err == nil || !strings.Contains(err.Error(), "usage: agent-manager settings") {
+		if err := tc.run(); err == nil || !strings.Contains(err.Error(), "usage: aghelm settings") {
 			t.Errorf("%s: %v, want the usage line", tc.name, err)
 		}
 	}

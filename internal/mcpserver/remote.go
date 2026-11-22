@@ -340,7 +340,7 @@ func (h *remoteHosts) callerName() (string, error) {
 			return terminal.Name, nil
 		}
 	}
-	return "", fmt.Errorf("session %s is not in Agent Manager's list", h.sessionID)
+	return "", fmt.Errorf("session %s is not in aghelm's list", h.sessionID)
 }
 
 // senderName shortens the session name, not the host, when the whole does

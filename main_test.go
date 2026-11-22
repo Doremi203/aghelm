@@ -39,7 +39,7 @@ func prepareMainProcess() bool {
 	}
 	for i, arg := range os.Args {
 		if arg == "--" {
-			os.Args = append([]string{"agent-manager"}, os.Args[i+1:]...)
+			os.Args = append([]string{"aghelm"}, os.Args[i+1:]...)
 			return true
 		}
 	}
@@ -93,7 +93,7 @@ func TestPrintHelpDoesNotRequireATerminal(t *testing.T) {
 		t.Fatalf("printHelp: %v", err)
 	}
 	for _, want := range []string{
-		"Usage: agent-manager [command]",
+		"Usage: aghelm [command]",
 		"Run the interactive manager when no command is given.",
 		"-h, --help",
 		"-v, --version",
@@ -116,7 +116,7 @@ func TestPrintHelpReturnsWriteError(t *testing.T) {
 	}
 }
 
-const noTerminalNotice = "agent-manager: no terminal attached; run it in a terminal to open the manager"
+const noTerminalNotice = "aghelm: no terminal attached; run it in a terminal to open the manager"
 
 func TestMainNonInteractiveStartDoesNotNeedMultiplexer(t *testing.T) {
 	if prepareMainProcess() {
@@ -131,9 +131,9 @@ func TestMainNonInteractiveStartDoesNotNeedMultiplexer(t *testing.T) {
 		want   string
 		notice bool
 	}{
-		{name: "no-args", want: "Usage: agent-manager [command]", notice: true},
-		{name: "version", args: []string{"--version"}, want: "agent-manager dev"},
-		{name: "help", args: []string{"--help"}, want: "Usage: agent-manager [command]"},
+		{name: "no-args", want: "Usage: aghelm [command]", notice: true},
+		{name: "version", args: []string{"--version"}, want: "aghelm dev"},
+		{name: "help", args: []string{"--help"}, want: "Usage: aghelm [command]"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -215,12 +215,12 @@ func nonInteractiveConfigDir(root string) (env []string, configDir string) {
 	switch runtime.GOOS {
 	case "windows":
 		appData := filepath.Join(root, "AppData")
-		return []string{"HOME", root, "USERPROFILE", root, "AppData", appData, "APPDATA", appData}, filepath.Join(appData, "agent-manager")
+		return []string{"HOME", root, "USERPROFILE", root, "AppData", appData, "APPDATA", appData}, filepath.Join(appData, "aghelm")
 	case "darwin", "ios":
-		return []string{"HOME", root, "USERPROFILE", root}, filepath.Join(root, "Library", "Application Support", "agent-manager")
+		return []string{"HOME", root, "USERPROFILE", root}, filepath.Join(root, "Library", "Application Support", "aghelm")
 	default:
 		xdg := filepath.Join(root, "xdg")
-		return []string{"HOME", root, "USERPROFILE", root, "XDG_CONFIG_HOME", xdg}, filepath.Join(xdg, "agent-manager")
+		return []string{"HOME", root, "USERPROFILE", root, "XDG_CONFIG_HOME", xdg}, filepath.Join(xdg, "aghelm")
 	}
 }
 
@@ -246,7 +246,7 @@ func assertNonInteractiveFailure(t *testing.T, env []string, wantErr string) {
 	if stdout.Len() != 0 {
 		t.Fatalf("stdout = %q, want empty", stdout.String())
 	}
-	if !strings.HasPrefix(stderr.String(), noTerminalNotice+"\nagent-manager: ") || !strings.Contains(stderr.String(), wantErr) {
+	if !strings.HasPrefix(stderr.String(), noTerminalNotice+"\naghelm: ") || !strings.Contains(stderr.String(), wantErr) {
 		t.Fatalf("stderr = %q, want the terminal notice and %q", stderr.String(), wantErr)
 	}
 }
@@ -263,10 +263,10 @@ func TestMainPrintsHelpWithoutStartingTUI(t *testing.T) {
 			cmd.Env = replaceEnv(cmd.Env, "HOME", home, "XDG_CONFIG_HOME", filepath.Join(home, ".config"))
 			out, err := cmd.CombinedOutput()
 			if err != nil {
-				t.Fatalf("agent-manager %s: %v\n%s", helpFlag, err, out)
+				t.Fatalf("aghelm %s: %v\n%s", helpFlag, err, out)
 			}
-			if !strings.Contains(string(out), "Usage: agent-manager [command]") {
-				t.Fatalf("agent-manager %s did not print help:\n%s", helpFlag, out)
+			if !strings.Contains(string(out), "Usage: aghelm [command]") {
+				t.Fatalf("aghelm %s did not print help:\n%s", helpFlag, out)
 			}
 		})
 	}
@@ -282,18 +282,18 @@ func TestMainDispatchesNonInteractiveCommands(t *testing.T) {
 		args []string
 		want string
 	}{
-		{"version", []string{"--version"}, "agent-manager dev"},
-		{"subcommand help", []string{"sessions", "-h"}, "usage: agent-manager sessions"},
-		{"settings verb help", []string{"settings", "set", "-h"}, "usage: agent-manager settings set"},
+		{"version", []string{"--version"}, "aghelm dev"},
+		{"subcommand help", []string{"sessions", "-h"}, "usage: aghelm sessions"},
+		{"settings verb help", []string{"settings", "set", "-h"}, "usage: aghelm settings set"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := mainTestCommand(t, tt.args...).CombinedOutput()
 			if err != nil {
-				t.Fatalf("agent-manager %s: %v\n%s", strings.Join(tt.args, " "), err, out)
+				t.Fatalf("aghelm %s: %v\n%s", strings.Join(tt.args, " "), err, out)
 			}
 			if !strings.Contains(string(out), tt.want) {
-				t.Fatalf("agent-manager %s output does not contain %q:\n%s", strings.Join(tt.args, " "), tt.want, out)
+				t.Fatalf("aghelm %s output does not contain %q:\n%s", strings.Join(tt.args, " "), tt.want, out)
 			}
 		})
 	}
@@ -609,7 +609,7 @@ func TestCallerSessionOutsideTmuxLeavesTheCommandToExplainIt(t *testing.T) {
 	if err == nil {
 		t.Fatal("a command with no caller succeeded")
 	}
-	for _, want := range []string{"session or terminal", "AGENT_MANAGER_SESSION_ID is unset", "pane Agent Manager runs"} {
+	for _, want := range []string{"session or terminal", "AGENT_MANAGER_SESSION_ID is unset", "pane aghelm runs"} {
 		if !strings.Contains(err.Error(), want) {
 			t.Fatalf("error %q does not mention %q", err, want)
 		}
@@ -651,7 +651,7 @@ func TestServeBackgroundPrintsWhetherItStartedOne(t *testing.T) {
 		t.Fatalf("started %v", args)
 	}
 	if err := runServe(&bytes.Buffer{}, &bytes.Buffer{}, []string{"--background", "extra"}, t.TempDir(), start); err == nil ||
-		!strings.Contains(err.Error(), "usage: agent-manager serve [--background]") {
+		!strings.Contains(err.Error(), "usage: aghelm serve [--background]") {
 		t.Fatalf("serve with an operand = %v", err)
 	}
 	if err := runServe(&bytes.Buffer{}, &bytes.Buffer{}, []string{"-h"}, t.TempDir(), start); !errors.Is(err, cli.ErrUsageShown) {

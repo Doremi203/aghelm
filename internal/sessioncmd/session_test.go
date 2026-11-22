@@ -322,7 +322,7 @@ func TestSessionsWithNoCallerListAndReadButStillRefuseToMessage(t *testing.T) {
 	if _, err := h.sessions.Read("", h.caller.ID); err != nil {
 		t.Fatalf("Read with no caller: %v", err)
 	}
-	if _, err := h.sessions.Send("", h.caller.ID, "hello"); err == nil || !strings.Contains(err.Error(), "not inside an Agent Manager session") {
+	if _, err := h.sessions.Send("", h.caller.ID, "hello"); err == nil || !strings.Contains(err.Error(), "not inside an aghelm session") {
 		t.Fatalf("Send with no caller = %v, want the missing caller named", err)
 	}
 }
@@ -344,7 +344,7 @@ func harnessRuntime(t *testing.T, h *sessionHarness) Runtime {
 
 // A CLI that stops answering while the manager registers the MCP server must
 // not keep a spawn or a revive from starting the session: it starts without
-// the agent-manager tools and says so in the result.
+// the aghelm tools and says so in the result.
 func TestSessionsStartThroughAMCPRegistrationThatTimesOut(t *testing.T) {
 	testenv.SkipPOSIXShell(t)
 	bin := t.TempDir()

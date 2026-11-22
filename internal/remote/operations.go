@@ -122,7 +122,7 @@ func (c *Client) Type(ctx context.Context, ref Ref, prompt string) (sessioncmd.S
 	return typed, unreadable(ref.Host, "type", err)
 }
 
-// typeLost marks a type cut off after agent-manager started on the host,
+// typeLost marks a type cut off after aghelm started on the host,
 // by the deadline or a dropped connection, as one that may have reached the
 // agent: the paste may have run before the answer was lost.
 func typeLost(err error) error {

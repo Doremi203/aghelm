@@ -38,7 +38,7 @@ func conversationFree(db queryRower, tool, agentSessionID string) error {
 
 func validateActivePlacement(tx *sql.Tx, sess Session, anchorID string) error {
 	if sess.Archived {
-		return fmt.Errorf("session %q is archived; restore it in Agent Manager first", sess.Name)
+		return fmt.Errorf("session %q is archived; restore it in aghelm first", sess.Name)
 	}
 	for _, id := range []string{anchorID, sess.ParentID} {
 		if id == "" {
@@ -50,7 +50,7 @@ func validateActivePlacement(tx *sql.Tx, sess Session, anchorID string) error {
 			return err
 		}
 		if archived {
-			return fmt.Errorf("session %q is archived; restore it in Agent Manager first", name)
+			return fmt.Errorf("session %q is archived; restore it in aghelm first", name)
 		}
 	}
 	rows, err := tx.Query(`SELECT name FROM groups WHERE archived = 1`)
@@ -70,7 +70,7 @@ func validateActivePlacement(tx *sql.Tx, sess Session, anchorID string) error {
 		return err
 	}
 	if EffectivelyArchived(archived, sess.Group) {
-		return fmt.Errorf("group %q is archived; restore it in Agent Manager first", sess.Group)
+		return fmt.Errorf("group %q is archived; restore it in aghelm first", sess.Group)
 	}
 	return nil
 }

@@ -13,7 +13,7 @@ import (
 	"testing"
 )
 
-// fakeArgvEnv turns the test binary into a fake agent-manager that prints
+// fakeArgvEnv turns the test binary into a fake aghelm that prints
 // its arguments as JSON.
 const fakeArgvEnv = "AM_REMOTE_TEST_PRINT_ARGV"
 
@@ -75,7 +75,7 @@ func TestRemoteCommandRoundTripsThroughLoginShell(t *testing.T) {
 		t.Fatal(err)
 	}
 	fake := "#!/bin/sh\nexec " + quote(self) + ` "$@"` + "\n"
-	if err := os.WriteFile(filepath.Join(bin, "agent-manager"), []byte(fake), 0o755); err != nil {
+	if err := os.WriteFile(filepath.Join(bin, "aghelm"), []byte(fake), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	// A connection's own path skips PATH, and may sit under ~/ or hold
@@ -122,7 +122,7 @@ func TestRemoteCommandRoundTripsThroughLoginShell(t *testing.T) {
 				}
 				var got []string
 				if err := json.Unmarshal(out, &got); err != nil {
-					t.Fatalf("fake agent-manager printed %q: %v", out, err)
+					t.Fatalf("fake aghelm printed %q: %v", out, err)
 				}
 				if !slices.Equal(got, awkwardArgs) {
 					t.Fatalf("arguments changed on the way through %s:\n got %q\nwant %q", shell, got, awkwardArgs)
@@ -141,7 +141,7 @@ func TestQuoteKeepsBackslashesOutsideQuotes(t *testing.T) {
 }
 
 // sshDestinationEnv names a host the real ssh reaches without a prompt,
-// with agent-manager on its login PATH. CI points it at an sshd in WSL to
+// with aghelm on its login PATH. CI points it at an sshd in WSL to
 // drive the Windows client.
 const sshDestinationEnv = "AM_REMOTE_TEST_SSH_DESTINATION"
 
@@ -182,8 +182,8 @@ func TestRealSSHRoundTrip(t *testing.T) {
 }
 
 func TestControlDirIsShortPrivateAndPerProfile(t *testing.T) {
-	dir := ControlDir("/home/me/.config/agent-manager")
-	if dir != ControlDir("/home/me/.config/agent-manager") || dir == ControlDir("/home/me/other") {
+	dir := ControlDir("/home/me/.config/aghelm")
+	if dir != ControlDir("/home/me/.config/aghelm") || dir == ControlDir("/home/me/other") {
 		t.Fatalf("control dir %s is not one per profile", dir)
 	}
 	base := filepath.Base(dir)
@@ -231,7 +231,7 @@ func TestAttachCommand(t *testing.T) {
 		t.Fatalf("attach destination %s", got)
 	}
 	// TestAttachScriptTakesBackTheHostsRequest runs the script itself.
-	want := quoteWords([]string{"tmux", "-u", "-L", "agentmgr", "attach-session", "-t", "am_a1b2c3d4"}) + "; "
+	want := quoteWords([]string{"tmux", "-u", "-L", "aghelm", "attach-session", "-t", "am_a1b2c3d4"}) + "; "
 	if got := cmd.Args[len(cmd.Args)-1]; got != loginShell(attachScript("a1b2c3d4")) || !strings.HasPrefix(attachScript("a1b2c3d4"), want) {
 		t.Fatalf("attach runs %q, want it to start with %q", got, want)
 	}

@@ -23,9 +23,9 @@ const (
 // option.
 var destinationPattern = regexp.MustCompile(`^[A-Za-z0-9_][A-Za-z0-9_.@:-]*$`)
 
-// Connection is another machine's agent-manager, reached as an SSH
+// Connection is another machine's aghelm, reached as an SSH
 // destination: user@host or an alias from ~/.ssh/config. Binary is where
-// agent-manager is installed there, an absolute path or one under ~/;
+// aghelm is installed there, an absolute path or one under ~/;
 // empty finds it on the login shell's PATH.
 type Connection struct {
 	Name        string
@@ -73,13 +73,13 @@ func ValidateConnection(next Connection, others []Connection) error {
 	switch {
 	case binary == "":
 	case len(binary) > maxBinaryBytes:
-		return fmt.Errorf("an agent-manager path can be at most %d bytes long", maxBinaryBytes)
+		return fmt.Errorf("an aghelm path can be at most %d bytes long", maxBinaryBytes)
 	case !utf8.ValidString(binary) || strings.IndexFunc(binary, unicode.IsControl) >= 0:
-		return errors.New("an agent-manager path cannot contain control characters")
+		return errors.New("an aghelm path cannot contain control characters")
 	case !strings.HasPrefix(binary, "/") && !strings.HasPrefix(binary, "~/"):
-		return errors.New("an agent-manager path starts with / or ~/")
+		return errors.New("an aghelm path starts with / or ~/")
 	case strings.HasSuffix(binary, "/"):
-		return errors.New("an agent-manager path names the binary, not its directory")
+		return errors.New("an aghelm path names the binary, not its directory")
 	}
 	return nil
 }

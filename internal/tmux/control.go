@@ -58,7 +58,7 @@ type reply struct {
 
 // tmux before 3.7 crashes if a control client is notified mid-handshake
 // (tmux/tmux#4980). attachGate orders this process, and a lock file beside
-// the socket orders every agent-manager process on that server.
+// the socket orders every aghelm process on that server.
 const attachGateSlots int64 = 1 << 20
 
 var attachGate = semaphore.NewWeighted(attachGateSlots)

@@ -10,10 +10,10 @@ const (
 	// TroubleUnreachable is ssh's own failure, or a host that did not
 	// answer in time.
 	TroubleUnreachable
-	// TroubleMissing is no agent-manager where the call looked for it.
+	// TroubleMissing is no aghelm where the call looked for it.
 	TroubleMissing
-	// TroubleOutdated is an agent-manager there too old for this one.
+	// TroubleOutdated is an aghelm there too old for this one.
 	TroubleOutdated
-	// TroubleNewer is an agent-manager there newer than this one.
+	// TroubleNewer is an aghelm there newer than this one.
 	TroubleNewer
 )

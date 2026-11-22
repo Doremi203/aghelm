@@ -29,7 +29,7 @@ func RequireCaller(sessionID string) error {
 
 func validSession(sessionID string) error {
 	if sessionID == "" {
-		return fmt.Errorf("not inside an Agent Manager session or terminal (this process does not run in a pane Agent Manager runs, and %s is unset or was inherited by a process outside one, such as a daemon)", hooks.EnvSessionID)
+		return fmt.Errorf("not inside an aghelm session or terminal (this process does not run in a pane aghelm runs, and %s is unset or was inherited by a process outside one, such as a daemon)", hooks.EnvSessionID)
 	}
 	if !sessionIDPattern.MatchString(sessionID) {
 		return fmt.Errorf("invalid session id %q", sessionID)
@@ -84,7 +84,7 @@ func renameMailbox(ctx context.Context, mailbox *hooks.Manager, sessionID, name 
 		return "", err
 	}
 	if !awake {
-		return fmt.Sprintf("rename to %q is queued: no Agent Manager is running to apply it; it takes effect when one opens", name), nil
+		return fmt.Sprintf("rename to %q is queued: no aghelm is running to apply it; it takes effect when one opens", name), nil
 	}
 	// The manager answers the name as it will take it, so the wait
 	// recognizes its own answer by that name rather than the typed one.
@@ -116,7 +116,7 @@ func renameMailbox(ctx context.Context, mailbox *hooks.Manager, sessionID, name 
 		case <-time.After(renameResultPoll):
 		}
 	}
-	return fmt.Sprintf("rename to %q is queued: Agent Manager is running but has not applied it yet", name), nil
+	return fmt.Sprintf("rename to %q is queued: aghelm is running but has not applied it yet", name), nil
 }
 
 // renameWasReplaced reports that a later rename took this one's place in

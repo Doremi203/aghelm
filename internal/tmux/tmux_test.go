@@ -28,7 +28,7 @@ const argsFileEnv = "AM_TMUX_TEST_ARGS_FILE"
 // exit-empty shutdown that takes the next test's fresh session down with it
 // ("server exited unexpectedly").
 func TestMain(m *testing.M) {
-	// startOtherProcess runs this binary again as a second agent-manager
+	// startOtherProcess runs this binary again as a second aghelm
 	// process, with the tmux binary and the session as its arguments.
 	if action := os.Getenv(otherProcessEnv); action != "" {
 		os.Exit(repeatUntilStdinCloses(&Driver{bin: os.Args[1], socket: testSocket}, action, os.Args[2]))

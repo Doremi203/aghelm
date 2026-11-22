@@ -1,4 +1,4 @@
-// Package cli implements agent-manager's subcommands over internal/sessioncmd,
+// Package cli implements aghelm's subcommands over internal/sessioncmd,
 // the same layer the MCP server drives. An agent whose CLI carries no MCP
 // client reaches the workspace from its shell instead, and both fronts speak
 // the same words because the sentences come from sessioncmd.
@@ -111,13 +111,13 @@ func CommandsWithArchiveOwner(specs settingSpecs, owner sessioncmd.ArchiveOwner)
 
 func Help(proactive bool) string {
 	var help strings.Builder
-	help.WriteString("Usage: agent-manager [command]\n\n")
+	help.WriteString("Usage: aghelm [command]\n\n")
 	help.WriteString("Run the interactive manager when no command is given.\n\n")
-	help.WriteString("agent-manager runs your session beside the user's other agents and terminals.\n")
+	help.WriteString("aghelm runs your session beside the user's other agents and terminals.\n")
 	if !proactive {
 		help.WriteString("Work with those other agents only when the user asks: on your own, do not list, message, spawn or wait on them, or create or claim shared tasks.\n")
 	}
-	help.WriteString("settings needs no caller. Every other command acts as the session or terminal whose pane started it, so run them from your own shell, not from a daemon or a process that outlived its pane. The exception is a Claude conversation Agent Manager launched that /background, /fork or the agent view moved out of its pane: it still acts as the session that launched it, while one started by hand has no caller. sessions, groups, snapshot, spawn, read, wait, kill, delete, revive, archive, move, create-group and delete-group also run from a script outside Agent Manager (a move of a host::id excepted), where spawn defaults to the CLI picked in settings, the root group and the script's directory. So do send with --from <name>, whose message says no reply can reach the sender, and terminal create, send, read and close, which there open a terminal under no session and drive only terminals under none. type runs only there: it is the user's own quick bar prompt from another machine, so an agent never uses it.\n")
+	help.WriteString("settings needs no caller. Every other command acts as the session or terminal whose pane started it, so run them from your own shell, not from a daemon or a process that outlived its pane. The exception is a Claude conversation aghelm launched that /background, /fork or the agent view moved out of its pane: it still acts as the session that launched it, while one started by hand has no caller. sessions, groups, snapshot, spawn, read, wait, kill, delete, revive, archive, move, create-group and delete-group also run from a script outside aghelm (a move of a host::id excepted), where spawn defaults to the CLI picked in settings, the root group and the script's directory. So do send with --from <name>, whose message says no reply can reach the sender, and terminal create, send, read and close, which there open a terminal under no session and drive only terminals under none. type runs only there: it is the user's own quick bar prompt from another machine, so an agent never uses it.\n")
 	for _, section := range sections(nil) {
 		help.WriteString("\n" + section.title + "\n")
 		help.WriteString(usageLines(section.commands))
@@ -131,7 +131,7 @@ func Help(proactive bool) string {
 func usageLines(commands []command) string {
 	var lines strings.Builder
 	for _, command := range commands {
-		lines.WriteString("  agent-manager " + command.usage + "\n")
+		lines.WriteString("  aghelm " + command.usage + "\n")
 		lines.WriteString("      " + command.about + "\n")
 		lines.WriteString(usageLines(command.verbs))
 	}
@@ -162,7 +162,7 @@ func verbNames(verbs []command) []string {
 func dispatch(out io.Writer, group string, verbs []command, args []string, caller func() string, configDir string) error {
 	names := verbNames(verbs)
 	if len(args) == 0 {
-		return fmt.Errorf("usage: agent-manager %s <%s>", group, strings.Join(names, "|"))
+		return fmt.Errorf("usage: aghelm %s <%s>", group, strings.Join(names, "|"))
 	}
 	if args[0] == "-h" || args[0] == "--help" || args[0] == "help" {
 		fmt.Fprint(out, usageLines(verbs))
@@ -203,19 +203,19 @@ func styledFlag(set *flag.FlagSet) *bool {
 }
 
 func usageError(usage string) error {
-	return fmt.Errorf("usage: agent-manager %s", usage)
+	return fmt.Errorf("usage: aghelm %s", usage)
 }
 
 func parseCommand(out io.Writer, set *flag.FlagSet, args []string, min, max int) ([]string, error) {
 	operands, err := parseInterspersed(set, args)
 	if errors.Is(err, flag.ErrHelp) {
-		fmt.Fprintln(out, "usage: agent-manager "+set.Name())
+		fmt.Fprintln(out, "usage: aghelm "+set.Name())
 		set.SetOutput(out)
 		set.PrintDefaults()
 		return nil, ErrUsageShown
 	}
 	if err != nil {
-		return nil, fmt.Errorf("%w; usage: agent-manager %s", err, set.Name())
+		return nil, fmt.Errorf("%w; usage: aghelm %s", err, set.Name())
 	}
 	if len(operands) < min || (max != anyNumber && len(operands) > max) {
 		return nil, usageError(set.Name())

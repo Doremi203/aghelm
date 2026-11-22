@@ -164,7 +164,7 @@ func TestResultsAreCleaned(t *testing.T) {
 
 func TestRemoteErrorTextIsCleaned(t *testing.T) {
 	c := newTestClient(t, func(context.Context, []string) ([]byte, []byte, error) {
-		return nil, []byte("agent-manager: no session \x1b]0;pwn\x07named \x1b[31mx\r\x9b2J\n"), exitStatus(1)
+		return nil, []byte("aghelm: no session \x1b]0;pwn\x07named \x1b[31mx\r\x9b2J\n"), exitStatus(1)
 	})
 	_, err := c.Kill(context.Background(), Ref{Host: "gpu", ID: "a1"})
 	if err == nil || err.Error() != "gpu: no session named x" {

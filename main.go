@@ -68,13 +68,13 @@ func main() {
 				err = printHelp(os.Stdout, dir)
 			}
 			if err != nil {
-				fmt.Fprintln(os.Stderr, "agent-manager:", err)
+				fmt.Fprintln(os.Stderr, "aghelm:", err)
 				os.Exit(1)
 			}
 			return
 		}
 		if os.Args[1] == "--version" || os.Args[1] == "-v" {
-			fmt.Println("agent-manager", version)
+			fmt.Println("aghelm", version)
 			return
 		}
 		if command, ok := subcommands()[os.Args[1]]; ok {
@@ -84,7 +84,7 @@ func main() {
 				if errors.Is(err, cli.ErrUsageShown) {
 					return
 				}
-				fmt.Fprintln(os.Stderr, "agent-manager:", err)
+				fmt.Fprintln(os.Stderr, "aghelm:", err)
 				os.Exit(cli.ExitCode(err))
 			}
 			return
@@ -96,19 +96,19 @@ func main() {
 	// not have one. Say so on stderr, print usage on stdout, and
 	// succeed; a real terminal still falls through to run.
 	if len(os.Args) == 1 && !stdioIsTerminal() {
-		fmt.Fprintln(os.Stderr, "agent-manager: no terminal attached; run it in a terminal to open the manager")
+		fmt.Fprintln(os.Stderr, "aghelm: no terminal attached; run it in a terminal to open the manager")
 		dir, err := config.Dir()
 		if err == nil {
 			err = printHelp(os.Stdout, dir)
 		}
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "agent-manager:", err)
+			fmt.Fprintln(os.Stderr, "aghelm:", err)
 			os.Exit(1)
 		}
 		return
 	}
 	if err := run(); err != nil {
-		fmt.Fprintln(os.Stderr, "agent-manager:", err)
+		fmt.Fprintln(os.Stderr, "aghelm:", err)
 		os.Exit(1)
 	}
 }
@@ -178,15 +178,15 @@ func runServe(out, errs io.Writer, args []string, dir string, start app.Starter)
 	background := set.Bool("background", false, "start a detached manager unless one is already running, print {\"started\":bool,\"pid\":N} and return at once")
 	if err := set.Parse(args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
-			fmt.Fprintln(out, "usage: agent-manager "+usageServe)
+			fmt.Fprintln(out, "usage: aghelm "+usageServe)
 			set.SetOutput(out)
 			set.PrintDefaults()
 			return cli.ErrUsageShown
 		}
-		return fmt.Errorf("%w; usage: agent-manager %s", err, usageServe)
+		return fmt.Errorf("%w; usage: aghelm %s", err, usageServe)
 	}
 	if set.NArg() != 0 {
-		return fmt.Errorf("usage: agent-manager %s", usageServe)
+		return fmt.Errorf("usage: aghelm %s", usageServe)
 	}
 	if *background {
 		started, err := app.ServeBackground(dir, time.Now(), start)
@@ -200,7 +200,7 @@ func runServe(out, errs io.Writer, args []string, dir string, start app.Starter)
 		return err
 	}
 	if !acquired {
-		fmt.Fprintln(out, "agent-manager serve: another serve is already running for this profile")
+		fmt.Fprintln(out, "aghelm serve: another serve is already running for this profile")
 		return nil
 	}
 	defer release()

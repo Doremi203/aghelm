@@ -516,7 +516,7 @@ func (m *Model) commitSpawn(request uilaunch.Request, sess store.Session) {
 		m.ledger.spawner.RememberSpawn(request.ToolName, request.PickWorktree)
 		spawn.RememberModel(m.spawnHost(), request.ToolName, spawn.Pick(request.Choice))
 		// The pick is the Settings default from now on, so the next form,
-		// the quick bar and an agent-manager spawn open on it. A remote
+		// the quick bar and an aghelm spawn open on it. A remote
 		// spawn never reaches here, so it leaves the local default alone.
 		m.saveChoiceSetting(uisettings.DefaultToolSetting, request.ToolName)
 	}

@@ -24,7 +24,7 @@ func TestConfigurationRoundTripAndMerge(t *testing.T) {
 			{Name: "z-last-alphabetically", Path: "/projects", Worktree: "on", Base: "main", Environment: "work"},
 			{Name: "a-first-alphabetically", Path: `C:\projects`, Worktree: "off"},
 		},
-		Connections: []Connection{{Name: "z-server", Destination: "user@host", Binary: "~/bin/agent-manager"}, {Name: "a-server", Destination: "alias"}},
+		Connections: []Connection{{Name: "z-server", Destination: "user@host", Binary: "~/bin/aghelm"}, {Name: "a-server", Destination: "alias"}},
 	}
 	if err := source.ImportConfiguration(original, transferSpecs); err != nil {
 		t.Fatal(err)

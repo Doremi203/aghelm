@@ -33,9 +33,9 @@ func TestRowFindsAgentsAndTerminals(t *testing.T) {
 func TestTroubleLabels(t *testing.T) {
 	for trouble, want := range map[remote.Trouble]string{
 		remote.TroubleUnreachable: "unreachable",
-		remote.TroubleMissing:     "agent-manager missing",
-		remote.TroubleOutdated:    "agent-manager too old",
-		remote.TroubleNewer:       "agent-manager newer",
+		remote.TroubleMissing:     "aghelm missing",
+		remote.TroubleOutdated:    "aghelm too old",
+		remote.TroubleNewer:       "aghelm newer",
 		remote.TroubleFailed:      "error",
 	} {
 		if got := TroubleLabel(trouble); got != want {

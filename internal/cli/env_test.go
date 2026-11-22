@@ -76,7 +76,7 @@ func TestEnvSetRefusesAnOperandThatIsNotAnAssignment(t *testing.T) {
 
 // A setup script defines its profiles before the manager has ever run.
 func TestEnvSetCreatesTheConfigDirectory(t *testing.T) {
-	configDir := filepath.Join(t.TempDir(), "agent-manager")
+	configDir := filepath.Join(t.TempDir(), "aghelm")
 	if err := runEnvSet(&bytes.Buffer{}, []string{"work", "A=1"}, configDir); err != nil {
 		t.Fatalf("set into a fresh config directory: %v", err)
 	}

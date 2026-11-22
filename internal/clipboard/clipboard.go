@@ -60,7 +60,7 @@ var (
 
 // pastesDir is the shared temp directory for clipboard image files.
 func pastesDir() string {
-	return filepath.Join(os.TempDir(), "agent-manager-pastes")
+	return filepath.Join(os.TempDir(), "aghelm-pastes")
 }
 
 // IsPastePath reports whether a word is one of the image paths a pasted

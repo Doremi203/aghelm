@@ -26,7 +26,7 @@ func TestApplyPreservesHermesSDKCheckTimeout(t *testing.T) {
 			}
 			dir := fakeCLI(t, "hermes", "case \"$1\" in\nconfig) exit 1 ;;\n--version) "+version+" ;;\n*) printf \"requires the 'mcp' Python SDK\\n\" ;;\nesac\n")
 			shortenRegistrationTimeout(t, 300*time.Millisecond)
-			_, err := Apply("hermes", "/opt/bin/agent-manager", dir, "hermes", map[string]string{})
+			_, err := Apply("hermes", "/opt/bin/aghelm", dir, "hermes", map[string]string{})
 			var timeout *TimeoutError
 			if !errors.As(err, &timeout) || timeout.Tool != "hermes" {
 				t.Fatalf("err = %v, want a Hermes TimeoutError", err)

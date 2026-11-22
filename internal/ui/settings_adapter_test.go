@@ -16,6 +16,7 @@ import (
 	"github.com/Doremi203/aghelm/internal/launch"
 	"github.com/Doremi203/aghelm/internal/store"
 	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
+	uinotices "github.com/Doremi203/aghelm/internal/ui/notices"
 	"github.com/Doremi203/aghelm/internal/ui/presentation"
 	uisettings "github.com/Doremi203/aghelm/internal/ui/settings"
 	uipersist "github.com/Doremi203/aghelm/internal/ui/settings/persist"
@@ -250,8 +251,8 @@ func TestSettingsBugReportRowOpensIssue(t *testing.T) {
 		t.Fatal("browser started during Update")
 	}
 	m.applyCmd(t, cmd)
-	if !strings.Contains(opened, "template=bug_report.yml") {
-		t.Fatalf("enter should open the bug form, got %q", opened)
+	if !strings.HasPrefix(opened, uinotices.RepoURL+"/issues/new") {
+		t.Fatalf("enter should open the new-issue page, got %q", opened)
 	}
 	if !strings.Contains(opened, "version=") {
 		t.Fatalf("bug form should carry the version, got %q", opened)
@@ -281,11 +282,8 @@ func TestSettingsFeatureRequestRowOpensForm(t *testing.T) {
 	m.settingsCard().State().Field = uisettings.FieldFeatureRequest
 	_, cmd := m.handleSettingsKey(key("enter"))
 	m.applyCmd(t, cmd)
-	if !strings.Contains(opened, "template=feature_request.yml") {
-		t.Fatalf("enter should open the feature form, got %q", opened)
-	}
-	if strings.Contains(opened, "template=bug_report.yml") {
-		t.Fatalf("suggest a change opened the bug form: %q", opened)
+	if opened != uinotices.FeatureRequestURL() {
+		t.Fatalf("enter should open the new-issue page, got %q", opened)
 	}
 	if !m.settingsOpen() {
 		t.Fatal("the action row must not close settings")

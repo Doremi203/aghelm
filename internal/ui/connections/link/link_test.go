@@ -141,7 +141,7 @@ func TestARefreshOfAReplacedListIsDropped(t *testing.T) {
 	}
 }
 
-// A host that failed says why agent-manager there is unusable rather than
+// A host that failed says why aghelm there is unusable rather than
 // reading as merely down.
 func TestRailHostsNameTheTrouble(t *testing.T) {
 	state := listedState(t, &ssh{})
