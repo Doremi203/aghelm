@@ -11,7 +11,7 @@ import (
 // neither this machine's rows nor a connection's.
 func TestServerWithNoCallerKeepsTheWorkspaceClosed(t *testing.T) {
 	terminals, sessions := &fakeTerminalCommands{}, &fakeSessionCommands{}
-	session := connectServer(t, newServer(t.TempDir(), "", "test", true, terminals, sessions, &fakeReporter{}))
+	session := connectServer(t, newServer(t.TempDir(), "", "test", true, terminals, sessions))
 	calls := []struct {
 		name string
 		args map[string]any
@@ -58,8 +58,7 @@ func TestServerWithNoCallerKeepsTheWorkspaceClosed(t *testing.T) {
 		{"close_terminal", map[string]any{"terminal_id": "t1"}},
 		{"close_terminal", map[string]any{"terminal_id": "box::t1"}},
 	}
-	// report_issue touches no session and stays open outside Agent Manager.
-	checked := map[string]bool{"report_issue": true}
+	checked := map[string]bool{}
 	for _, call := range calls {
 		checked[call.name] = true
 		text, isError := callText(t, session, call.name, call.args)

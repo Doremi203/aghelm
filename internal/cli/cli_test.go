@@ -508,9 +508,6 @@ func TestJSONIsPromisedOnlyWhereTheCommandTakesIt(t *testing.T) {
 		{usageReviewMode, func(out *bytes.Buffer, args []string) error {
 			return runReviewMode(out, append([]string{"staged"}, args...), "cafe0001", t.TempDir())
 		}},
-		{usageIssue, func(out *bytes.Buffer, args []string) error {
-			return runIssue(out, sampleReporter(), append([]string{"t", "--body", "b"}, args...), "cafe0001")
-		}},
 		{usageUpdate, func(out *bytes.Buffer, args []string) error {
 			swapUpdateSeams(t, "agent-manager", update.Manager{},
 				update.Result{Releases: []update.Release{{Version: "v0.31.0"}}}, nil)
@@ -550,15 +547,15 @@ func TestAFrontReportsWhatTheLayerDecided(t *testing.T) {
 	}
 }
 
-// Resolving a caller from a terminal asks tmux, which update, issue and
-// feature have no use for.
+// Resolving a caller from a terminal asks tmux, which these commands have no
+// use for.
 func TestCommandsThatActAsNoSessionNeverResolveACaller(t *testing.T) {
 	table := Commands("dev", sampleSpecs)
 	resolve := func() string {
 		t.Fatal("the caller was resolved")
 		return ""
 	}
-	for _, name := range []string{"update", "issue", "feature", "settings", "prompts", "env"} {
+	for _, name := range []string{"update", "settings", "prompts", "env"} {
 		if err := table[name]([]string{"-h"}, resolve, t.TempDir()); !errors.Is(err, ErrUsageShown) {
 			t.Fatalf("%s -h: %v", name, err)
 		}
@@ -570,7 +567,7 @@ func TestCommandsAndHelpCoverEverySection(t *testing.T) {
 	registered := []string{
 		"sessions", "snapshot", "spawn", "send", "type", "read", "wait", "message-status", "kill", "delete", "revive", "archive", "move", "archive-self", "kill-self", "prompts", "env",
 		"groups", "create-group", "delete-group", "task", "reserve", "release-files", "reservations", "terminal",
-		"rename", "review-repo", "review-base", "review-mode", "review-comment", "issue", "feature", "settings", "export", "import", "update",
+		"rename", "review-repo", "review-base", "review-mode", "review-comment", "settings", "export", "import", "update",
 	}
 	for _, name := range registered {
 		if table[name] == nil {
@@ -582,7 +579,7 @@ func TestCommandsAndHelpCoverEverySection(t *testing.T) {
 	}
 
 	help := Help("dev", false)
-	for _, line := range []string{usageSessions, usageReserve, usageTerminalSend, usageRename, usageReviewComment, usageIssue, usageFeature, usageUpdate, usageSettingsSet, usagePromptsAdd, usageEnvSet, "task <list|create|claim|finish|release|delete>", "settings <list|get|set>", "prompts <list|add|rm>", "env <list|show|set|unset|rm>"} {
+	for _, line := range []string{usageSessions, usageReserve, usageTerminalSend, usageRename, usageReviewComment, usageUpdate, usageSettingsSet, usagePromptsAdd, usageEnvSet, "task <list|create|claim|finish|release|delete>", "settings <list|get|set>", "prompts <list|add|rm>", "env <list|show|set|unset|rm>"} {
 		if !strings.Contains(help, line) {
 			t.Fatalf("help is missing %q:\n%s", line, help)
 		}
