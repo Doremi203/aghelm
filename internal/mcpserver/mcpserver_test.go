@@ -665,7 +665,7 @@ func TestBadInputsReturnToolErrors(t *testing.T) {
 	}
 
 	noSession := connect(t, configDir, "")
-	if text, isError := callText(t, noSession, "rename", map[string]any{"name": "x"}); !isError || !strings.Contains(text, "AGENT_MANAGER_SESSION_ID") {
+	if text, isError := callText(t, noSession, "rename", map[string]any{"name": "x"}); !isError || !strings.Contains(text, "AGHELM_SESSION_ID") {
 		t.Fatalf("missing session id should error, got %q", text)
 	}
 }

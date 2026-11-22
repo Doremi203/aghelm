@@ -173,7 +173,7 @@ func TestCreateExportsColorFgBg(t *testing.T) {
 // agent drops the pane onto the shell the script execs, and an agent
 // started again from that shell belongs to this managed session only if it
 // inherits these values: the rename subcommand and the MCP server both
-// identify the session by AGENT_MANAGER_SESSION_ID alone.
+// identify the session by AGHELM_SESSION_ID alone.
 func TestCreateExportsSessionEnvIntoTheShell(t *testing.T) {
 	testenv.SkipPOSIXShell(t)
 	driver := requireTmux(t)
@@ -186,8 +186,8 @@ func TestCreateExportsSessionEnvIntoTheShell(t *testing.T) {
 	}
 	t.Setenv("SHELL", shell)
 	env := map[string]string{
-		"AGENT_MANAGER_SESSION_ID":  "abc123",
-		"AGENT_MANAGER_STATUS_FILE": "/tmp/status-abc123",
+		"AGHELM_SESSION_ID":  "abc123",
+		"AGHELM_STATUS_FILE": "/tmp/status-abc123",
 	}
 	// A launch command that returns at once stands in for the user quitting
 	// the agent back to the pane's shell.
@@ -199,7 +199,7 @@ func TestCreateExportsSessionEnvIntoTheShell(t *testing.T) {
 
 	// Written whole and moved into place, so the read cannot land between
 	// the two values.
-	report := `printf '%s %s\n' "$AGENT_MANAGER_SESSION_ID" "$AGENT_MANAGER_STATUS_FILE" > ` +
+	report := `printf '%s %s\n' "$AGHELM_SESSION_ID" "$AGHELM_STATUS_FILE" > ` +
 		marker + `.part && mv ` + marker + `.part ` + marker
 	if err := driver.SendKeys(id, report, "Enter"); err != nil {
 		t.Fatalf("SendKeys: %v", err)

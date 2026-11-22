@@ -34,7 +34,7 @@ var detachedEditors = map[string]bool{
 func GUIEditors() []string { return slices.Clone(guiEditors) }
 
 // Resolve picks the command that opens a directory: the one Settings holds,
-// then $AGENT_MANAGER_EDITOR, then a GUI editor this machine has. $VISUAL
+// then $AGHELM_EDITOR, then a GUI editor this machine has. $VISUAL
 // and $EDITOR come last because they usually name the editor set for git
 // commit messages, not the one a project is meant to open in.
 func Resolve(configured, manager, visual, editor string, gui []string, lookup func(string) (string, error)) string {

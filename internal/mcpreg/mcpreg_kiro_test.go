@@ -33,7 +33,7 @@ exit 1
 	}
 	want := strings.Join([]string{"mcp", "add", "--scope", "global", "--name", "aghelm",
 		"--command", exe, "--args", "mcp",
-		"--env", "AGENT_MANAGER_SESSION_ID=${AGENT_MANAGER_SESSION_ID}", "--force"}, "\n") + "\n"
+		"--env", "AGHELM_SESSION_ID=${AGHELM_SESSION_ID}", "--force"}, "\n") + "\n"
 	if string(args) != want {
 		t.Fatalf("kiro-cli args = %q want %q", args, want)
 	}

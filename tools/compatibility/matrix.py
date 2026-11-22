@@ -27,7 +27,7 @@ def isolated(home):
     home.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ, HOME=str(home), XDG_CONFIG_HOME=str(home / '.config'),
                XDG_DATA_HOME=str(home / '.local/share'), XDG_STATE_HOME=str(home / '.local/state'))
-    for key in ('TMUX', 'TMUX_PANE', 'TMUX_TMPDIR', 'AGENT_MANAGER_SESSION_ID'):
+    for key in ('TMUX', 'TMUX_PANE', 'TMUX_TMPDIR', 'AGHELM_SESSION_ID'):
         env.pop(key, None)
     return env
 
@@ -71,7 +71,7 @@ def run(candidate, work, tag, peer=None):
     def cli(binary, home, *args, caller=None):
         env = isolated(home)
         if caller:
-            env['AGENT_MANAGER_SESSION_ID'] = caller
+            env['AGHELM_SESSION_ID'] = caller
         result = subprocess.run([str(binary), *args], cwd=home, env=env, text=True,
                                 capture_output=True, timeout=20)
         if result.returncode:
@@ -79,7 +79,7 @@ def run(candidate, work, tag, peer=None):
         return result.stdout
     def initialize(binary, home):
         env = isolated(home)
-        env['AGENT_MANAGER_SESSION_ID'] = 'beefcafe'
+        env['AGHELM_SESSION_ID'] = 'beefcafe'
         subprocess.run([str(binary), 'sessions'], cwd=home, env=env, capture_output=True, timeout=20)
         db = profile(home) / 'state.db'
         if not db.exists():
@@ -150,7 +150,7 @@ def run(candidate, work, tag, peer=None):
         def claim(actor):
             name, binary, caller = actor
             env = isolated(home)
-            env['AGENT_MANAGER_SESSION_ID'] = caller
+            env['AGHELM_SESSION_ID'] = caller
             ready.wait(timeout=5)
             result = subprocess.run([str(binary), 'task', 'claim', task['id'], '--json'],
                                     cwd=home, env=env, text=True, capture_output=True, timeout=20)

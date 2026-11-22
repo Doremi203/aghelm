@@ -305,7 +305,7 @@ func TestTerminalCommandsRejectUnsafeTargetsAndInvalidInput(t *testing.T) {
 	if _, err := h.terminals.Read(h.caller.ID, terminal.ID); err == nil || !strings.Contains(err.Error(), "not running") {
 		t.Fatalf("dead read error = %v", err)
 	}
-	if _, err := h.terminals.List(""); err == nil || !strings.Contains(err.Error(), "AGENT_MANAGER_SESSION_ID") {
+	if _, err := h.terminals.List(""); err == nil || !strings.Contains(err.Error(), "AGHELM_SESSION_ID") {
 		t.Fatalf("missing caller error = %v", err)
 	}
 }

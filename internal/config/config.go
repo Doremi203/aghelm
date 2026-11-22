@@ -200,8 +200,8 @@ type Config struct {
 // A subprocess keeps a HOME, APPDATA, or XDG_CONFIG_HOME it was given, and
 // a relative XDG_CONFIG_HOME still fails. An XDG_CONFIG_HOME the process
 // inherited is the user config, so the planted directory still replaces it.
-const startupConfigEnv = "AGENT_MANAGER_STARTUP_CONFIG"
-const startupXDGEnv = "AGENT_MANAGER_STARTUP_XDG"
+const startupConfigEnv = "AGHELM_STARTUP_CONFIG"
+const startupXDGEnv = "AGHELM_STARTUP_XDG"
 
 var (
 	testConfigDir   string
@@ -210,7 +210,7 @@ var (
 )
 
 func init() {
-	if !testing.Testing() || os.Getenv("AGENT_MANAGER_CONFIG_DIR") != "" {
+	if !testing.Testing() || os.Getenv("AGHELM_CONFIG_DIR") != "" {
 		return
 	}
 	base, err := os.UserConfigDir()
@@ -224,7 +224,7 @@ func init() {
 	testConfigDir = dir
 	startupXDG = os.Getenv("XDG_CONFIG_HOME")
 	startupXDGNoted = true
-	os.Setenv("AGENT_MANAGER_CONFIG_DIR", dir)
+	os.Setenv("AGHELM_CONFIG_DIR", dir)
 	os.Setenv(startupConfigEnv, base)
 	os.Setenv(startupXDGEnv, startupXDG)
 }
@@ -251,12 +251,12 @@ func Dir() (string, error) {
 	return filepath.Join(base, "aghelm"), nil
 }
 
-// chosenConfigDir is AGENT_MANAGER_CONFIG_DIR when this process asked for
+// chosenConfigDir is AGHELM_CONFIG_DIR when this process asked for
 // it. The directory planted for go test does not count once HOME, APPDATA,
 // XDG_CONFIG_HOME, or their Darwin and Windows equivalents no longer
 // resolve to the user config this process started with.
 func chosenConfigDir() string {
-	override := os.Getenv("AGENT_MANAGER_CONFIG_DIR")
+	override := os.Getenv("AGHELM_CONFIG_DIR")
 	if override == "" {
 		return ""
 	}
@@ -305,7 +305,7 @@ func harnessConfigDir(base string) string {
 	if testConfigDir != "" {
 		return testConfigDir
 	}
-	return os.Getenv("AGENT_MANAGER_CONFIG_DIR")
+	return os.Getenv("AGHELM_CONFIG_DIR")
 }
 
 func dirInside(path, dir string) bool {

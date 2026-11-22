@@ -20,7 +20,7 @@ type EnvProfile struct {
 
 // reservedEnvPrefix belongs to the variables the manager sets on every
 // launch, which a profile must not shadow.
-const reservedEnvPrefix = "AGENT_MANAGER_"
+const reservedEnvPrefix = "AGHELM_"
 
 // CheckEnvProfileName refuses a name the CLI flag and the pickers cannot
 // carry.

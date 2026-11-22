@@ -20,15 +20,15 @@ class SandboxTests(unittest.TestCase):
 
     def test_inherited_tmux_and_git_cannot_select_live_resources(self):
         with patch.dict(os.environ, {'TMUX': '/live/socket,1,0', 'GIT_DIR': '/live/repo',
-                                     'GIT_CONFIG_COUNT': '1', 'AGENT_MANAGER_SESSION_ID': 'live-session',
-                                     'AGENT_MANAGER_CONFIG_DIR': '/live/config'}):
+                                     'GIT_CONFIG_COUNT': '1', 'AGHELM_SESSION_ID': 'live-session',
+                                     'AGHELM_CONFIG_DIR': '/live/config'}):
             isolated = Sandbox(Path(self.temp.name) / 'inherited-evidence')
         try:
             self.assertNotIn('TMUX', isolated.env)
             self.assertNotIn('GIT_DIR', isolated.env)
             self.assertNotIn('GIT_CONFIG_COUNT', isolated.env)
-            self.assertNotIn('AGENT_MANAGER_SESSION_ID', isolated.env)
-            self.assertNotIn('AGENT_MANAGER_CONFIG_DIR', isolated.env)
+            self.assertNotIn('AGHELM_SESSION_ID', isolated.env)
+            self.assertNotIn('AGHELM_CONFIG_DIR', isolated.env)
             self.assertLess(len(str(isolated.socket_dir / 'tmux-99999/agentmgr')), 104)
             self.assertTrue(isolated.socket_dir.is_dir())
             self.assertEqual(isolated.env['HOME'], str(isolated.home))

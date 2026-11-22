@@ -1,7 +1,7 @@
 // Package mcpserver exposes aghelm's session commands as MCP tools
 // over stdio, so any MCP-capable agent discovers and calls them natively.
 // The manager registers this server into every session it spawns; the
-// session id travels via the AGENT_MANAGER_SESSION_ID environment variable.
+// session id travels via the AGHELM_SESSION_ID environment variable.
 package mcpserver
 
 import (

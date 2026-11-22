@@ -60,7 +60,7 @@ const relaunchHint = "aghelm: agent exited - revive it in aghelm to relaunch it 
 
 // envKeysVar lists the keys a launch exported into the pane's shell, so the
 // next launch in that pane can unset the ones its environment dropped.
-const envKeysVar = "AGENT_MANAGER_ENV_KEYS"
+const envKeysVar = "AGHELM_ENV_KEYS"
 
 func sortedKeys(env map[string]string) []string {
 	keys := make([]string, 0, len(env))
