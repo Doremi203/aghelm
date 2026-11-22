@@ -21,10 +21,10 @@ class CleanupSafetyTest(unittest.TestCase):
                 wrapper.write_text("#!/bin/sh\nprintf '%s\\n' \"$*\" >> \"$CALL_LOG\"\n")
                 wrapper.chmod(0o755)
             env = dict(os.environ, PATH=str(tools) + os.pathsep + os.environ["PATH"], CALL_LOG=str(log))
-            context = 'work="$1"; SLOW_SWITCH="$work/slow.switch"; socketA="$work/tmxa/tmux-0/agentmgr"; socketB="$work/tmxb/tmux-0/agentmgr"; REAL_TMUX=tmux; observer_pid=""; a_pid=""; b_pid=""; '
+            context = 'work="$1"; SLOW_SWITCH="$work/slow.switch"; socketA="$work/tmxa/tmux-0/aghelm"; socketB="$work/tmxb/tmux-0/aghelm"; REAL_TMUX=tmux; observer_pid=""; a_pid=""; b_pid=""; '
             subprocess.run(["bash", "-c", context + cleanup + "\ncleanup", "test", str(root)], env=env, check=True)
             calls = log.read_text().splitlines()
-            self.assertEqual(calls, ["-S " + str(root / "tmxa/tmux-0/agentmgr") + " kill-server", "-S " + str(root / "tmxb/tmux-0/agentmgr") + " kill-server"])
+            self.assertEqual(calls, ["-S " + str(root / "tmxa/tmux-0/aghelm") + " kill-server", "-S " + str(root / "tmxb/tmux-0/aghelm") + " kill-server"])
 
     def test_cleanup_stops_only_captured_manager_pid(self):
         source = SCRIPT.read_text()

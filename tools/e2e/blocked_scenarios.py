@@ -171,7 +171,7 @@ def settings_blocked(sandbox, binary):
     frame(sandbox, 'settings-density-edited', 'comfortable')
     with store_lock(sandbox):
         key(sandbox, 'Enter')
-        frame(sandbox, 'settings-save-accepted', 'A G E N T', 'Settings')
+        frame(sandbox, 'settings-save-accepted', 'A G H E L M', 'Settings')
         key(sandbox, 's')
         frame(sandbox, 'settings-open-while-save-blocked', 'Settings')
         for _ in range(5):
@@ -186,7 +186,7 @@ def settings_blocked(sandbox, binary):
     sandbox.wait('settings-accepted-save-durable', density, lambda value: value == 'comfortable')
     frame(sandbox, 'settings-newer-dialog-retained', 'compact')
     key(sandbox, 'Escape')
-    frame(sandbox, 'settings-dismissed', 'A G E N T', 'Settings')
+    frame(sandbox, 'settings-dismissed', 'A G H E L M', 'Settings')
 
 
 def focus_blocked(sandbox, binary):
@@ -206,7 +206,7 @@ def focus_blocked(sandbox, binary):
     frame(sandbox, 'focus-settings-edited', 'comfortable')
     with store_lock(sandbox):
         key(sandbox, 'Enter')
-        frame(sandbox, 'focus-save-blocked', 'A G E N T', 'Settings')
+        frame(sandbox, 'focus-save-blocked', 'A G H E L M', 'Settings')
         key(sandbox, 'Enter')
         key(sandbox, '?')
         frame(sandbox, 'focus-help-responsive-while-blocked', '? Keys')
@@ -216,12 +216,12 @@ def focus_blocked(sandbox, binary):
     frame(sandbox, 'focus-help-retained', '? Keys')
     key(sandbox, 'Escape')
     key(sandbox, 'Escape')
-    frame(sandbox, 'focus-returned-list', 'A G E N T', '? Keys')
+    frame(sandbox, 'focus-returned-list', 'A G H E L M', '? Keys')
     select_row(sandbox, name, 'focus-reselect')
     key(sandbox, 'Enter')
     frame(sandbox, 'focus-reentered', 'focused · ctrl+q')
     key(sandbox, 'C-q')
-    frame(sandbox, 'focus-detached', 'A G E N T', 'focused · ctrl+q')
+    frame(sandbox, 'focus-detached', 'A G H E L M', 'focused · ctrl+q')
 
 
 CASES = [
@@ -256,7 +256,7 @@ def main():
             case_started = time.monotonic()
             try:
                 runner(sandbox, binary)
-                frame(sandbox, 'ready-to-quit', 'A G E N T', 'Settings')
+                frame(sandbox, 'ready-to-quit', 'A G H E L M', 'Settings')
                 key(sandbox, 'q')
                 sandbox.wait_manager_exit('scen:0.0')
                 results[case] = dict(status='passed',

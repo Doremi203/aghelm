@@ -8,7 +8,7 @@ python3 tools/e2e/smoke.py
 ```
 
 The smoke builds the repository binary once before changing HOME. Reuse a build
-with `--binary /absolute/path/agent-manager`. `--artifacts /new/path` selects a
+with `--binary /absolute/path/aghelm`. `--artifacts /new/path` selects a
 new evidence directory; the default is a unique directory in the system temp
 folder. Output includes its path, result, and total duration; `timings.jsonl`
 records every observed transition. Keep the smoke separate from the fast Go suite. The observation budget is 12 seconds per
@@ -16,8 +16,7 @@ transition; a successful cached-build run should take less than 30 seconds.
 
 The harness creates its own HOME (the default profile therefore belongs to this
 run), XDG directories, and shell configuration directory. It routes every HTTP
-request to a closed port, so the message feed and the release check fail at
-once and nothing lands mid-scenario. It removes inherited
+request to a closed port, so nothing in a run reaches the network. It removes inherited
 TMUX and uses a short, unique, precreated `/tmp/ame-*` socket directory. Every
 tmux command uses an absolute `-S` socket path within the fixture. Cleanup kills only these two
 servers within that directory, including on failure. A failed cleanup still
@@ -30,7 +29,11 @@ when its evidence is no longer needed.
 The terminal is explicitly 110×30 with `xterm-256color`, truecolor capability,
 `NO_COLOR=1`, and a controlled wrapper that executes `/bin/sh -i` with a
 unique prompt. Git environment overrides and global/system configuration are
-removed from the disposable repository fixture. Assertions cover Help open,
+removed from the disposable repository fixture. The smoke starts on a fresh
+profile and asserts that the first launch opens the setup screen, then leaves
+it. Every other scenario writes `last_seen_version` into the profile's
+`state.db` before the manager starts, so the setup screen stays shut.
+Assertions cover Help open,
 search entry, typing,
 commit, clear, wheel consumption followed by acknowledged keyboard scrolling,
 close, a terminal row, a real managed shell accepting a unique file-writing
@@ -47,8 +50,8 @@ Two rules keep these scenarios honest on a slower runner.
 
 **Wait for the condition, never for the clock.** A transition is awaited by
 observing it, through `Sandbox.wait`. A fixed pause on the click before it holds
-only as long as the machine that chose the number, so it passes locally and
-fails on CI, or the reverse. `test_sleeps.py` fails any sleep outside the poll
+only as long as the machine that chose the number, so it passes on one
+machine and fails on another. `test_sleeps.py` fails any sleep outside the poll
 cadence; set a number there instead when the delay is part of the behaviour
 being checked.
 
@@ -60,19 +63,18 @@ reader has the tty. The recorder touches a file once it owns the tty, and the
 scenario waits for that file.
 
 This is bounded local tmux evidence, not the supported terminal/platform/tool
-matrix. CI runs this smoke in its own job and retains evidence artifacts for
-seven days. CLI, stdio MCP, headless/extension flows, historical released
+matrix. CLI, stdio MCP, headless/extension flows, historical released
 clients, and real SSH remain separate acceptance work.
 
 ## Dialog and accepted-write drain scenarios
 
 ```sh
-go build -o /tmp/agent-manager-e2e .
-python3 tools/e2e/scenarios.py --binary /tmp/agent-manager-e2e
-python3 tools/e2e/scenarios.py --binary /tmp/agent-manager-e2e --glyph-mode basic
+go build -o /tmp/aghelm-e2e .
+python3 tools/e2e/scenarios.py --binary /tmp/aghelm-e2e
+python3 tools/e2e/scenarios.py --binary /tmp/aghelm-e2e --glyph-mode basic
 ```
 
-CI runs the scenario gate in both Advanced and Compatible modes. Settings
+Run the scenario gate in both Advanced and Compatible modes. Settings
 navigation follows the selected field label and the chosen mode’s marker.
 The separate scenario gate shares one binary across two disposable profiles.
 It covers form spawn, selected-session quick input reaching a real pane with matching durable metadata, terminal/group creation, move, rename, settings persistence
@@ -94,8 +96,8 @@ outcomes, real provider session stores and the wider platform/SSH matrix.
 ## Partial writes and installation
 
 ```sh
-python3 tools/e2e/failure_scenarios.py --binary /tmp/agent-manager-e2e
-python3 tools/e2e/failure_scenarios.py --binary /tmp/agent-manager-e2e --scenario settings-partial-save
+python3 tools/e2e/failure_scenarios.py --binary /tmp/aghelm-e2e
+python3 tools/e2e/failure_scenarios.py --binary /tmp/aghelm-e2e --scenario settings-partial-save
 ```
 
 Three disposable profiles cover a settings save with eight committed writes
@@ -110,14 +112,14 @@ identity is separately covered by effect unit tests.
 The final local run with a controlled installer PATH took 3.32 seconds. Removing partial-error preference
 reconciliation made the settings scenario fail on the stale layout. These are
 real binary wiring checks with synthetic CLI/installer processes, not actual
-provider installers or session discovery. CI reuses the existing binary and
+provider installers or session discovery. A run reuses an existing binary and
 retains failure evidence alongside the smoke. Use `--scenario` to run one case.
 
 ## Blocked rename and move
 
 ```sh
-python3 tools/e2e/blocked_scenarios.py --binary /tmp/agent-manager-e2e
-python3 tools/e2e/blocked_scenarios.py --binary /tmp/agent-manager-e2e --scenario move
+python3 tools/e2e/blocked_scenarios.py --binary /tmp/aghelm-e2e
+python3 tools/e2e/blocked_scenarios.py --binary /tmp/aghelm-e2e --scenario move
 ```
 
 Two disposable profiles hold a SQLite write lock before accepting rename/move,
@@ -127,7 +129,7 @@ observed UI transitions. Durable commit alone does not acknowledge completion
 processing in Update; focused unit tests explicitly deliver stale completions
 and establish the generation fence. Lock-held frame observations have a two-second
 deadline, below the store's five-second busy timeout. The final local run took 8.07 seconds. Both cases require a
-zero-exit shutdown. CI shares the existing binary and retains the frames.
+zero-exit shutdown. A run shares one binary and retains the frames.
 
 The initial move scenario exposed a failure: `openMove` did not advance
 the dialog generation, so an older completion closed a reopened card. A focused
@@ -148,8 +150,8 @@ edits. Its Focus case queues focus behind that save and verifies Help opens and
 accepts a search while the write remains blocked; later focus remains usable.
 
 ```sh
-python3 tools/e2e/blocked_scenarios.py --binary /tmp/agent-manager-e2e --scenario settings
-python3 tools/e2e/blocked_scenarios.py --binary /tmp/agent-manager-e2e --scenario focus
+python3 tools/e2e/blocked_scenarios.py --binary /tmp/aghelm-e2e --scenario settings
+python3 tools/e2e/blocked_scenarios.py --binary /tmp/aghelm-e2e --scenario focus
 ```
 
 The headless example has a separate-process observation/shutdown regression in
@@ -161,9 +163,9 @@ or the Linux/SSH platform matrix.
 ## SSH connection
 
 ```sh
-python3 tools/e2e/ssh_scenarios.py --binary /tmp/agent-manager-e2e
+python3 tools/e2e/ssh_scenarios.py --binary /tmp/aghelm-e2e
 ```
 
-A fixture `ssh` first on PATH drops every argument but the remote command and runs it with `/bin/sh -c` under a second disposable HOME and its own short tmux socket directory, so the "host" is a real agent-manager with its own profile and no network, keys or `~/.ssh`. A copy of the binary, first on PATH at a path unique to the run, serves both sides. The scenario seeds an agent on the host through its CLI, adds the connection through the `C` dialog, waits for the remote row, answers it from the quick bar and checks the prompt reached the host's pane with nothing queued in its inbox, moves the grouped agent to the host's root with `m` and checks the host filed it there, kills the first and checks its tmux session is gone on the host. It then revives, archives and restores it, deletes a second agent and checks the host's store no longer has it, attaches to the first and detaches, and starts an agent, a terminal and a group there. It requires that the local store holds the connection and no sessions. A second connection whose ssh fails shows as unreachable. The first refresh starts the host's headless manager.
+A fixture `ssh` first on PATH drops every argument but the remote command and runs it with `/bin/sh -c` under a second disposable HOME and its own short tmux socket directory, so the "host" is a real aghelm with its own profile and no network, keys or `~/.ssh`. A copy of the binary, first on PATH at a path unique to the run, serves both sides. The scenario seeds an agent on the host through its CLI, adds the connection through the `C` dialog, waits for the remote row, answers it from the quick bar and checks the prompt reached the host's pane with nothing queued in its inbox, moves the grouped agent to the host's root with `m` and checks the host filed it there, kills the first and checks its tmux session is gone on the host. It then revives, archives and restores it, deletes a second agent and checks the host's store no longer has it, attaches to the first and detaches, and starts an agent, a terminal and a group there. It requires that the local store holds the connection and no sessions. A second connection whose ssh fails shows as unreachable. The first refresh starts the host's headless manager.
 
 Cleanup ends every process by PID: the binary copy's processes (the host's `serve` among them) and the tmux servers on the run's own sockets, listed in `ended-processes.json`. No `kill-server` is sent.

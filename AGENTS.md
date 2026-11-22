@@ -2,13 +2,12 @@
 
 Project context for coding agents. Human setup and PR conventions live in
 [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md), and what a review looks
-for in [REVIEW.md](REVIEW.md). Fill the Scope section of the pull request
-template: a review reads it to tell the change you meant from the change you
-made.
+for in [REVIEW.md](REVIEW.md). aghelm is a fork with no CI and no releases:
+`make check` is the gate, and users build from source.
 
 ## Product boundary
 
-Keep agent-manager a thin wrapper around the supported TUIs. Preserve upstream
+Keep aghelm a thin wrapper around the supported TUIs. Preserve upstream
 defaults and user configuration; avoid hardcoded models, version-specific
 behavior, and recreating upstream settings. Apply the
 [Thin Wrapper Principle](PRODUCT.md#thin-wrapper-principle) to every integration,
@@ -19,8 +18,8 @@ not mean mirroring its feature set; prefer workspace features shared across tool
 ## What every change covers
 
 A feature, a tool, or a fix is done when it holds on the whole matrix. The
-matrix is every CLI in `builtinTools` (`internal/config/config.go`), every
-platform `.goreleaser.yaml` builds plus WSL2, every terminal that reaches
+matrix is every CLI in `builtinTools` (`internal/config/config.go`), macOS,
+Linux and Windows on amd64 and arm64 plus WSL2, every terminal that reaches
 the manager, local or over SSH, and both input methods. A change that
 covers a subset names what it leaves out in the PR description and what
 covering the rest would take. Disclosure alone does not approve partial tool
@@ -45,13 +44,13 @@ coverage. [REVIEW.md](REVIEW.md#tool-coverage) defines the allowed exceptions.
   change lives in Settings (`s`), is stored by the manager, and takes effect
   from the picker, the way the keybindings and editor rows do. The value
   lives in `state.db`, where the manager, the CLI and the MCP server all
-  read it, and `agent-manager settings` reads and writes it from a shell.
+  read it, and `aghelm settings` reads and writes it from a shell.
   Every key is named in `ui.SettingSpecs` with the values it takes, so the
   shell refuses what the modal would never write. A value that is a
   command, a token or a URL stays off the modal and is set from the shell
   alone, so the modal does not grow a row per knob. A new per-user file,
   environment variable, or hand-edited block is the wrong shape; put the
-  choice on a Settings row, behind `agent-manager settings`, or pick a
+  choice on a Settings row, behind `aghelm settings`, or pick a
   default in code.
 - **Every tool.** New shared behavior covers every applicable tool in the
   same PR. A field, status rule, or command added to one `[tools.*]` block
@@ -87,8 +86,9 @@ in code or in a user's file stops receiving fixes the day it is written.
 ```bash
 go run .                                        # run the TUI
 go build ./...
-make build                                      # ./agent-manager stamped with git describe
-mkdir -p /tmp/amtest && env -u TMUX TMUX_TMPDIR=/tmp/amtest go test -race ./...
+make build                                      # ./aghelm stamped with git describe
+make check                                      # everything below, in one target
+mkdir -p /tmp/amtest && env -u TMUX TMUX_TMPDIR=/tmp/amtest SHELL=/bin/sh go test -race ./...
 ```
 
 The suite drives a real tmux server. When your own shell already runs inside
@@ -102,31 +102,34 @@ before tmux starts, for the same reason. Never run `tmux kill-server` or
 Panes fall back to `$SHELL` when their agent exits, and a shell whose startup
 files fork or print throws off the timing tests. `internal/ui` pins
 `SHELL=/bin/sh` in its `TestMain`; for the other packages that drive tmux, run
-with `SHELL=/bin/sh` as CI does.
+with `SHELL=/bin/sh` as `make check` does.
 
 On Windows, see Checks in [CONTRIBUTING.md](.github/CONTRIBUTING.md) for
 what the suite needs.
 
 `config.Dir` is the directory that holds `state.db`. It is
-`AGENT_MANAGER_CONFIG_DIR` when that variable is set, on every OS, and
-otherwise `$XDG_CONFIG_HOME/agent-manager` when `XDG_CONFIG_HOME` is set.
+`AGHELM_CONFIG_DIR` when that variable is set, on every OS, and
+otherwise `$XDG_CONFIG_HOME/aghelm` when `XDG_CONFIG_HOME` is set.
 `os.UserConfigDir` ignores `XDG_CONFIG_HOME` on macOS, so a probe that
 must not open the user's store sets the first:
 
 ```bash
-AGENT_MANAGER_CONFIG_DIR=/tmp/amprobe agent-manager
+AGHELM_CONFIG_DIR=/tmp/amprobe aghelm
 ```
 
 `go test` reads a temp directory while the process is still on the user
 config it started with, including an `XDG_CONFIG_HOME` the environment
-already had. A test that sets `AGENT_MANAGER_CONFIG_DIR`,
+already had. A test that sets `AGHELM_CONFIG_DIR`,
 `XDG_CONFIG_HOME`, `HOME`, or `APPDATA` still selects its own. The
 substitution stays in the test process.
 
-Before finishing: `gofmt -l .` prints nothing, `go vet ./...` is clean.
+Before finishing: `make check` passes. It runs gofmt, `go vet`, staticcheck,
+the checks in `tools/architecture` (including `check-identity`, which rejects
+the upstream project's names outside its exception list) and the race suite.
+`make vulncheck` runs govulncheck and needs the network.
 
 A change to the UI, the poller, or a tool's status rules is verified against
-real sessions before the PR says so: build the binary, run it under a
+real sessions before the commit says so: build the binary, run it under a
 throwaway `HOME` on its own socket (see Capturing a TUI frame in
 [CONTRIBUTING.md](.github/CONTRIBUTING.md)), drive a real CLI in it, and read
 the frames back. A green suite is not that.
@@ -137,7 +140,7 @@ Rules the code depends on that no compiler checks. Each one has broken a
 release or a user's sessions before.
 
 - **Every tmux call names its socket.** Go through `Driver` in
-  `internal/tmux`, whose `args` pins `-L agentmgr`. A bare
+  `internal/tmux`, whose `args` pins `-L aghelm`. A bare
   `exec.Command("tmux", ...)` resolves through `$TMUX` to the developer's own
   server. A global option, `kill-session`, or `set-hook` on a socket this
   process does not own is data loss.
@@ -155,15 +158,13 @@ release or a user's sessions before.
   installs only while upgraded databases keep the old shape. New schema is a
   new entry at the end, written so re-running it is harmless.
 - **`builtinTools` is the only source of tool definitions.** It loads on
-  every start, so an edited pattern reaches every install on that release.
+  every start, so an edited pattern reaches every install built from that commit.
   A default belongs in code.
 - **The key tables and the editor are read from the store, by every
   process.** The manager, the CLI and the MCP server each install the tmux
   bindings, so a table read from anywhere else gives a session the wrong
   keys. A `config.toml` from an earlier release is read once, by the import
   in `internal/store`.
-- **Workflow actions are pinned to a release tag** and bumped by dependabot.
-  A branch ref or a missing ref is a defect.
 - **No speculative branches.** A fallback or nil-guard for a shape that
   cannot occur here is a defect, not safety. Verify the real shape first.
   Guards on external input are correct.
@@ -172,9 +173,6 @@ release or a user's sessions before.
 
 - `git stash` is repo-wide across worktrees. With several sessions on one
   checkout, a pop lands on someone else's work. Commit to the branch instead.
-- Release notes: a `## Highlights` or `## Thank you` bullet past 120 visible
-  characters is cut in the messages panel of v0.35.0 through v0.39.0, and
-  past 160 in later ones. Backticks are not counted.
 - A tmux `send-keys` stops around 1024 bytes; paste through `load-buffer`,
   which `Driver` already does, with a buffer name that carries the pid so
   the manager, the MCP server, and the CLI never swap text between panes.
@@ -185,57 +183,6 @@ Multiple agent sessions share this checkout. Do feature work in an isolated
 git worktree (`git worktree add`), or your edits get swept into someone
 else's commit. Branch from `origin/main` after a fetch, not from the local
 `main` ref.
-
-## Releases
-
-A push of a `v*` tag runs `.github/workflows/release.yml`: goreleaser on
-Actions creates the release with the workflow token and pushes the Homebrew
-cask with the `RELEASE_TOKEN` secret (`AUR_KEY`, `SCOOP_TOKEN` and
-`WINGET_TOKEN` cover the other packages), then build provenance is attested
-over `dist/checksums.txt` and `badges.yml` is dispatched. Only the admin role
-can push the tag.
-
-```bash
-tag=v0.30.0                       # the release being cut
-git tag "$tag" origin/main && git push origin "$tag"
-gh run watch "$(gh run list --workflow release.yml --branch "$tag" --limit 1 --json databaseId -q '.[0].databaseId')" --exit-status
-```
-
-Without `AUR_KEY` the AUR step silently skips and the release still reports
-success while the Arch package goes stale, and without `RELEASE_TOKEN` the
-Homebrew cask skips the same way, so the run log must show the
-release published, the Homebrew cask pushed, and the AUR push. A failed
-run after the release was created is retried from a clean tag. Fix the cause
-on `origin/main`, then `gh release delete "$tag" --cleanup-tag`, which
-removes the remote tag and leaves the local one on the old commit, so
-recreate it: `git tag -f "$tag" origin/main && git push origin "$tag"`.
-
-The notes carry more than the generated list of pull requests:
-
-- **A summary in your own words**, at the top, saying what the release gives
-  someone who installs it. Two or three sentences, the change first and the
-  mechanism second. The generated list says which pull requests landed; it
-  does not say what is different now.
-- **A `## Highlights` section above `## What's Changed`**, holding short
-  bullets, one per thing the release gives someone. The manager reads
-  exactly those bullets into its messages panel, so write them for a modal:
-  a sentence each, feature and fix language, no pull request numbers. Prose
-  in that section stays on the web page; only bullets travel. A release
-  without the section falls back to the generated list, filtered to
-  `feat`, `fix` and `perf`.
-- **A `## Thank you` section**, one bullet per person: handle, what they
-  did, PR or issue number. The manager reads those bullets into the
-  messages panel under the highlights, labelled Thank you. Prose in that
-  section stays on the web page; only bullets travel. Cover PR authors and
-  issue reporters: the generated changelog names authors only, and a fix
-  exists because someone wrote the bug up. Credit the release a feature
-  builds on, too, when it extends someone else's work. A range with nobody
-  outside the maintainer omits the section.
-
-Publish first, then edit: take what the workflow published with
-`gh release view <tag> --json body -q .body`, put the summary, the
-highlights and the thanks above its `## What's Changed`, and send it back
-with `gh release edit <tag> --notes-file notes.md`.
 
 ## Layout
 
@@ -261,14 +208,12 @@ with `gh release edit <tag> --notes-file notes.md`.
   `<feature>_*_surface.go`, so `ls internal/ui/settings_*` is the whole
   Settings adapter; only `keys.go`, `mouse.go`, `updates.go` and `ids.go`
   route. A new feature is a package and adds its name to
-  `tools/architecture/check-file-names`. The package map, the CI checks and
+  `tools/architecture/check-file-names`. The package map, the checks `make check` runs and
   the reasons are in [docs/architecture.md](docs/architecture.md).
 - `internal/tmux` owns the dedicated tmux socket and control-mode client;
   `internal/store` is the SQLite state, Settings included; `internal/status`
   classifies pane output into agent states; `internal/config` holds the
   built-in tool rules.
-- The badges workflow publishes the clone count and contributor image to the
-  `badges` branch; neither generated asset is edited by hand.
 
 ## Style
 

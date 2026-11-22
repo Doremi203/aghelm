@@ -26,6 +26,7 @@ check:
 	go run ./tools/architecture/check-ui-boundaries
 	go run ./tools/architecture/check-file-names
 	go run ./tools/architecture/check-file-sizes
+	go run ./tools/architecture/check-identity
 	mkdir -p /tmp/amtest
 	env -u TMUX TMUX_TMPDIR=/tmp/amtest SHELL=/bin/sh go test -race ./...
 

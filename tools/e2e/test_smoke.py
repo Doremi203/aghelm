@@ -29,7 +29,7 @@ class SandboxTests(unittest.TestCase):
             self.assertNotIn('GIT_CONFIG_COUNT', isolated.env)
             self.assertNotIn('AGHELM_SESSION_ID', isolated.env)
             self.assertNotIn('AGHELM_CONFIG_DIR', isolated.env)
-            self.assertLess(len(str(isolated.socket_dir / 'tmux-99999/agentmgr')), 104)
+            self.assertLess(len(str(isolated.socket_dir / 'tmux-99999/aghelm')), 104)
             self.assertTrue(isolated.socket_dir.is_dir())
             self.assertEqual(isolated.env['HOME'], str(isolated.home))
         finally:
@@ -72,7 +72,7 @@ class SandboxTests(unittest.TestCase):
             self.sandbox.close()
         self.assertEqual([call.args[0] for call in run.call_args_list], [
             ['tmux', '-S', str(self.sandbox.socket_dir / f'tmux-{os.getuid()}' / 'e2e-outer'), 'kill-server'],
-            ['tmux', '-S', str(self.sandbox.socket_dir / f'tmux-{os.getuid()}' / 'agentmgr'), 'kill-server']])
+            ['tmux', '-S', str(self.sandbox.socket_dir / f'tmux-{os.getuid()}' / 'aghelm'), 'kill-server']])
         self.assertTrue(self.sandbox.home.exists())
         self.assertFalse(self.sandbox.socket_dir.exists())
         # tearDown is intentionally harmless after cleanup.
@@ -91,7 +91,7 @@ class SandboxTests(unittest.TestCase):
                 TimeoutError('capture deadline'), subprocess.CompletedProcess([], 0, 'shell frame', '')]):
             errors = self.sandbox.failure_frames()
         self.assertEqual(len(errors), 1)
-        self.assertEqual((self.sandbox.artifacts / 'agentmgr-last-frame.txt').read_text(), 'shell frame')
+        self.assertEqual((self.sandbox.artifacts / 'aghelm-last-frame.txt').read_text(), 'shell frame')
 
     def test_unknown_socket_rejected_before_dispatch(self):
         with patch.object(self.sandbox, 'run') as run:

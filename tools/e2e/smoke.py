@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import shlex
 import shutil
+import sqlite3
 import subprocess
 import tempfile
 import time
@@ -13,11 +14,11 @@ import time
 
 def profile_dir(sandbox):
     """Where the binary keeps its profile: the XDG_CONFIG_HOME the sandbox sets."""
-    return sandbox.home / '.config' / 'agent-manager'
+    return sandbox.home / '.config' / 'aghelm'
 
 
 class Sandbox:
-    sockets = ('e2e-outer', 'agentmgr')
+    sockets = ('e2e-outer', 'aghelm')
 
     def __init__(self, artifacts):
         self.artifacts = Path(artifacts)
@@ -26,7 +27,6 @@ class Sandbox:
         (self.socket_dir / f'tmux-{os.getuid()}').mkdir(mode=0o700)
         self.home = self.artifacts / 'home'
         self.home.mkdir()
-        self.seed_feed_cache()
         self.prompt = f'am-shell-{time.time_ns()}> '
         shell = self.home / 'fixture-shell'
         shell.write_text('#!/bin/sh\nunset ENV BASH_ENV\n' +
@@ -42,34 +42,34 @@ class Sandbox:
         for key in ('TMUX', 'TMUX_PANE', 'AGHELM_PROFILE', 'AGHELM_SESSION_ID', 'COLORFGBG',
                     'ENV', 'BASH_ENV', 'PROMPT_COMMAND'):
             self.env.pop(key, None)
-        # An inherited directory would put the feed cache outside this sandbox.
+        # An inherited directory would put the profile outside this sandbox.
         self.env.pop('AGHELM_CONFIG_DIR', None)
         for key in tuple(self.env):
             if key.startswith('GIT_'):
                 self.env.pop(key)
         self.env.update(GIT_CONFIG_NOSYSTEM='1', GIT_CONFIG_GLOBAL='/dev/null')
-        # The manager fetches its message feed and release list after the first
-        # frame. A reply landing mid-scenario pops the messages panel over the
-        # list, so every HTTP request goes to a closed port and fails at once.
+        # Nothing in a run may reach the network, so every HTTP request goes
+        # to a closed port and fails at once.
         for key in ('NO_PROXY', 'no_proxy'):
             self.env.pop(key, None)
         closed = 'http://127.0.0.1:1'
         self.env.update(HTTP_PROXY=closed, HTTPS_PROXY=closed, http_proxy=closed, https_proxy=closed)
         self.log = self.artifacts / 'commands.jsonl'
 
-    def seed_feed_cache(self):
-        """A fresh, empty message feed, so no scenario races a GitHub fetch.
+    def seed_seen_version(self, binary):
+        """Mark the profile as launched before, so the setup screen stays shut.
 
-        The manager opens the messages card on a new remote notice when the
-        list is clear. With a fresh profile that fetch can land before the
-        first frame is captured, and the card then hides whatever the wait
-        looks for. A cache this build parsed, checked just now and holding no
-        messages, serves from disk within the check interval.
+        The manager opens its setup screen when state.db has no
+        last_seen_version. A CLI call creates the store; the key is then
+        written the way seed_store writes its settings.
         """
-        config_dir = profile_dir(self)
-        config_dir.mkdir(parents=True, exist_ok=True)
-        cache = dict(checked_at=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), parser=1, messages=[])
-        (config_dir / 'feed-messages.json').write_text(json.dumps(cache))
+        self.run([str(binary), 'settings', 'list'])
+        conn = sqlite3.connect(str(profile_dir(self) / 'state.db'), timeout=5)
+        try:
+            conn.execute("INSERT OR REPLACE INTO settings(key, value) VALUES ('last_seen_version', 'e2e')")
+            conn.commit()
+        finally:
+            conn.close()
 
     def run(self, args, check=True):
         result = subprocess.run(args, env=self.env, text=True, capture_output=True, timeout=20)
@@ -108,7 +108,9 @@ class Sandbox:
             # enough that constant captures starve it.
             time.sleep(min(0.05 * (1 + (now - started) // 2), 0.5))
 
-    def start_manager(self, session, cwd, binary):
+    def start_manager(self, session, cwd, binary, first_launch=False):
+        if not first_launch:
+            self.seed_seen_version(binary)
         # remain-on-exit permits exit-code inspection instead of mistaking a vanished pane for success.
         exit_file = shlex.quote(str(self.artifacts / 'manager-exit-code.txt'))
         self.tmux('new-session', '-d', '-s', session, '-x', '110', '-y', '30', '-c', str(cwd),
@@ -164,7 +166,7 @@ class Sandbox:
 
     def failure_frames(self):
         errors = []
-        for socket, target in [('e2e-outer', 'smoke:0.0'), ('agentmgr', '%0')]:
+        for socket, target in [('e2e-outer', 'smoke:0.0'), ('aghelm', '%0')]:
             try:
                 capture = self.tmux('capture-pane', '-p', '-t', target, socket=socket, check=False)
                 (self.artifacts / (socket + '-last-frame.txt')).write_text(capture.stdout + capture.stderr)
@@ -184,8 +186,14 @@ def smoke(sandbox, binary):
                  '-c', 'user.email=e2e@example.invalid', '-c', 'commit.gpgsign=false',
                  'commit', '-m', 'fixture baseline'])
     changed.write_text('after_review_e2e\n')
-    sandbox.start_manager('smoke', repo, binary)
-    sandbox.frame('startup', 'A G E N T')
+    # A fresh profile has no last_seen_version, so the first launch opens
+    # the setup screen; leaving it records the version and shows the list.
+    sandbox.start_manager('smoke', repo, binary, first_launch=True)
+    sandbox.frame('first-launch-setup', 'Welcome to aghelm')
+    sandbox.key('Escape')
+    sandbox.frame('leave-setup', 'Leave the setup?')
+    sandbox.key('y')
+    sandbox.frame('startup', 'A G H E L M', 'Leave the setup?')
     sandbox.key('Escape')
     sandbox.key('?')
     sandbox.frame('help-open', '? Keys')
@@ -208,7 +216,7 @@ def smoke(sandbox, binary):
     sandbox.key('PageDown')
     sandbox.wait('wheel-consumed-keyboard-scroll', sandbox.capture, lambda frame: frame == baseline)
     sandbox.key('Escape')
-    sandbox.frame('help-closed', 'A G E N T', '? Keys')
+    sandbox.frame('help-closed', 'A G H E L M', '? Keys')
     sandbox.key('g')
     sandbox.frame('group-form', 'New Group')
     sandbox.tmux('send-keys', '-l', '-t', 'smoke:0.0', 'e2e-group')
@@ -219,17 +227,17 @@ def smoke(sandbox, binary):
     sandbox.frame('terminal-row', 'terminal-')
     panes = sandbox.wait('terminal-panes',
                         lambda: sandbox.tmux('list-panes', '-a', '-F',
-                            '#{pane_id} #{pane_current_command}', socket='agentmgr', check=False).stdout,
+                            '#{pane_id} #{pane_current_command}', socket='aghelm', check=False).stdout,
                         lambda value: len(value.splitlines()) == 1 and len(value.split()) == 2)
     pane = panes.split()[0]
     sandbox.wait('shell-prompt',
-                 lambda: sandbox.tmux('capture-pane', '-p', '-t', pane, socket='agentmgr').stdout,
+                 lambda: sandbox.tmux('capture-pane', '-p', '-t', pane, socket='aghelm').stdout,
                  lambda frame: sandbox.prompt.rstrip() in frame)
     # A unique file proves the actual shell accepted a command, not a footer label or prompt.
     acknowledgement = sandbox.home / 'shell-ack'
     sandbox.tmux('send-keys', '-l', '-t', pane,
-                 f'printf shell-ready > {shlex.quote(str(acknowledgement))}', socket='agentmgr')
-    sandbox.tmux('send-keys', '-t', pane, 'Enter', socket='agentmgr')
+                 f'printf shell-ready > {shlex.quote(str(acknowledgement))}', socket='aghelm')
+    sandbox.tmux('send-keys', '-t', pane, 'Enter', socket='aghelm')
     sandbox.wait('shell-ready', lambda: acknowledgement.read_text() if acknowledgement.exists() else '',
                  lambda value: value == 'shell-ready')
     feature_flows(sandbox, pane)
@@ -245,7 +253,7 @@ def feature_flows(sandbox, pane):
     sandbox.key('Escape')
     sandbox.frame('review-help-closed', 'after_review_e2e', '? Review keys')
     sandbox.key('Escape')
-    sandbox.frame('review-closed', 'A G E N T', 'after_review_e2e')
+    sandbox.frame('review-closed', 'A G H E L M', 'after_review_e2e')
     sandbox.key('Right')
     sandbox.frame('focus-open', 'focused · ctrl+q')
     acknowledgement = sandbox.home / 'focus-ack'
@@ -255,7 +263,7 @@ def feature_flows(sandbox, pane):
     sandbox.wait('focused-command', lambda: acknowledgement.read_text() if acknowledgement.exists() else '',
                  lambda value: value == 'focus-ready')
     sandbox.wait('focused-pane-command',
-                 lambda: sandbox.tmux('capture-pane', '-p', '-t', pane, socket='agentmgr').stdout,
+                 lambda: sandbox.tmux('capture-pane', '-p', '-t', pane, socket='aghelm').stdout,
                  lambda frame: 'printf focus-ready' in frame)
     paste_keeps_its_linefeeds(sandbox)
     sandbox.key('C-q')
@@ -348,7 +356,7 @@ def main():
     started = time.monotonic()
     sandbox = Sandbox(artifacts)
     try:
-        binary = args.binary.resolve() if args.binary else artifacts / 'agent-manager'
+        binary = args.binary.resolve() if args.binary else artifacts / 'aghelm'
         if not args.binary:
             with (artifacts / 'build.log').open('w') as log:
                 subprocess.run(['go', 'build', '-o', str(binary), '.'], cwd=root,

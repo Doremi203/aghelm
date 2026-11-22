@@ -68,7 +68,7 @@ def ensure_binary(root, artifacts, given):
     """One build per invocation; reuse an existing binary untouched."""
     if given:
         return Path(given).resolve()
-    binary = artifacts / 'agent-manager'
+    binary = artifacts / 'aghelm'
     if not binary.exists():
         with (artifacts / 'build.log').open('w') as log:
             subprocess.run(['go', 'build', '-o', str(binary), '.'], cwd=root,
@@ -96,7 +96,7 @@ def seed_store(sandbox):
 
 def start_manager(sandbox, binary, session='scen'):
     sandbox.start_manager(session, sandbox.home, binary)
-    frame(sandbox, 'startup', 'A G E N T')
+    frame(sandbox, 'startup', 'A G H E L M')
     key(sandbox, 'Escape')
 
 
@@ -210,7 +210,7 @@ def agent_panes(sandbox, command, name='pane'):
     value = sandbox.wait(f'{name}-{command[:12]}',
                          lambda: sandbox.tmux('list-panes', '-a', '-F',
                                                '#{pane_id} #{pane_current_command}',
-                                               socket='agentmgr', check=False).stdout,
+                                               socket='aghelm', check=False).stdout,
                          lambda value: any(line.split()[-1:] == [command] for line in value.splitlines()))
     return [line.split()[0] for line in value.splitlines() if line.split()[-1:] == [command]]
 
@@ -220,7 +220,7 @@ def agent_pane(sandbox, command, name='pane'):
 
 
 def pane_text(sandbox, pane):
-    return sandbox.tmux('capture-pane', '-p', '-t', pane, socket='agentmgr', check=False).stdout
+    return sandbox.tmux('capture-pane', '-p', '-t', pane, socket='aghelm', check=False).stdout
 
 
 def store_sessions(sandbox):

@@ -1,6 +1,6 @@
 # Architecture
 
-How the code is laid out, what CI enforces, and why. Product rules and
+How the code is laid out, what `make check` enforces, and why. Product rules and
 invariants live in [AGENTS.md](../AGENTS.md).
 
 ## Packages
@@ -19,7 +19,7 @@ Under `internal/`:
 - `ui/session`, `ui/terminal`: the value-only parts of the session lifecycle (editor lines, unreachable-session messages), the copy and fix a refused launch shows, and what takes over the terminal (links, child processes).
 - `ui/connections`: the SSH connections: their list and each host's last refresh, the row a selection names, the selected row's screen and the add and edit dialog. The root's `connections_adapter*.go` paints them and routes actions; see [SSH connections](ssh-connections.md).
 - `ui/connections/link`: the connections' runtime: the SSH client, the store writes that keep the list, the host polls, the screen reads and the attach. The root answers its `Root` and runs its calls on the remote lane.
-- `remote`: drives another host's agent-manager over `ssh`, and holds the rule that a session drives only the remote terminals it opened. `remote/value`: what a connection is, row refs and failure kinds, with no SSH.
+- `remote`: drives another host's aghelm over `ssh`, and holds the rule that a session drives only the remote terminals it opened. `remote/value`: what a connection is, row refs and failure kinds, with no SSH.
 - `ui/spawn`, `ui/quick`: the New Session form with its model choice, and the quick bar; the root keeps their prompt box and runs their spawn.
 - `ui/dialogs`: the confirm, rename, move, fork and launch fix dialogs.
 - `ui/onboarding`: first-run setup, feature-owned surface, live preview, and saved-conversation import.
@@ -55,14 +55,22 @@ Under `internal/`:
 - `atomicfile`, `deps`, `pwsh`, `proctree`, `wsl`: small helpers for file writes, install hints, PowerShell, Windows processes, WSL detection.
 - `testenv`, `testfixture`: test helpers.
 
-## Rules CI enforces
+## Rules `make check` enforces
 
-Each check runs in `.github/workflows/ci.yml` or in `go test ./...`.
+Each check is a step of `make check` (see the `Makefile`) or runs in `go test ./...`.
 
 - **Dependency boundaries.** `go run ./tools/architecture/check-ui-boundaries` lists each package's transitive production imports on darwin, linux and windows and fails on any other package of this module. The allowed lists live in `tools/architecture/check-ui-boundaries/boundaries.go`, one line per package, and `-write` regenerates them; a package not marked runtime that reaches the store, tmux, git, config, status or SSH fails both the check and the rewrite, so a new import arrives as a reviewed diff and never as a quiet widening. Leaves (`ui/surface`, `ui/effects`, `ui/presentation`, `git/value`, `catalog/value`, `remote/value`) import nothing from the module, and `ui/theme` only `systheme` and `ui/effects`; runtime packages (`*/persist`, `*/runtime`, `*/source`, `*/link`, `*/install`, `*/lifecycle`, `*/launch`, `*/apply`) may reach the store, tmux, git and SSH. No boundary lists `internal/ui`, so a child package that imports the root fails. The runtime packages listed under Packages import runtime packages too; each line in the tool names its whole graph, and none reaches `ui`. No other feature package imports `remote` or `sessioncmd`. Test imports are not checked.
 - **File names.** `go run ./tools/architecture/check-file-names`. Every non-test file in `internal/ui` starts with a feature name from the tool's `packaged` or `rootOnly` map (plus `keys.go`, `mouse.go`, `updates.go`, `ids.go`). A packaged feature has its own package under `internal/ui`, and its root files are only `<feature>_adapter*.go`, `*_effect.go` and `*_surface.go`, besides the older files in `rootExtras`, a list that only shrinks. Those files adapt: the `<feature>Root` types the package's `Root` interface is answered by, the effect binding and the surface opener. State and view stay in the package. `rootOnly` is closed: a new feature starts as a package and joins `packaged`. Every `_test.go` file pairs with a source beside it (`<source>_test.go` or `<source>_<aspect>_test.go`), except `*_helpers_test.go`, `*_bench_test.go`, `main_test.go` and the `allowed` list in the tool.
 - **File sizes.** `go run ./tools/architecture/check-file-sizes`. A non-test Go
   file of 1,000 lines or more fails. Split by concern.
+- **Identity.** `go run ./tools/architecture/check-identity`. Every file
+  `git ls-files` lists, except binary ones, is searched for the upstream
+  project's names (its binary and module name, tmux socket, environment
+  prefix and owners). A match fails unless the tool's exception list names
+  that file, or that file and the exact text. The exceptions are the licence
+  files, the attribution line in `README.md`, the variable prefix `main.go`
+  strips, CLI screens recorded as status-rule input, and the design that
+  describes the rename; the list only shrinks.
 - **Host width.** `go test ./internal/ui -run TestFeatureHostsStayNarrow`
   (`internal/ui/model_host_test.go`). Every `*Host` interface in `internal/ui`,
   embedded hosts included, has at most 8 methods, and no method mentions `Model`,
@@ -73,7 +81,7 @@ Each check runs in `.github/workflows/ci.yml` or in `go test ./...`.
 - **Effect coverage.** `go test ./internal/ui -run TestEveryPackageEffectIsBoundAndApplied` (`internal/ui/effects_adapter_registry_test.go`). Every request a feature package declares has its `Services` bound in `bindEffect`, and every result has a case in `applyEffect`.
 - **Surface coverage.** `go test ./internal/ui -run TestEverySurfaceAnswersTheMouse` (`internal/ui/mouse_test.go`). Every type with a `Leave(surface.Host)` method, in the root or a child package, needs an opener in `mouseOpeners` and must take a wheel and a click without touching the stack under it, so a screen cannot ship keyboard-only. `TestModelFieldCap` caps `Model` at 21 fields, so state goes to its feature.
 
-Not in CI: `go run ./tools/architecture/check-ui-moves BASE TARGET` (TARGET may
+Not in `make check`: `go run ./tools/architecture/check-ui-moves BASE TARGET` (TARGET may
 be `WORKTREE`) confirms a move or split within a package kept every declaration
 and comment, so a pure-move commit can be reviewed as one. Imports and file
 locations may change; anything else fails it.

@@ -30,7 +30,7 @@ class SelectionTests(unittest.TestCase):
         sandbox = SimpleNamespace(home=Path('/fixture/home'))
         with patch('sys.platform', 'darwin'):
             self.assertEqual(scenarios.profile_dir(sandbox),
-                             Path('/fixture/home/.config/agent-manager'))
+                             Path('/fixture/home/.config/aghelm'))
 
     def test_selected_local_row_does_not_receive_a_navigation_key(self):
         selected = preview('wanted\n') + '\n' + preview(scenarios.READY_MARKER)

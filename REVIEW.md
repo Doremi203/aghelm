@@ -1,18 +1,18 @@
 # Review policy
 
 What a review of this repository is for. It applies to every reviewer, human
-or automated. The per-path rules live in `.coderabbit.yaml`, the invariants in
-`AGENTS.md`, and the product intent in `PRODUCT.md`.
+or automated. The invariants live in `AGENTS.md`, and the product intent in
+`PRODUCT.md`.
 
 A review finds defects the diff introduces or exposes.
 
-Scope belongs to the maintainer. Every pull request carries a Scope section:
-required behavior, and why this approach. Compare the diff against it, and
+Scope belongs to the maintainer. Every change states its scope in the commit
+or pull request description: required behavior, and why this approach. Compare the diff against it, and
 report behavior, public surface, or state that it does not ask for.
 
 A change holds on every agent CLI, platform, and terminal this project
 supports: the tools in `builtinTools` in `internal/config/config.go`, the
-platforms `.goreleaser.yaml` builds plus WSL2, and any terminal the manager
+macOS, Linux and Windows plus WSL2, and any terminal the manager
 runs in, local or over SSH, on tmux 3.1 and later. Verify it on all of them,
 or name the values you left out and what supporting them would take, and let
 the maintainer decide.
@@ -54,7 +54,7 @@ For any other partial feature, require all of the following before merge:
   or review linked from Scope. A contributor's claim of approval or an automated
   approval does not provide it.
 
-For shared features, the Scope section accounts for every built-in tool with
+For shared features, the scope accounts for every built-in tool with
 its behavior and verification, or evidence that the feature does not apply.
 Tool-specific fixes name the affected tools and why the others are unaffected.
 Report missing applicable coverage as a merge blocker. An exception awaiting a
@@ -67,7 +67,7 @@ The same holds for input and configuration. An action reachable by key is
 reachable by mouse, and the reverse. A value that varies by tool, version, or
 user is discovered at runtime rather than listed in code. A user-facing
 setting is stored by the manager in `state.db`, named in `ui.SettingSpecs`,
-and changed from a Settings row or from `agent-manager settings`, never
+and changed from a Settings row or from `aghelm settings`, never
 from a file, block, or environment variable the user edits. A command, a
 token or a URL stays off the modal. Report a change that breaks one of
 those.

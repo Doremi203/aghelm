@@ -155,7 +155,7 @@ def install_script_write_failure(sandbox, binary):
     finally:
         hooks.unlink()
     key(sandbox, 'Escape')
-    frame(sandbox, 'hint-closed', 'A G E N T', 'Session needs a setup step')
+    frame(sandbox, 'hint-closed', 'A G H E L M', 'Session needs a setup step')
 
 
 def install_retry_creates_one_session(sandbox, binary):
@@ -179,7 +179,7 @@ def install_retry_creates_one_session(sandbox, binary):
         'the retried spawn must not add a second agent row'
     assert len(session_rows(sandbox, 'install-cmd')) == 1, \
         'the install row must survive the retry exactly once'
-    frame(sandbox, 'no-hint-left', 'A G E N T', 'Session needs a setup step')
+    frame(sandbox, 'no-hint-left', 'A G H E L M', 'Session needs a setup step')
 
 
 def main():
@@ -201,7 +201,7 @@ def main():
         try:
             binary = ensure_binary(root, artifacts, args.binary)
             run(sandbox, binary)
-            frame(sandbox, 'ready-to-quit', 'A G E N T', 'Settings')
+            frame(sandbox, 'ready-to-quit', 'A G H E L M', 'Settings')
             key(sandbox, 'q')
             sandbox.wait_manager_exit('scen:0.0')
             results[name] = 'passed'
