@@ -14,7 +14,7 @@ export GOFLAGS
 .PHONY: build install
 
 build:
-	go build -o agent-manager$(shell go env GOEXE) .
+	go build -o aghelm$(shell go env GOEXE) .
 
 install:
 	go install .
