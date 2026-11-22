@@ -3,7 +3,7 @@
 
 A fixture `ssh` first on PATH drops every argument but the remote command and
 runs it with /bin/sh under a second disposable profile, so the manager talks
-to a real agent-manager "host" without a network or the user's ~/.ssh. The
+to a real aghelm "host" without a network or the user's ~/.ssh. The
 scenario adds a connection through the dialog and drives every action a
 remote row offers: preview, quick send, move, kill, revive, archive,
 restore, delete, attach, quick spawn and a new terminal. A second connection
@@ -131,7 +131,7 @@ class Remote:
         return profile_dir(SimpleNamespace(home=self.home))
 
     def socket(self):
-        return self.socket_dir / f'tmux-{os.getuid()}' / 'agentmgr'
+        return self.socket_dir / f'tmux-{os.getuid()}' / 'aghelm'
 
     def run(self, sandbox, args, check=True):
         saved = sandbox.env
@@ -169,7 +169,7 @@ def write_fixtures(sandbox, remote, binary):
     bin_dir = sandbox.home / 'bin'
     bin_dir.mkdir()
     # A copy at a path unique to this run, so its processes are found by PID.
-    manager = bin_dir / 'agent-manager'
+    manager = bin_dir / 'aghelm'
     shutil.copy2(binary, manager)
     (bin_dir / FAKE_BIN).write_text(composer_cli_script())
     (bin_dir / 'ssh').write_text(fake_ssh_script(remote.env))
@@ -337,7 +337,7 @@ def attach(sandbox, remote, agent_id):
     select_remote_agent(sandbox)
     sandbox.wait('remote-pane-ready', lambda: remote_pane_code(sandbox, remote, agent_id), lambda code: code == '0')
     key(sandbox, 'A')
-    frame(sandbox, 'remote-attached', READY_MARKER, 'A G E N T')
+    frame(sandbox, 'remote-attached', READY_MARKER, 'A G H E L M')
     key(sandbox, 'C-q')
     frame(sandbox, 'remote-detached', f'{REMOTE_AGENT}  on {CONNECTION}')
 
@@ -350,7 +350,7 @@ def left_at_prompt_head(sandbox, remote, agent_id):
     pane = 'am_' + agent_id
     select_remote_agent(sandbox)
     key(sandbox, 'Enter')
-    frame(sandbox, 'left-attached', READY_MARKER, 'A G E N T')
+    frame(sandbox, 'left-attached', READY_MARKER, 'A G H E L M')
     frame(sandbox, 'left-footer', '← prompt start = back')
     sandbox.tmux('send-keys', '-l', '-t', 'scen:0.0', 'ab')
     sandbox.wait('left-draft', lambda: remote.tmux(sandbox, 'capture-pane', '-p', '-t', pane).stdout,
@@ -358,7 +358,7 @@ def left_at_prompt_head(sandbox, remote, agent_id):
     key(sandbox, 'Left')
     sandbox.wait('left-reached-agent', lambda: remote.tmux(sandbox, 'capture-pane', '-p', '-t', pane).stdout,
                  lambda text: LEFT_ECHO + ' 1' in text)
-    frame(sandbox, 'left-still-attached', LEFT_ECHO + ' 1', 'A G E N T')
+    frame(sandbox, 'left-still-attached', LEFT_ECHO + ' 1', 'A G H E L M')
     key(sandbox, 'BSpace')
     key(sandbox, 'BSpace')
     sandbox.wait('left-composer-empty', lambda: remote.tmux(sandbox, 'capture-pane', '-p', '-t', pane).stdout,
@@ -424,7 +424,7 @@ def scenario(sandbox, remote, binary):
     manager = write_fixtures(sandbox, remote, binary)
     agent_id = seed_remote(sandbox, remote, manager)
     sandbox.start_manager('scen', sandbox.home, manager)
-    frame(sandbox, 'startup', 'A G E N T')
+    frame(sandbox, 'startup', 'A G H E L M')
     key(sandbox, 'Escape')
     seed_store(sandbox)
 
@@ -521,7 +521,7 @@ def cleanup(sandbox, remote, manager):
     this run started, each by PID; no server is told to kill itself."""
     ended = binary_processes(manager) if manager else {}
     for socket_path in (remote.socket(),
-                        sandbox.socket_dir / f'tmux-{os.getuid()}' / 'agentmgr',
+                        sandbox.socket_dir / f'tmux-{os.getuid()}' / 'aghelm',
                         sandbox.socket_dir / f'tmux-{os.getuid()}' / 'e2e-outer'):
         pid = server_pid(sandbox, socket_path)
         if pid:
@@ -549,7 +549,7 @@ def main():
     manager = None
     try:
         binary = ensure_binary(root, artifacts, args.binary)
-        manager = sandbox.home / 'bin' / 'agent-manager'
+        manager = sandbox.home / 'bin' / 'aghelm'
         scenario(sandbox, remote, binary)
         result = dict(status='passed', seconds=round(time.monotonic()-started, 2))
     except (Exception, KeyboardInterrupt) as error:

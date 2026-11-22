@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Candidate/released CLI and MCP contracts on disposable profiles.
+"""Candidate/peer CLI and MCP contracts on disposable profiles.
 
-Released binary comparisons and MCP protocol negotiation are separate checks.
+Peer binary comparisons and MCP protocol negotiation are separate checks.
 This runner does not invoke or mutate installed clients or real agent sessions.
 """
 import argparse
@@ -10,15 +10,12 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import platform
 import sqlite3
 import subprocess
 import sys
-import tarfile
 import tempfile
 import threading
 import time
-import urllib.request
 
 from mcp_probe import probe
 
@@ -33,40 +30,13 @@ def isolated(home):
 
 
 def profile(home):
-    return home / ('Library/Application Support' if sys.platform == 'darwin' else '.config') / 'agent-manager'
+    # isolated() sets XDG_CONFIG_HOME, which the binary honors on every OS.
+    return home / '.config' / 'aghelm'
 
 
-def released_binary(work, tag):
-    system = {'Darwin': 'darwin', 'Linux': 'linux'}[platform.system()]
-    arch = {'arm64': 'arm64', 'aarch64': 'arm64', 'x86_64': 'amd64', 'AMD64': 'amd64'}[platform.machine()]
-    name = f'agent-manager_{tag.removeprefix("v")}_{system}_{arch}.tar.gz'
-    base = f'https://github.com/wainmann/agent-manager/releases/download/{tag}/'
-    def download(name):
-        with urllib.request.urlopen(base + name, timeout=30) as response:
-            return response.read()
-    archive = download(name)
-    sums = download('checksums.txt').decode().splitlines()
-    expected = next(line.split()[0] for line in sums if line.split()[-1] == name)
-    digest = hashlib.sha256(archive).hexdigest()
-    if digest != expected:
-        raise ValueError('released archive checksum mismatch')
-    tar_path = work / name
-    tar_path.write_bytes(archive)
-    binary = work / 'released-agent-manager'
-    with tarfile.open(tar_path) as package:
-        member = next(item for item in package.getmembers() if item.isfile() and Path(item.name).name == 'agent-manager')
-        with package.extractfile(member) as stream:
-            binary.write_bytes(stream.read())
-    binary.chmod(0o700)
-    return binary, digest
-
-
-def run(candidate, work, tag, peer=None):
-    if peer:
-        release = peer.resolve()
-        digest = hashlib.sha256(release.read_bytes()).hexdigest()
-    else:
-        release, digest = released_binary(work, tag)
+def run(candidate, work, peer):
+    other = peer.resolve()
+    digest = hashlib.sha256(other.read_bytes()).hexdigest()
     checks = []
     def cli(binary, home, *args, caller=None):
         env = isolated(home)
@@ -87,7 +57,7 @@ def run(candidate, work, tag, peer=None):
         with sqlite3.connect(db) as conn:
             conn.execute("INSERT OR IGNORE INTO sessions(id,name,tool,cwd,group_name,status,archived,created_at,last_status_at) VALUES('beefcafe','fixture','terminal',?,'','finished',0,?,?)", (str(home), int(time.time()), int(time.time())))
 
-    for name, binary in [('candidate', candidate), ('peer' if peer else 'released', release)]:
+    for name, binary in [('candidate', candidate), ('peer', other)]:
         home = work / ('home-' + name)
         version = cli(binary, home, '--version')
         (work / (name + '-version.txt')).write_text(version)
@@ -107,7 +77,7 @@ def run(candidate, work, tag, peer=None):
             if not result.get('tool_count') or result.get('tools_error') or result.get('initialize_error') or 'error' in result.get('call', {}) or result.get('call', {}).get('result', {}).get('isError'):
                 raise AssertionError(f'{name} MCP {protocol} failed')
             checks.append(name + ' MCP ' + protocol)
-    for label, first, second in [('release-first', release, candidate), ('candidate-first', candidate, release)]:
+    for label, first, second in [('peer-first', other, candidate), ('candidate-first', candidate, other)]:
         home = work / ('shared-' + label)
         initialize(first, home)
         cli(first, home, 'task', 'create', 'first-version task', '--json', caller='beefcafe')
@@ -119,11 +89,11 @@ def run(candidate, work, tag, peer=None):
         checks.append(label + ' shared profile task roundtrip')
 
     home = work / 'concurrent-tasks'
-    initialize(release, home)
+    initialize(other, home)
     initialize(candidate, home)
     with sqlite3.connect(profile(home) / 'state.db') as conn:
         conn.execute("INSERT INTO sessions(id,name,tool,cwd,group_name,status,archived,created_at,last_status_at) VALUES('feedcafe','second-fixture','terminal',?,'','finished',0,?,?)", (str(home), int(time.time()), int(time.time())))
-    actors = [('candidate', candidate, 'beefcafe'), ('peer' if peer else 'released', release, 'feedcafe')]
+    actors = [('candidate', candidate, 'beefcafe'), ('peer', other, 'feedcafe')]
     create_pairs = [threading.Barrier(2) for _ in range(8)]
     def concurrent_create(item):
         name, binary, caller, index = item
@@ -168,23 +138,21 @@ def run(candidate, work, tag, peer=None):
         races.append(dict(task_id=task['id'], outcomes=outcomes))
     (work / 'concurrent-tasks.json').write_text(json.dumps(dict(created=created, claims=races), indent=2))
     checks.extend(['mixed-version concurrent task creation (16 writes)', 'mixed-version task claims (6 single-winner races)'])
-    return dict(status='passed', release=None if peer else tag, peer_binary=str(release),
-                peer_sha256=digest if peer else None, archive_sha256=None if peer else digest, checks=checks,
+    return dict(status='passed', peer_binary=str(other), peer_sha256=digest, checks=checks,
                 gaps=['installed client extension acceptance', 'live SSH', 'mixed-version concurrent writes beyond tasks', 'exclusive authority'])
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--binary', type=Path, required=True)
-    parser.add_argument('--release', default='v0.39.0')
-    parser.add_argument('--peer-binary', type=Path, help='compare an explicitly selected binary instead of downloading a release')
+    parser.add_argument('--peer-binary', type=Path, required=True, help='the binary the candidate is compared with')
     parser.add_argument('--artifacts', type=Path)
     args = parser.parse_args()
     work = args.artifacts or Path(tempfile.mkdtemp(prefix='am-matrix-'))
     work.mkdir(parents=True, exist_ok=True)
     started = time.monotonic()
     try:
-        result = run(args.binary.resolve(), work.resolve(), args.release, args.peer_binary)
+        result = run(args.binary.resolve(), work.resolve(), args.peer_binary)
     except Exception as error:
         result = dict(status='failed', error=str(error))
     result['seconds'] = round(time.monotonic() - started, 2)

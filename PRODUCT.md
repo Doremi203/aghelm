@@ -10,13 +10,13 @@ Developers who run several AI coding agents at once, often inside a dense termin
 
 ## Product Purpose
 
-agent-manager makes many independent agent sessions feel like one dependable workspace. It should reveal which sessions need attention, preserve each agent's context, and make common actions immediate without obscuring the underlying CLIs.
+aghelm makes many independent agent sessions feel like one dependable workspace. It should reveal which sessions need attention, preserve each agent's context, and make common actions immediate without obscuring the underlying CLIs.
 
 ## Thin Wrapper Principle
 
-agent-manager manages the workspace around agent TUIs. Each TUI owns its models, configuration, and interaction. Keep the wrapper generic and give upstream tools as little custom configuration as possible, so their upgrades do not require matching agent-manager releases.
+aghelm manages the workspace around agent TUIs. Each TUI owns its models, configuration, and interaction. Keep the wrapper generic and give upstream tools as little custom configuration as possible, so their upgrades do not require matching aghelm releases.
 
-This is a project sustainability constraint. Provider-specific features multiply the maintenance burden across features, providers, and upstream releases. A growing collection of individually useful integrations can become impossible to keep working. Supporting a TUI means making it usable in the workspace; it does not commit agent-manager to exposing every feature that provider offers.
+This is a project sustainability constraint. Provider-specific features multiply the maintenance burden across features, providers, and upstream releases. A growing collection of individually useful integrations can become impossible to keep working. Supporting a TUI means making it usable in the workspace; it does not commit aghelm to exposing every feature that provider offers.
 
 - Prefer workspace features that work across tools with little or no provider-specific code. New shared behavior covers every applicable tool in the same PR. Evaluate the ongoing cost across all supported providers before adding an integration. Ease of implementing the first provider is not enough.
 - Preserve each tool's defaults and the user's configuration. Add launch flags or configuration only when required for session management or explicitly requested by the user; do not choose a model on their behalf.

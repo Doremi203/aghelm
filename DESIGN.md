@@ -1,5 +1,5 @@
 ---
-name: agent-manager
+name: aghelm
 description: A precise terminal workspace for many AI coding agents.
 colors:
   background: "#0f1115"
@@ -44,13 +44,13 @@ components:
     typography: "{typography.body}"
 ---
 
-# Design System: agent-manager
+# Design System: aghelm
 
 ## Overview
 
 **Creative North Star: "The Operator's Field Desk"**
 
-agent-manager is a dense working surface used for hours, not a presentation layer. Structure comes from alignment, tonal surfaces, concise labels, and persistent spatial relationships. The interface stays quiet until state requires attention.
+aghelm is a dense working surface used for hours, not a presentation layer. Structure comes from alignment, tonal surfaces, concise labels, and persistent spatial relationships. The interface stays quiet until state requires attention.
 
 Key characteristics: terminal-native, keyboard-first, information-dense, restrained, and deterministic. Avoid decorative SaaS patterns, novelty controls, modal dumps, and visual treatments that disguise stale or ambiguous state.
 
@@ -91,7 +91,7 @@ The rail shows canonical notice titles in a bounded fieldset. Overflow is summar
 
 ### Notices modal
 
-The modal presents a short list first, then a readable summary of the selected notice. A notice may open with an authored headline. Release notices group changes by version, newest first, list the newest release's features and fixes under its highlights, show the direct upgrade path, and cap visible detail with an explicit remainder rather than clipping silently. A long notice scrolls beside a scrollbar.
+The modal presents a short list first, then a readable summary of the selected notice. A notice may open with an authored headline. A long notice scrolls beside a scrollbar.
 
 ### Inputs and actions
 

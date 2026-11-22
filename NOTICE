@@ -2,3 +2,14 @@ agent-manager
 Copyright 2026 Yoan Wai and the agent-manager contributors
 
 Licensed under the Apache License, Version 2.0.
+
+aghelm
+
+aghelm is a modified version of agent-manager
+(https://github.com/YoanWai/agent-manager), distributed under the same
+Apache License, Version 2.0. The modifications rename the program and its
+module, binary, tmux socket, configuration directory, MCP server name,
+environment variables and generated files so that it runs beside
+agent-manager; remove the self-updater, the release and message feeds, and
+the issue reporter; and replace the continuous integration and release
+setup with a local `make check`.

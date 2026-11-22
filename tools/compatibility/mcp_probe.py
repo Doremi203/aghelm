@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Raw MCP stdio probe: newline-delimited JSON-RPC against `agent-manager mcp`.
+"""Raw MCP stdio probe: newline-delimited JSON-RPC against `aghelm mcp`.
 
 No model call, no approval: initialize, tools/list, and one optional
 tools/call. Prints a JSON result so matrix.sh can file it as evidence.

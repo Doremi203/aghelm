@@ -1,32 +1,16 @@
-# Contributing to agent-manager
+# Contributing to aghelm
 
-Thanks for taking an interest. Bug reports, feature ideas, and pull requests are all welcome.
+aghelm is a fork of the project named in [NOTICE](../NOTICE). Bug reports and pull requests go to [Doremi203/aghelm](https://github.com/Doremi203/aghelm/issues/new); a fix that applies to the upstream project is worth sending there as well.
 
-## Ways to help
+## What a change covers
 
-- **Report a bug** with the [bug report form](https://github.com/wainmann/agent-manager/issues/new?template=bug_report.yml).
-- **Suggest a feature** with the [feature request form](https://github.com/wainmann/agent-manager/issues/new?template=feature_request.yml).
-- **Ask a question or show what you built** in [Discussions](https://github.com/wainmann/agent-manager/discussions).
-- **Talk about contributing** in #dev on the [Agent Manager Community Discord](https://discord.gg/ecS88An7pF).
-- **Add or fix status rules for a CLI** you use. Every CLI's launch command and detection rules ship in the binary, in `internal/config/config.go`, so a pull request there reaches everyone running that agent. An issue with the CLI's version and the pane text it draws is the next best thing.
-
-## Picking up an issue
-
-Every issue has a type next to its labels. The bug form sets Bug, the feature form sets Feature, and anything else gets Task during triage. Search by type, such as `type:Bug`, to find something to pick up.
-
-If an issue is unassigned, it's free to take. Comment that you're on it and I'll assign you. If there's no update in 14 days, it's free again.
-
-## Before you open a pull request
-
-Send it. Typos, broken links, a one-line fix, a status rule for a tool you use: straight to a pull request is fine, and a rough patch that works is worth more than a perfect one you never open.
-
-For a large change (new UI, new keybinding, reworked status detection), an issue first gets you a read on the approach so the work lands the first time. This is optional except for the partial feature proposals described below.
+A rough patch that works is welcome. For a large change (new UI, new keybinding, reworked status detection), open an issue first to agree on the approach.
 
 Follow the [Thin Wrapper Principle](../PRODUCT.md#thin-wrapper-principle): preserve
 each agent TUI's defaults and user configuration, keep shared features generic,
 and avoid integrations that need updates whenever an upstream tool changes.
 For example, a model picker needs reliable dynamic discovery across supported
-tools; a maintained list of model names does not belong in agent-manager.
+tools; a maintained list of model names does not belong in aghelm.
 
 New shared features must work for every applicable CLI in the same PR.
 Notifications, copying replies, and session controls are shared workspace
@@ -41,12 +25,11 @@ an exception. Listing exclusions or promising follow-up PRs does not.
 See [tool coverage](../REVIEW.md#tool-coverage) for the evidence required.
 
 If you want a feature for one tool but cannot or do not plan to build it for
-the other applicable tools, [open a feature request](https://github.com/wainmann/agent-manager/issues/new?template=feature_request.yml)
+the other applicable tools, [open an issue](https://github.com/Doremi203/aghelm/issues/new)
 first. You may also open a draft PR linked to that issue as a reference
-implementation. Mark it as reference only and name the missing tool coverage.
-Keep it in draft until the coverage is complete or the maintainer accepts an
-exception. The example helps discuss the idea without presenting it as ready
-to merge or committing anyone to finish it.
+implementation. Mark it as reference only, name the missing tool coverage, and
+keep it in draft until the coverage is complete or the maintainer accepts an
+exception.
 
 Build against the current release of each agent CLI. None of them publishes a
 long-term-support line, so the latest stable release is the one we support.
@@ -63,33 +46,39 @@ each of these with the reason behind it.
 
 ## Setup
 
-You need Go 1.27.4+ and tmux.
+You need Go 1.27.4+, tmux 3.1+, and git.
 
 ```bash
-git clone https://github.com/wainmann/agent-manager.git
-cd agent-manager
+git clone https://github.com/Doremi203/aghelm.git
+cd aghelm
 go run .
 ```
 
-The manager runs its sessions on a dedicated tmux socket (`-L`), so a development build stays clear of the tmux server your own shell is attached to.
+aghelm runs its sessions on a dedicated tmux socket (`-L aghelm`), so a development build stays clear of the tmux server your own shell is attached to and of an upstream install's.
 
-`make build` writes `./agent-manager` (`agent-manager.exe` on Windows) and `make install` puts it in your Go bin directory. Both stamp the commit from `git describe`, such as `0.47.1-10-g1656b508-dirty`, which Settings, `--version` and bug reports show. A build without the stamp, such as `go run .` or a plain `go build`, reports `dev`, except a plain `go build` on a clean checkout of a release tag: Go stamps that tag as the module version, so it reports the release. Add `-buildvcs=false` to keep it `dev`. Source outside its own git repository, such as an unpacked archive, reports `dev` from `make build` too. Neither kind is offered updates or the what's-new notice. Without `make`, pass the stamp yourself: `go build -ldflags "-X main.version=$(git describe --tags --always --dirty --long)" .`
+`make build` writes `./aghelm` (`aghelm.exe` on Windows) and `make install` puts it in your Go bin directory. Both stamp the commit from `git describe`, such as `0.47.1-10-g1656b508-dirty`, which Settings and `--version` show. A build without the stamp, such as `go run .` or a plain `go build`, reports `dev`, except a plain `go build` on a clean checkout of a tag: Go stamps that tag as the module version. Add `-buildvcs=false` to keep it `dev`. Without `make`, pass the stamp yourself: `go build -ldflags "-X main.version=$(git describe --tags --always --dirty --long)" .`
 
 ## Checks
 
-CI runs these on every pull request. The other jobs in `.github/workflows/ci.yml` are gitleaks, govulncheck, shellcheck on `install.sh`, a run of `install.sh` on Linux and macOS and of `install.ps1` on Windows against the latest release, the test suite on Windows and on macOS (all but one echo-latency test), the real-terminal e2e scenarios, the Windows ssh client against a WSL host, and a goreleaser snapshot build of every release target. Run these locally first:
+There is no CI. Run `make check` before every commit:
 
 ```bash
-gofmt -l .          # must print nothing
-go vet ./...
-go run honnef.co/go/tools/cmd/staticcheck@2026.2.2 ./...
-mkdir -p /tmp/amtest && env -u TMUX TMUX_TMPDIR=/tmp/amtest go test -race ./...
-go build ./...
+make check
 ```
 
-The test suite includes end-to-end tests against a real tmux server on its own socket. Install tmux to run those tests locally; tmux-dependent tests are skipped when tmux is unavailable. `env -u TMUX` is required when your shell is already inside tmux, or the tests land on that server.
+It runs, in order, and stops at the first failure:
 
-On Windows the suite needs psmux 3.4.0 or newer, PowerShell 7.3 or newer, and `cat`, `echo`, `printf` and `true` from Git for Windows (`C:\Program Files\Git\usr\bin`) on `PATH`. The `ui` package outruns go test's default timeout, and `-race` needs cgo:
+- `gofmt -l .`, which must print nothing
+- `go vet ./...`
+- staticcheck, at the version pinned in the `Makefile`
+- the architecture checks in `tools/architecture` (`check-ui-boundaries`, `check-file-names`, `check-file-sizes`, `check-identity`)
+- `go test -race ./...` with `TMUX` unset, `TMUX_TMPDIR=/tmp/amtest` and `SHELL=/bin/sh`
+
+The test suite includes end-to-end tests against a real tmux server on its own socket. Install tmux to run them; tmux-dependent tests are skipped when tmux is unavailable. `make check` unsets `TMUX` itself, so the tests never land on the server your shell is in.
+
+`make vulncheck` runs govulncheck against the Go vulnerability database. It needs the network, so it stays out of `make check`; run it after a dependency change. The real-terminal scenarios in `tools/e2e` and the side-by-side checks in `tools/compatibility` run by hand; their READMEs say how.
+
+`make check` runs shell commands (`test`, `mkdir -p`, `env -u`), so on Windows it needs a POSIX shell such as the one Git for Windows ships. Without one, run the steps by hand. On Windows the suite needs psmux 3.4.0 or newer, PowerShell 7.3 or newer, and `cat`, `echo`, `printf` and `true` from Git for Windows (`C:\Program Files\Git\usr\bin`) on `PATH`. The `ui` package outruns go test's default timeout, and `-race` needs cgo:
 
 ```powershell
 go test -timeout 40m ./...
@@ -98,8 +87,8 @@ go test -timeout 40m ./...
 ## Code style
 
 - Match the surrounding code. Names describe intent; comments explain a non-obvious *why* and stay rare.
-- Keep changes focused on one thing. A PR that fixes a bug and refactors three packages is two PRs.
-- Add tests for behavior you change, next to the package you touched.
+- Keep changes focused on one thing. A change that fixes a bug and refactors three packages is two commits.
+- Add tests for behavior you change, next to the file you touched.
 
 ## Commits and pull requests
 
@@ -111,30 +100,12 @@ fix(status): treat an Esc interrupt as waiting
 docs: document the review-base subcommand
 ```
 
-Release notes are generated from merged pull request titles, so give the PR the title you want readers to see in the changelog.
-
-The TUI reads **Highlights** and **Thank you** from the GitHub release notes
-into the messages panel. Do not duplicate those notes in the maintainer message
-feed; see [Release summaries and messages](../docs/notifications.md) for the two
-publishing paths.
-
-In the pull request description, say what changed and why, and how you verified
-it. Fill the Scope section: what the change has to do and why this shape. A typo
-or a one-line fix answers both in a sentence, and a review reads them to tell
-the change you meant from the change you made. For a shared feature, account
-for every CLI in `builtinTools` with its behavior and verification, or evidence
-that the feature does not apply. For a tool-specific fix, name the affected
-tools and why the others are unaffected. For any partial feature exception,
-link the maintainer decision or state it explicitly when you are the maintainer.
-Name excluded platforms and what covering them would take too. If the change
-grew out of a Discussion, or you opened one
-about it, link it there.
-Complete the Visual evidence section for every pull request. Include before
-and after screenshots whenever the change can be shown visually; use a short
-recording when interaction or motion is clearer that way. If useful visual
-evidence is not possible, say why. For example, a new UI may have no
-reproducible before state, while an internal refactor may have no meaningful
-visual state at all.
+In a pull request description, say what changed and why, and how you verified
+it. For a shared feature, account for every CLI in `builtinTools` with its
+behavior and verification, or evidence that the feature does not apply. For a
+tool-specific fix, name the affected tools and why the others are unaffected.
+Name excluded platforms and what covering them would take. Include before and
+after frames when the change is visible; see below.
 
 ## Capturing a TUI frame
 
@@ -143,22 +114,22 @@ everything else on your screen and cannot show a mouse gesture at all. Drive a
 built binary on its own tmux socket instead and capture the frames it paints.
 
 ```bash
-go build -o /tmp/amcap/bin/agent-manager .   # build first, before HOME moves
+go build -o /tmp/amcap/bin/aghelm .   # build first, before HOME moves
 
 mkdir -p /tmp/amcap/home /tmp/amcap/sock
 export HOME=/tmp/amcap/home          # throwaway config and store
 export TMUX_TMPDIR=/tmp/amcap/sock   # keep it short, see AGENTS.md
 unset TMUX
-tmux -L outer new-session -d -x 110 -y 30 /tmp/amcap/bin/agent-manager
+tmux -L outer new-session -d -x 110 -y 30 /tmp/amcap/bin/aghelm
 ```
 
 `unset TMUX` and a short `TMUX_TMPDIR` matter for the same reason they matter
 to the suite; see Build and test in [AGENTS.md](../AGENTS.md). The socket
 directory also has to exist before tmux starts. When it does not, tmux falls
 back to your default socket without saying so, and the run lands on your real
-sessions. The manager starts its own `agentmgr` server under that directory,
-so `tmux -L agentmgr` reaches the sessions it spawns without touching your
-own.
+sessions. The manager starts its own `aghelm` server under that directory,
+so `tmux -L aghelm` reaches the sessions it spawns without touching your
+own. A fresh `HOME` opens the first-run setup screen once; `esc` skips it.
 
 Keys go in with `send-keys`, mouse events as raw SGR bytes through `send-keys -H`:
 
@@ -184,16 +155,4 @@ Contributions come in under the project's [Apache-2.0 license](../LICENSE), same
 
 Two clauses are worth knowing as a contributor. Section 3 licenses the patent claims you can license that your own contribution necessarily infringes, on its own or combined with the project, and it withdraws that grant from anyone who sues over the work. Section 9 lets a redistributor sell support or a warranty only on its own behalf, and requires it to indemnify, defend and hold contributors harmless for what it took on.
 
-## Review
-
-[REVIEW.md](../REVIEW.md) states what a review here covers, so you can see what a finding will be about before you open the PR. CodeRabbit reviews every pull request automatically, usually within minutes. Work through its findings first: fix what it got right, and reply on the comment when you disagree, so the thread records why. Maintainer review starts once the CodeRabbit round is handled; a PR with open, unanswered findings waits.
-
-Any collaborator may merge a pull request once another collaborator or the maintainer has approved it. Nobody approves their own pull request. GitHub enforces this with a required code-owner review. [CODEOWNERS](CODEOWNERS) lists `@YoanWai` and `@wainmann/collaborators` as default owners, with maintainer-only paths for everything under `.github`, security, governance, the installers, the Go module files, the license, and release publishing. One approving code-owner review is required. A push after approval needs a fresh approval. The required checks must pass, and conversations must be resolved. Expect a first response within a few days.
-
-## Governance
-
-Roles, how decisions are made, and how the roadmap is edited are in [GOVERNANCE.md](../GOVERNANCE.md). The current maintainer, collaborators, and triagers are listed in [MAINTAINERS.md](../MAINTAINERS.md).
-
-## Code of Conduct
-
-Participation is covered by the [Code of Conduct](CODE_OF_CONDUCT.md).
+[REVIEW.md](../REVIEW.md) states what a review here covers.
