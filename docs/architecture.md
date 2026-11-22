@@ -53,7 +53,7 @@ Under `internal/`:
 - `diff`: loads changed files through `git`. `diff/model`: pure diff and line models.
 - `keybind`: key names and their spellings per surface.
 - `clipboard`, `notify`, `termseq`, `systheme`, `sysstat`: clipboard, notifications, terminal escapes, OS theme, host stats.
-- `update`, `feed`, `report`: release checks, message feed, bug and feature reports.
+- `update`, `feed`: release checks and the message feed.
 - `atomicfile`, `deps`, `pwsh`, `proctree`, `wsl`: small helpers for file writes, install hints, PowerShell, Windows processes, WSL detection.
 - `testenv`, `testfixture`: test helpers.
 

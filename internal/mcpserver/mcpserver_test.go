@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/Doremi203/aghelm/internal/hooks"
-	"github.com/Doremi203/aghelm/internal/report"
 	"github.com/Doremi203/aghelm/internal/sessioncmd"
 	"github.com/Doremi203/aghelm/internal/store"
 	"github.com/Doremi203/aghelm/internal/testenv"
@@ -268,28 +267,6 @@ func (f *fakeSessionCommands) DeleteGroup(_ string, path string) (sessioncmd.Gro
 	return sessioncmd.GroupRemoval{Removed: []string{path}, Moved: []string{"a1b2c3d4"}}, f.err
 }
 
-// fakeReporter records the drafts each call handed it, so a test can tell a
-// preview that posted nothing from a confirm that filed.
-type fakeReporter struct {
-	approved  string
-	previewed []report.Draft
-	filed     []report.Draft
-	preview   report.Preview
-	result    report.Filed
-	err       error
-}
-
-func (f *fakeReporter) Preview(_ string, draft report.Draft) (report.Preview, error) {
-	f.previewed = append(f.previewed, draft)
-	return f.preview, f.err
-}
-
-func (f *fakeReporter) File(_ string, draft report.Draft, previewID string) (report.Filed, error) {
-	f.approved = previewID
-	f.filed = append(f.filed, draft)
-	return f.result, f.err
-}
-
 func connect(t *testing.T, configDir, sessionID string) *mcp.ClientSession {
 	t.Helper()
 	return connectServer(t, NewServer(configDir, sessionID, "test", true))
@@ -360,7 +337,7 @@ func TestListsAllTools(t *testing.T) {
 		names[tool.Name] = true
 	}
 	for _, want := range []string{
-		"rename", "review", "review_comment", "report_issue",
+		"rename", "review", "review_comment",
 		"list_terminals", "create_terminal", "send_terminal", "read_terminal", "close_terminal",
 	} {
 		if !names[want] {
@@ -480,7 +457,7 @@ func TestTerminalToolsExposeStructuredResultsAndForwardArguments(t *testing.T) {
 			Output:   "build complete",
 		},
 	}
-	session := connectServer(t, newServer(t.TempDir(), "abc123", "test", true, fake, &fakeSessionCommands{}, &fakeReporter{}))
+	session := connectServer(t, newServer(t.TempDir(), "abc123", "test", true, fake, &fakeSessionCommands{}))
 
 	listed := callTool(t, session, "list_terminals", map[string]any{})
 	if listed.IsError || listed.StructuredContent == nil {
@@ -529,7 +506,7 @@ func TestTerminalToolsExposeStructuredResultsAndForwardArguments(t *testing.T) {
 
 func TestCloseTerminalForwardsID(t *testing.T) {
 	fake := &fakeTerminalCommands{}
-	session := connectServer(t, newServer(t.TempDir(), "abc123", "test", true, fake, &fakeSessionCommands{}, &fakeReporter{}))
+	session := connectServer(t, newServer(t.TempDir(), "abc123", "test", true, fake, &fakeSessionCommands{}))
 	text, isError := callText(t, session, "close_terminal", map[string]any{"terminal_id": "a1b2c3d4"})
 	if isError || !strings.Contains(text, "closed terminal a1b2c3d4") {
 		t.Fatalf("close_terminal = %q, isError=%v", text, isError)
@@ -543,7 +520,7 @@ func TestCreateTerminalForwardsNest(t *testing.T) {
 	fake := &fakeTerminalCommands{
 		created: sessioncmd.Terminal{ID: "e5f6a7b8", Name: "terminal-e5f6"},
 	}
-	session := connectServer(t, newServer(t.TempDir(), "abc123", "test", true, fake, &fakeSessionCommands{}, &fakeReporter{}))
+	session := connectServer(t, newServer(t.TempDir(), "abc123", "test", true, fake, &fakeSessionCommands{}))
 
 	if created := callTool(t, session, "create_terminal", map[string]any{}); created.IsError {
 		t.Fatalf("create_terminal no args = %+v", created)
@@ -593,7 +570,7 @@ func TestTerminalToolAnnotationsDescribeLocalRisk(t *testing.T) {
 
 func TestTerminalToolErrorsAreToolErrors(t *testing.T) {
 	fake := &fakeTerminalCommands{err: errors.New("terminal is not running")}
-	session := connectServer(t, newServer(t.TempDir(), "abc123", "test", true, fake, &fakeSessionCommands{}, &fakeReporter{}))
+	session := connectServer(t, newServer(t.TempDir(), "abc123", "test", true, fake, &fakeSessionCommands{}))
 	for _, call := range []struct {
 		name string
 		args map[string]any
@@ -900,7 +877,7 @@ func TestSessionToolsExposeStructuredResultsAndForwardArguments(t *testing.T) {
 		},
 		groups: []sessioncmd.Group{{Path: group, Directory: "/work", Sessions: 2}},
 	}
-	session := connectServer(t, newServer(t.TempDir(), "abc123", "test", true, &fakeTerminalCommands{}, fake, &fakeReporter{}))
+	session := connectServer(t, newServer(t.TempDir(), "abc123", "test", true, &fakeTerminalCommands{}, fake))
 
 	listed := callTool(t, session, "list_sessions", map[string]any{})
 	if listed.IsError || listed.StructuredContent == nil {
@@ -1126,7 +1103,7 @@ func TestSessionToolErrorsAreToolErrors(t *testing.T) {
 
 func serverWithFakes(t *testing.T, sessions sessionCommands) *mcp.Server {
 	t.Helper()
-	return newServer(t.TempDir(), "abc123", "test", true, &fakeTerminalCommands{}, sessions, &fakeReporter{})
+	return newServer(t.TempDir(), "abc123", "test", true, &fakeTerminalCommands{}, sessions)
 }
 
 func TestTaskToolsForwardArgumentsAndRenderTheList(t *testing.T) {
@@ -1226,100 +1203,12 @@ func TestReservationToolsReportConflictsWithoutRefusingTheLease(t *testing.T) {
 	}
 }
 
-func TestReportIssuePreviewsUntilTheUserConfirms(t *testing.T) {
-	fake := &fakeReporter{
-		preview: report.Preview{ID: "3f2a91c4", Kind: report.Bug, Title: "Space lands in the wrong pane", Body: "### What happened\n\nsteps\n", Route: report.RouteGH, Account: "yoan"},
-		result:  report.Filed{Route: report.RouteGH, URL: "https://github.com/wainmann/agent-manager/issues/512"},
-	}
-	session := connectServer(t, newServer(t.TempDir(), "abc123", "test", true, &fakeTerminalCommands{}, &fakeSessionCommands{}, fake))
-
-	args := map[string]any{"kind": "bug", "title": "Space lands in the wrong pane", "body": "steps"}
-	text, isError := callText(t, session, "report_issue", args)
-	if isError {
-		t.Fatalf("preview errored: %q", text)
-	}
-	for _, want := range []string{"not filed yet", "preview id: 3f2a91c4", "through gh as yoan", "call again with preview_id 3f2a91c4"} {
-		if !strings.Contains(text, want) {
-			t.Fatalf("preview lacks %q:\n%s", want, text)
-		}
-	}
-	want := report.Draft{Kind: report.Bug, Title: "Space lands in the wrong pane", Body: "steps"}
-	if len(fake.previewed) != 1 || fake.previewed[0] != want || len(fake.filed) != 0 {
-		t.Fatalf("a call without preview_id previewed %v and filed %v", fake.previewed, fake.filed)
-	}
-
-	args["preview_id"] = "3f2a91c4"
-	text, isError = callText(t, session, "report_issue", args)
-	if isError || text != "filed https://github.com/wainmann/agent-manager/issues/512" {
-		t.Fatalf("confirm = %q, isError=%v", text, isError)
-	}
-	if len(fake.filed) != 1 || fake.filed[0] != want || fake.approved != "3f2a91c4" {
-		t.Fatalf("confirm filed %v approved as %q", fake.filed, fake.approved)
-	}
-	structured := callTool(t, session, "report_issue", args).StructuredContent
-	if record, ok := structured.(map[string]any); !ok || record["url"] != "https://github.com/wainmann/agent-manager/issues/512" || record["route"] != "gh" {
-		t.Fatalf("structured content = %#v", structured)
-	}
-}
-
-func TestReportIssueRefusalsAreToolErrors(t *testing.T) {
-	fake := &fakeReporter{err: errors.New("body is empty; say what you did")}
-	session := connectServer(t, newServer(t.TempDir(), "abc123", "test", true, &fakeTerminalCommands{}, &fakeSessionCommands{}, fake))
-	for _, previewID := range []string{"", "3f2a91c4"} {
-		text, isError := callText(t, session, "report_issue", map[string]any{"kind": "bug", "title": "t", "body": "", "preview_id": previewID})
-		if !isError || !strings.Contains(text, "body is empty") {
-			t.Fatalf("preview_id=%q: %q, isError=%v", previewID, text, isError)
-		}
-	}
-}
-
-// The description carries the whole contract for a client that shows tools
-// without server instructions: when to offer it, that a first call only
-// previews, and that the body goes public.
-func TestReportIssueDescriptionTeachesTheConfirmFlow(t *testing.T) {
-	session := connect(t, t.TempDir(), "abc123")
-	tools, err := session.ListTools(context.Background(), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var tool *mcp.Tool
-	for _, listed := range tools.Tools {
-		if listed.Name == "report_issue" {
-			tool = listed
-		}
-	}
-	if tool == nil {
-		t.Fatal("report_issue is not served")
-	}
-	for _, want := range []string{"bug in the manager itself", "cannot do", "preview", "posts nothing", "only after they approve", "exactly what they saw", "gh", "prefilled", "public"} {
-		if !strings.Contains(tool.Description, want) {
-			t.Fatalf("report_issue description lacks %q:\n%s", want, tool.Description)
-		}
-	}
-	if annotations := tool.Annotations; annotations == nil || annotations.ReadOnlyHint || annotations.OpenWorldHint == nil || !*annotations.OpenWorldHint {
-		t.Fatalf("report_issue annotations = %+v", annotations)
-	}
-	if tool.OutputSchema != nil {
-		t.Fatalf("report_issue declares one output schema for two result shapes: %+v", tool.OutputSchema)
-	}
-}
-
-func TestServerTeachesWhenToOfferAReport(t *testing.T) {
-	session := connect(t, t.TempDir(), "abc123")
-	instructions := session.InitializeResult().Instructions
-	for _, want := range []string{"report_issue", "bug in the manager", "previews", "approves"} {
-		if !strings.Contains(instructions, want) {
-			t.Fatalf("server instructions do not teach %q:\n%s", want, instructions)
-		}
-	}
-}
-
 func TestOnRequestServerWaitsForTheUserBeforeReachingOtherSessions(t *testing.T) {
 	onRequest := connectServer(t, NewServer(t.TempDir(), "abc123", "test", false))
 	proactive := connect(t, t.TempDir(), "abc123")
 
 	instructions := onRequest.InitializeResult().Instructions
-	for _, want := range []string{"when the user asks", "never list, read, message, spawn or wait on another session", "create or claim tasks", "even where a tool description suggests it", "create_session", "report_issue", "create_terminal"} {
+	for _, want := range []string{"when the user asks", "never list, read, message, spawn or wait on another session", "create or claim tasks", "even where a tool description suggests it", "create_session", "create_terminal"} {
 		if !strings.Contains(instructions, want) {
 			t.Fatalf("on-request instructions do not say %q:\n%s", want, instructions)
 		}
@@ -1508,7 +1397,7 @@ func TestServerRunnersReturnCoordinationModeReadErrors(t *testing.T) {
 }
 
 func TestCreateSessionPresetSchemaIsOptional(t *testing.T) {
-	session := connectServer(t, newServer(t.TempDir(), "abc123", "test", true, &fakeTerminalCommands{}, &fakeSessionCommands{}, &fakeReporter{}))
+	session := connectServer(t, newServer(t.TempDir(), "abc123", "test", true, &fakeTerminalCommands{}, &fakeSessionCommands{}))
 	listed, err := session.ListTools(context.Background(), nil)
 	if err != nil {
 		t.Fatal(err)
@@ -1553,7 +1442,7 @@ func TestCreateSessionPresetSchemaIsOptional(t *testing.T) {
 
 func TestCreateSessionForwardsSessionPreset(t *testing.T) {
 	fake := &fakeSessionCommands{}
-	session := connectServer(t, newServer(t.TempDir(), "abc123", "test", true, &fakeTerminalCommands{}, fake, &fakeReporter{}))
+	session := connectServer(t, newServer(t.TempDir(), "abc123", "test", true, &fakeTerminalCommands{}, fake))
 	result := callTool(t, session, "create_session", map[string]any{"saved": "project/reviewer", "prompt": " task "})
 	if result.IsError {
 		t.Fatalf("create_session: %+v", result)
