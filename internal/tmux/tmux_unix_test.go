@@ -51,7 +51,7 @@ func TestRunInPaneDeliversALongCommandToAShellWithoutLineEditing(t *testing.T) {
 	t.Cleanup(func() { driver.Kill(id) })
 	marker := filepath.Join(t.TempDir(), "ran")
 	payload := strings.Repeat("x", 1500)
-	if err := driver.RunInPane(id, map[string]string{"AGENT_MANAGER_SESSION_ID": "abc123"}, "printf '%s %s' \"$AGENT_MANAGER_SESSION_ID\" '"+payload+"' > "+ShellQuote(marker+".part")+" && mv "+ShellQuote(marker+".part")+" "+ShellQuote(marker)); err != nil {
+	if err := driver.RunInPane(id, map[string]string{"AGHELM_SESSION_ID": "abc123"}, "printf '%s %s' \"$AGHELM_SESSION_ID\" '"+payload+"' > "+ShellQuote(marker+".part")+" && mv "+ShellQuote(marker+".part")+" "+ShellQuote(marker)); err != nil {
 		t.Fatalf("RunInPane: %v", err)
 	}
 	if got := waitForFile(t, driver, id, marker); got != "abc123 "+payload {

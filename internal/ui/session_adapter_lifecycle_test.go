@@ -2087,7 +2087,7 @@ func TestReviveStartsTheAgentAgainInALivePane(t *testing.T) {
 
 	// The relaunch hands its environment over in a file the shell sources,
 	// so only that file's path is typed, never a value.
-	if pane, _ := m.services.tmux.CapturePane(sess.ID); strings.Contains(strings.ReplaceAll(ansi.Strip(pane), "\n", ""), "AGENT_MANAGER_SESSION_ID") {
+	if pane, _ := m.services.tmux.CapturePane(sess.ID); strings.Contains(strings.ReplaceAll(ansi.Strip(pane), "\n", ""), "AGHELM_SESSION_ID") {
 		t.Fatalf("relaunch typed the session identity into the pane:\n%s", pane)
 	}
 	got, err := m.services.store.Get(sess.ID)
@@ -2108,9 +2108,9 @@ func TestReviveStartsTheAgentAgainInALivePane(t *testing.T) {
 	}
 	waitForAgent(t, m, sess.ID, false)
 	marker := filepath.Join(t.TempDir(), "env")
-	report := `printf '%s %s\n' "$AGENT_MANAGER_SESSION_ID" "$AGENT_MANAGER_STATUS_FILE" > ` + marker + `.part && mv ` + marker + `.part ` + marker
+	report := `printf '%s %s\n' "$AGHELM_SESSION_ID" "$AGHELM_STATUS_FILE" > ` + marker + `.part && mv ` + marker + `.part ` + marker
 	if runtime.GOOS == "windows" {
-		report = `Set-Content -LiteralPath ` + tmux.ShellQuote(marker+".part") + ` -Value "$env:AGENT_MANAGER_SESSION_ID $env:AGENT_MANAGER_STATUS_FILE"; ` +
+		report = `Set-Content -LiteralPath ` + tmux.ShellQuote(marker+".part") + ` -Value "$env:AGHELM_SESSION_ID $env:AGHELM_STATUS_FILE"; ` +
 			`Move-Item -LiteralPath ` + tmux.ShellQuote(marker+".part") + ` -Destination ` + tmux.ShellQuote(marker)
 	}
 	if err := m.services.tmux.SendKeys(sess.ID, report, "Enter"); err != nil {

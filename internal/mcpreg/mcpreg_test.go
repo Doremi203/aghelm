@@ -87,7 +87,7 @@ func TestApplyClaudeWritesConfigAndFlag(t *testing.T) {
 	if server.Command != "/opt/bin/aghelm" || len(server.Args) != 1 || server.Args[0] != "mcp" {
 		t.Fatalf("server = %+v", server)
 	}
-	if server.Env["AGENT_MANAGER_SESSION_ID"] != "${AGENT_MANAGER_SESSION_ID}" {
+	if server.Env["AGHELM_SESSION_ID"] != "${AGHELM_SESSION_ID}" {
 		t.Fatalf("env = %v", server.Env)
 	}
 	if len(env) != 0 {
@@ -104,7 +104,7 @@ func TestApplyCodexAppendsOverrides(t *testing.T) {
 	for _, want := range []string{
 		`mcp_servers.aghelm.command="/opt/bin/aghelm"`,
 		`mcp_servers.aghelm.args=["mcp"]`,
-		`mcp_servers.aghelm.env_vars=["AGENT_MANAGER_SESSION_ID"]`,
+		`mcp_servers.aghelm.env_vars=["AGHELM_SESSION_ID"]`,
 	} {
 		if !strings.Contains(command, want) {
 			t.Fatalf("command %q missing %q", command, want)
@@ -131,7 +131,7 @@ func TestApplyOpencodeSetsEnvToConfigFile(t *testing.T) {
 		t.Fatal(err)
 	}
 	text := string(content)
-	for _, want := range []string{`"/opt/bin/aghelm"`, `"mcp"`, "{env:AGENT_MANAGER_SESSION_ID}"} {
+	for _, want := range []string{`"/opt/bin/aghelm"`, `"mcp"`, "{env:AGHELM_SESSION_ID}"} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("config %q missing %q", text, want)
 		}

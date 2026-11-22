@@ -34,7 +34,7 @@ func TestMain(m *testing.M) {
 }
 
 func prepareMainProcess() bool {
-	if os.Getenv("AGENT_MANAGER_MAIN_TEST") != "1" {
+	if os.Getenv("AGHELM_MAIN_TEST") != "1" {
 		return false
 	}
 	for i, arg := range os.Args {
@@ -57,7 +57,7 @@ func mainTestCommand(t *testing.T, args ...string) *exec.Cmd {
 	commandArgs = append(commandArgs, "--")
 	commandArgs = append(commandArgs, args...)
 	cmd := exec.CommandContext(ctx, os.Args[0], commandArgs...)
-	cmd.Env = append(os.Environ(), "AGENT_MANAGER_MAIN_TEST=1")
+	cmd.Env = append(os.Environ(), "AGHELM_MAIN_TEST=1")
 	cmd.WaitDelay = time.Second
 	return cmd
 }
@@ -180,7 +180,7 @@ func TestMainNonInteractiveStartReportsHelpFailures(t *testing.T) {
 		main()
 		return
 	}
-	t.Setenv("AGENT_MANAGER_CONFIG_DIR", "")
+	t.Setenv("AGHELM_CONFIG_DIR", "")
 	t.Run("config dir", func(t *testing.T) {
 		home := t.TempDir()
 		env, want := nonInteractiveConfigDirFailure(home)
@@ -195,8 +195,8 @@ func TestMainNonInteractiveStartReportsHelpFailures(t *testing.T) {
 		if err := os.WriteFile(filepath.Join(configDir, "state.db"), []byte("not a database"), 0o644); err != nil {
 			t.Fatal(err)
 		}
-		// An empty AGENT_MANAGER_CONFIG_DIR makes the child test binary plant its own config dir.
-		assertNonInteractiveFailure(t, append(env, "AGENT_MANAGER_CONFIG_DIR", configDir), "not a database")
+		// An empty AGHELM_CONFIG_DIR makes the child test binary plant its own config dir.
+		assertNonInteractiveFailure(t, append(env, "AGHELM_CONFIG_DIR", configDir), "not a database")
 	})
 }
 
@@ -609,7 +609,7 @@ func TestCallerSessionOutsideTmuxLeavesTheCommandToExplainIt(t *testing.T) {
 	if err == nil {
 		t.Fatal("a command with no caller succeeded")
 	}
-	for _, want := range []string{"session or terminal", "AGENT_MANAGER_SESSION_ID is unset", "pane aghelm runs"} {
+	for _, want := range []string{"session or terminal", "AGHELM_SESSION_ID is unset", "pane aghelm runs"} {
 		if !strings.Contains(err.Error(), want) {
 			t.Fatalf("error %q does not mention %q", err, want)
 		}

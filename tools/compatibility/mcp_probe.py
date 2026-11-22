@@ -21,10 +21,10 @@ def probe(binary, home, protocol, tool=None, caller=None):
     env["XDG_CONFIG_HOME"] = str(Path(home) / ".config")
     env["XDG_DATA_HOME"] = str(Path(home) / ".local/share")
     env["XDG_STATE_HOME"] = str(Path(home) / ".local/state")
-    for key in ("TMUX", "TMUX_PANE", "TMUX_TMPDIR", "AGENT_MANAGER_SESSION_ID"):
+    for key in ("TMUX", "TMUX_PANE", "TMUX_TMPDIR", "AGHELM_SESSION_ID"):
         env.pop(key, None)
     if caller:
-        env["AGENT_MANAGER_SESSION_ID"] = caller
+        env["AGHELM_SESSION_ID"] = caller
     proc = subprocess.Popen(
         [binary, "mcp"],
         stdin=subprocess.PIPE,

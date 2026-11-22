@@ -211,8 +211,8 @@ func TestPsmuxRunInPaneDeliversALongCommand(t *testing.T) {
 	id := psmuxSession(t, driver, "rerun", "Write-Output launched", "launched")
 	marker := filepath.Join(t.TempDir(), "ran")
 	payload := strings.Repeat("x", 1500)
-	command := "[IO.File]::WriteAllText(" + ShellQuote(marker) + ", $env:AGENT_MANAGER_SESSION_ID + ' ' + " + ShellQuote(payload) + ")"
-	if err := driver.RunInPane(id, map[string]string{"AGENT_MANAGER_SESSION_ID": "abc123"}, command); err != nil {
+	command := "[IO.File]::WriteAllText(" + ShellQuote(marker) + ", $env:AGHELM_SESSION_ID + ' ' + " + ShellQuote(payload) + ")"
+	if err := driver.RunInPane(id, map[string]string{"AGHELM_SESSION_ID": "abc123"}, command); err != nil {
 		t.Fatalf("RunInPane: %v", err)
 	}
 	want := "abc123 " + payload

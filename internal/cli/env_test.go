@@ -64,7 +64,7 @@ func TestEnvSetListShowUnsetAndRemove(t *testing.T) {
 
 func TestEnvSetRefusesAnOperandThatIsNotAnAssignment(t *testing.T) {
 	configDir := t.TempDir()
-	for _, args := range [][]string{{"work", "CLAUDE_CONFIG_DIR"}, {"work"}, {"work", "AGENT_MANAGER_SESSION_ID=x"}} {
+	for _, args := range [][]string{{"work", "CLAUDE_CONFIG_DIR"}, {"work"}, {"work", "AGHELM_SESSION_ID=x"}} {
 		if err := runEnvSet(&bytes.Buffer{}, args, configDir); err == nil {
 			t.Errorf("set %q succeeded", args)
 		}

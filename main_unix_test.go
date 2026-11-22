@@ -66,7 +66,7 @@ func TestMainHeadlessNoArgsPrintsUsage(t *testing.T) {
 // A process a managed pane started speaks for that pane's session, whatever
 // session its variable names.
 func TestCallerSessionTrustsThePaneThatStartedTheProcess(t *testing.T) {
-	if out := os.Getenv("AGENT_MANAGER_CALLER_OUT"); out != "" {
+	if out := os.Getenv("AGHELM_CALLER_OUT"); out != "" {
 		if err := os.WriteFile(out+".part", []byte(callerSession(t.TempDir())), 0o644); err != nil {
 			t.Fatal(err)
 		}
@@ -84,7 +84,7 @@ func TestCallerSessionTrustsThePaneThatStartedTheProcess(t *testing.T) {
 		t.Fatalf("tmux driver: %v", err)
 	}
 	out := filepath.Join(t.TempDir(), "caller")
-	command := "AGENT_MANAGER_CALLER_OUT=" + tmux.ShellQuote(out) + " " + hooks.EnvSessionID + "=deadbeef " +
+	command := "AGHELM_CALLER_OUT=" + tmux.ShellQuote(out) + " " + hooks.EnvSessionID + "=deadbeef " +
 		tmux.ShellQuote(os.Args[0]) + " -test.run='^" + t.Name() + "$'; sleep 60"
 	id := "ca11ab1e"
 	if err := driver.Create(id, os.TempDir(), command, nil, 80, 24); err != nil {
@@ -103,5 +103,23 @@ func TestCallerSessionTrustsThePaneThatStartedTheProcess(t *testing.T) {
 	}
 	if string(got) != id {
 		t.Fatalf("callerSession in the pane with another session's variable = %q, want %q", got, id)
+	}
+}
+
+// A copy started from an upstream pane must not pass that pane's session to
+// the processes it starts.
+func TestDropUpstreamEnvKeepsItFromChildren(t *testing.T) {
+	t.Setenv(upstreamEnvPrefix+"SESSION_ID", "upstream")
+	t.Setenv(hooks.EnvSessionID, "mine")
+	dropUpstreamEnv()
+	out, err := exec.Command("env").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(out), upstreamEnvPrefix) {
+		t.Fatalf("a child inherited an upstream variable:\n%s", out)
+	}
+	if !strings.Contains(string(out), hooks.EnvSessionID+"=mine") {
+		t.Fatalf("a child lost %s:\n%s", hooks.EnvSessionID, out)
 	}
 }

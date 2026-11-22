@@ -52,6 +52,7 @@ func resolveVersion(embedded string, info *debug.BuildInfo, ok bool) string {
 }
 
 func main() {
+	dropUpstreamEnv()
 	info, hasInfo := debug.ReadBuildInfo()
 	version = resolveVersion(version, info, hasInfo)
 
@@ -110,6 +111,19 @@ func main() {
 	if err := run(); err != nil {
 		fmt.Fprintln(os.Stderr, "aghelm:", err)
 		os.Exit(1)
+	}
+}
+
+const upstreamEnvPrefix = "AGENT_MANAGER_"
+
+// dropUpstreamEnv unsets the variables the upstream manager exports into its
+// panes. Started from one of them, this process would otherwise hand that
+// session's identity and config to its own tmux server and sessions.
+func dropUpstreamEnv() {
+	for _, entry := range os.Environ() {
+		if key, _, _ := strings.Cut(entry, "="); strings.HasPrefix(key, upstreamEnvPrefix) {
+			os.Unsetenv(key)
+		}
 	}
 }
 

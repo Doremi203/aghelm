@@ -675,14 +675,14 @@ func TestDirStaysOutOfTheUserConfigUnderTest(t *testing.T) {
 func TestDirHonorsOverrideThenXDGThenUserConfig(t *testing.T) {
 	override := t.TempDir()
 	xdg := t.TempDir()
-	t.Setenv("AGENT_MANAGER_CONFIG_DIR", override)
+	t.Setenv("AGHELM_CONFIG_DIR", override)
 	t.Setenv("XDG_CONFIG_HOME", xdg)
 	got, err := Dir()
 	if err != nil || got != override {
 		t.Fatalf("Dir() = %q, %v; want the override %q", got, err, override)
 	}
 
-	t.Setenv("AGENT_MANAGER_CONFIG_DIR", "")
+	t.Setenv("AGHELM_CONFIG_DIR", "")
 	got, err = Dir()
 	want := filepath.Join(xdg, "aghelm")
 	if err != nil || got != want {

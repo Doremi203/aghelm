@@ -33,7 +33,7 @@ func TestValidHermesMCPEntry(t *testing.T) {
 	entry := hermesMCPEntry{
 		Command: "/opt/bin/aghelm",
 		Args:    []string{"mcp"},
-		Env:     map[string]string{"AGENT_MANAGER_SESSION_ID": "${AGENT_MANAGER_SESSION_ID}"},
+		Env:     map[string]string{"AGHELM_SESSION_ID": "${AGHELM_SESSION_ID}"},
 		Enabled: &enabled,
 	}
 	if !validHermesMCPEntry(entry, "/opt/bin/aghelm") {
@@ -56,11 +56,11 @@ func TestApplyHermesRegistersAndVerifies(t *testing.T) {
 	}
 	script := `#!/bin/sh
 if [ "$1" = "config" ] && [ "$2" = "get" ]; then
-  if [ -n "$AGENT_MANAGER_SESSION_ID" ]; then
+  if [ -n "$AGHELM_SESSION_ID" ]; then
     touch "$FAKE_HERMES_LEAK"
   fi
   if [ -f "$FAKE_HERMES_STATE" ]; then
-    printf '{"command":"%s","args":["mcp"],"env":{"AGENT_MANAGER_SESSION_ID":"${AGENT_MANAGER_SESSION_ID}"},"enabled":true}\n' "$FAKE_HERMES_EXE"
+    printf '{"command":"%s","args":["mcp"],"env":{"AGHELM_SESSION_ID":"${AGHELM_SESSION_ID}"},"enabled":true}\n' "$FAKE_HERMES_EXE"
     exit 0
   fi
   exit 1
@@ -100,7 +100,7 @@ exit 1
 	if err != nil {
 		t.Fatal(err)
 	}
-	wantArgs := "mcp\nadd\naghelm\n--command\n/opt/bin/aghelm\n--env\nAGENT_MANAGER_SESSION_ID=${AGENT_MANAGER_SESSION_ID}\n--args\nmcp\n"
+	wantArgs := "mcp\nadd\naghelm\n--command\n/opt/bin/aghelm\n--env\nAGHELM_SESSION_ID=${AGHELM_SESSION_ID}\n--args\nmcp\n"
 	if string(args) != wantArgs {
 		t.Fatalf("hermes args = %q want %q", args, wantArgs)
 	}

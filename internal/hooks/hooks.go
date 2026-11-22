@@ -1,5 +1,5 @@
 // Package hooks wires Claude Code hook events into status files: each
-// managed session gets AGENT_MANAGER_STATUS_FILE in its environment, and
+// managed session gets AGHELM_STATUS_FILE in its environment, and
 // the generated settings file makes Claude Code write its lifecycle state
 // there. The poller reads these files as a tier-1 status source, ahead of
 // the pane-regex heuristics.
@@ -22,20 +22,20 @@ import (
 	"github.com/Doremi203/aghelm/internal/status"
 )
 
-const EnvStatusFile = "AGENT_MANAGER_STATUS_FILE"
+const EnvStatusFile = "AGHELM_STATUS_FILE"
 
 // EnvSessionID identifies the managed session to the rename subcommand;
 // every session gets it regardless of tool.
-const EnvSessionID = "AGENT_MANAGER_SESSION_ID"
+const EnvSessionID = "AGHELM_SESSION_ID"
 
 // EnvLaunch names the launch an agent process belongs to, so a conversation
 // it reports late cannot land on a launch that replaced it.
-const EnvLaunch = "AGENT_MANAGER_LAUNCH"
+const EnvLaunch = "AGHELM_LAUNCH"
 
 // EnvAgentPID is the pid of the agent a launch started. The launch's own
 // shell exports its pid and execs the agent in its place, so only the agent
 // runs under it, while its children and teammates inherit the value.
-const EnvAgentPID = "AGENT_MANAGER_AGENT_PID"
+const EnvAgentPID = "AGHELM_AGENT_PID"
 
 // StatusSourceClaude is the status_source config value that enables this
 // package for a tool.

@@ -90,8 +90,8 @@ default_status = "idle"
 
 # Prints the conversation it resumes and the launch it was told it is.
 [tools.reporter]
-command = "echo launched launch=$AGENT_MANAGER_LAUNCH"
-resume_by_id_command = "echo resumed {id} launch=$AGENT_MANAGER_LAUNCH"
+command = "echo launched launch=$AGHELM_LAUNCH"
+resume_by_id_command = "echo resumed {id} launch=$AGHELM_LAUNCH"
 default_status = "idle"
 activity_cutoff = "(?m)^\u276f"
 

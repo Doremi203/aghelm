@@ -65,8 +65,8 @@ func TestEnvProfilesRefuseWhatCannotBeExported(t *testing.T) {
 		{"work", nil, "at least one"},
 		{"work", map[string]string{"1A": "1"}, "cannot start with a digit"},
 		{"work", map[string]string{"A-B": "1"}, "letters, digits"},
-		{"work", map[string]string{"AGENT_MANAGER_SESSION_ID": "x"}, "aghelm itself"},
-		{"work", map[string]string{"agent_manager_launch": "x"}, "aghelm itself"},
+		{"work", map[string]string{"AGHELM_SESSION_ID": "x"}, "aghelm itself"},
+		{"work", map[string]string{"aghelm_launch": "x"}, "aghelm itself"},
 		{"work", map[string]string{"A": "a\x00b"}, "NUL"},
 	} {
 		if _, err := st.SetEnvVars(tc.name, tc.vars); err == nil || !strings.Contains(err.Error(), tc.want) {

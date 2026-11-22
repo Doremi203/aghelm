@@ -39,11 +39,11 @@ class Sandbox:
                         XDG_STATE_HOME=str(self.home / '.local/state'),
                         TMUX_TMPDIR=str(self.socket_dir), TERM='xterm-256color',
                         COLORTERM='truecolor', SHELL=str(shell), NO_COLOR='1')
-        for key in ('TMUX', 'TMUX_PANE', 'AGENT_MANAGER_PROFILE', 'AGENT_MANAGER_SESSION_ID', 'COLORFGBG',
+        for key in ('TMUX', 'TMUX_PANE', 'AGHELM_PROFILE', 'AGHELM_SESSION_ID', 'COLORFGBG',
                     'ENV', 'BASH_ENV', 'PROMPT_COMMAND'):
             self.env.pop(key, None)
         # An inherited directory would put the feed cache outside this sandbox.
-        self.env.pop('AGENT_MANAGER_CONFIG_DIR', None)
+        self.env.pop('AGHELM_CONFIG_DIR', None)
         for key in tuple(self.env):
             if key.startswith('GIT_'):
                 self.env.pop(key)

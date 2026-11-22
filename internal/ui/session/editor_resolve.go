@@ -7,7 +7,7 @@ import (
 )
 
 // EditorResolution is the editor line the manager launches with: the one
-// Settings holds, else $AGENT_MANAGER_EDITOR, else a windowed editor this
+// Settings holds, else $AGHELM_EDITOR, else a windowed editor this
 // machine has, else $VISUAL or $EDITOR.
 type EditorResolution struct {
 	configured string
@@ -23,7 +23,7 @@ type EditorResolution struct {
 func Resolution(configured string, lookup func(string) (string, error)) EditorResolution {
 	return EditorResolution{
 		configured: configured,
-		manager:    os.Getenv("AGENT_MANAGER_EDITOR"),
+		manager:    os.Getenv("AGHELM_EDITOR"),
 		visual:     os.Getenv("VISUAL"),
 		editor:     os.Getenv("EDITOR"),
 		gui:        GUIEditors(),
