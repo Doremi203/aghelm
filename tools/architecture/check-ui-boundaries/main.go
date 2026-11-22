@@ -23,7 +23,7 @@ func modulePath() string {
 	return strings.TrimSpace(string(out))
 }
 
-// platforms are the GOOS values .goreleaser.yaml builds. A dependency behind
+// platforms are the GOOS values aghelm is built for. A dependency behind
 // a build tag on one of them is still a dependency.
 var platforms = []string{"darwin", "linux", "windows"}
 

@@ -11,10 +11,23 @@ VERSION := $(or $(VERSION),dev)
 override GOFLAGS := -ldflags=-X=main.version=$(VERSION) $(or $(GOFLAGS),$(shell go env GOFLAGS))
 export GOFLAGS
 
-.PHONY: build install
+.PHONY: build install check vulncheck
 
 build:
 	go build -o aghelm$(shell go env GOEXE) .
 
 install:
 	go install .
+
+check:
+	test -z "$$(gofmt -l .)"
+	go vet ./...
+	go run honnef.co/go/tools/cmd/staticcheck@2026.2.2 ./...
+	go run ./tools/architecture/check-ui-boundaries
+	go run ./tools/architecture/check-file-names
+	go run ./tools/architecture/check-file-sizes
+	mkdir -p /tmp/amtest
+	env -u TMUX TMUX_TMPDIR=/tmp/amtest SHELL=/bin/sh go test -race ./...
+
+vulncheck:
+	go run golang.org/x/vuln/cmd/govulncheck@v1.10.0 ./...
