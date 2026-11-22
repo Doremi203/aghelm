@@ -122,9 +122,9 @@ func (c *Client) sshArgv(destination string, tty bool, command string) []string 
 }
 
 // outputMarker is printed once the login profile has run, right before
-// agent-manager starts, so what a profile prints (conda, nvm, an echo) is
+// aghelm starts, so what a profile prints (conda, nvm, an echo) is
 // skipped. JSON escapes control bytes, so no answer can hold it.
-const outputMarker = "\x1eagent-manager\x1e"
+const outputMarker = "\x1eaghelm\x1e"
 
 // remoteCommand runs program, already quoted for the shell, with words
 // through the user's login shell after the marker.
@@ -208,7 +208,7 @@ const (
 // of its attaches ends there, so the script takes it back and reports it in
 // its exit status instead.
 func attachScript(id string) string {
-	tmux := []string{"tmux", "-u", "-L", "agentmgr"}
+	tmux := []string{"tmux", "-u", "-L", "aghelm"}
 	attach := quoteWords(append(tmux, "attach-session", "-t", "am_"+id))
 	show := quoteWords(append(tmux, "show-options", "-gqv", "@am_request"))
 	unset := quoteWords(append(tmux, "set-option", "-gu", "@am_request"))

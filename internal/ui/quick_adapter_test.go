@@ -242,7 +242,7 @@ func TestQuickChipRendersInlineInTheInput(t *testing.T) {
 
 	m := buildModel(t)
 	m.openQuickMode()
-	m.quick().Attachments = []composer.Attachment{{ID: 1, Path: "/tmp/agent-manager-pastes/paste-123.png"}}
+	m.quick().Attachments = []composer.Attachment{{ID: 1, Path: "/tmp/aghelm-pastes/paste-123.png"}}
 	m.quick().Input.SetValue("look at " + composer.Token(1) + " please")
 	m.quick().Input.SetWidth(60)
 

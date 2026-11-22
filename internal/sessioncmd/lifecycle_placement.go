@@ -8,7 +8,7 @@ import (
 
 func (l *Lifecycle) ValidatePlacement(sess store.Session) error {
 	if sess.Archived {
-		return fmt.Errorf("session %q is archived; restore it in Agent Manager first", sess.Name)
+		return fmt.Errorf("session %q is archived; restore it in aghelm first", sess.Name)
 	}
 	groups, err := l.runtime.Store.Groups()
 	if err != nil {
@@ -16,7 +16,7 @@ func (l *Lifecycle) ValidatePlacement(sess store.Session) error {
 	}
 	archived := store.ArchivedGroups(groups)
 	if store.EffectivelyArchived(archived, sess.Group) {
-		return fmt.Errorf("group %q is archived; restore it in Agent Manager first", sess.Group)
+		return fmt.Errorf("group %q is archived; restore it in aghelm first", sess.Group)
 	}
 	if sess.ParentID != "" {
 		parent, err := l.runtime.Store.Get(sess.ParentID)
@@ -24,7 +24,7 @@ func (l *Lifecycle) ValidatePlacement(sess store.Session) error {
 			return err
 		}
 		if parent.Archived || store.EffectivelyArchived(archived, parent.Group) {
-			return fmt.Errorf("session %q is archived; restore it in Agent Manager first", parent.Name)
+			return fmt.Errorf("session %q is archived; restore it in aghelm first", parent.Name)
 		}
 	}
 	return nil

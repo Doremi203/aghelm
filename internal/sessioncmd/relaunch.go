@@ -104,7 +104,7 @@ func caretRow(driver *tmux.Driver, sessID string) (string, bool) {
 // manager holds a shell that was never given it. It returns the row it
 // relaunched, read after the agent quit, since that agent may have reported
 // a switch the caller's copy predates, and a warning when the agent started
-// without the agent-manager tools because registering them timed out.
+// without the aghelm tools because registering them timed out.
 func RelaunchInPane(driver *tmux.Driver, st *store.Store, hookManager *hooks.Manager, sessID string, tool config.Tool) (store.Session, string, error) {
 	sess, err := st.Get(sessID)
 	if err != nil {

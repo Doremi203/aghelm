@@ -50,10 +50,10 @@ func TestMainHeadlessNoArgsPrintsUsage(t *testing.T) {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		t.Fatalf("agent-manager with no terminal: %v\nstdout:\n%s\nstderr:\n%s", err, stdout.String(), stderr.String())
+		t.Fatalf("aghelm with no terminal: %v\nstdout:\n%s\nstderr:\n%s", err, stdout.String(), stderr.String())
 	}
-	if !strings.Contains(stdout.String(), "Usage: agent-manager [command]") {
-		t.Fatalf("agent-manager did not print usage:\n%s", stdout.String())
+	if !strings.Contains(stdout.String(), "Usage: aghelm [command]") {
+		t.Fatalf("aghelm did not print usage:\n%s", stdout.String())
 	}
 	if strings.Contains(stdout.String(), noTerminalNotice) {
 		t.Fatalf("stdout included the terminal notice:\n%s", stdout.String())

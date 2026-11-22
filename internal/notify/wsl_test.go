@@ -32,7 +32,7 @@ func TestNotifyWSLPostsWindowsToast(t *testing.T) {
 	}
 	env := rec.environments()[0]
 	want := map[string]string{
-		"AM_TOAST_TITLE":    "agent-manager",
+		"AM_TOAST_TITLE":    "aghelm",
 		"AM_TOAST_SUBTITLE": "deploy · claude",
 		"AM_TOAST_BODY":     "✕ Errored",
 		"AM_TOAST_SOUND":    "ms-winsoundevent:Notification.IM",

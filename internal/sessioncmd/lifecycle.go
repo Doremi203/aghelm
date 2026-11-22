@@ -31,14 +31,14 @@ type LaunchRequest struct {
 type LaunchResult struct {
 	Session    store.Session
 	LabelError error
-	// Warning is set when the agent started without the agent-manager tools
+	// Warning is set when the agent started without the aghelm tools
 	// because registering them timed out.
 	Warning string
 }
 
 // Caveat is what the UI reports after a launch that went through: a label
 // that could not be set, or an agent that started without the
-// agent-manager tools. It is nil when there is nothing to report.
+// aghelm tools. It is nil when there is nothing to report.
 func (r LaunchResult) Caveat() error {
 	return caveat(r.LabelError, r.Warning)
 }
@@ -66,7 +66,7 @@ type RelaunchResult struct {
 	Degraded     bool
 	LabelError   error
 	Conversation string
-	// Warning is set when the agent started without the agent-manager tools
+	// Warning is set when the agent started without the aghelm tools
 	// because registering them timed out.
 	Warning string
 }

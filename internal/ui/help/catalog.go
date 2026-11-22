@@ -39,7 +39,7 @@ func (h *helpRows) fixed(key, does string) {
 func listHelpRows(list keybind.Table, arrowStep, arrowAttach bool, glyphs Glyphs) [][2]string {
 	mode := glyphs.Mode
 	h := helpRows{list: list, mode: mode}
-	h.fixed("", "Tell your agent to manage sessions and terminals in Agent Manager.")
+	h.fixed("", "Tell your agent to manage sessions and terminals in aghelm.")
 	h.action("move the cursor up", keybind.Up)
 	h.action("move the cursor down", keybind.Down)
 	h.fixed("click", "focus from a row or the preview in the split, select otherwise")
@@ -304,7 +304,7 @@ func titledWith(name string, list keybind.Table, mode presentation.GlyphMode, ac
 
 func reviewHelpSection(list keybind.Table, keys [][2]string, mode presentation.GlyphMode) helpSection {
 	rows := [][2]string{
-		{"", "Tell your agent what to review in Agent Manager; they set it up."},
+		{"", "Tell your agent what to review in aghelm; they set it up."},
 		{"click", "open a file, move to a code line, or run a header key"},
 	}
 	return helpSection{title: titledWith("review", list, mode, keybind.Review), rows: append(rows, keys...)}

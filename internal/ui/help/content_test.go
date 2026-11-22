@@ -15,7 +15,7 @@ func TestContentDescribesGlobalAndReviewHelp(t *testing.T) {
 	if global.Title != "? Keys" {
 		t.Fatalf("global title = %q", global.Title)
 	}
-	if body := ansi.Strip(strings.Join(global.Lines, "\n")); !strings.Contains(body, "Tell your agent to manage sessions and terminals in Agent Manager") {
+	if body := ansi.Strip(strings.Join(global.Lines, "\n")); !strings.Contains(body, "Tell your agent to manage sessions and terminals in aghelm") {
 		t.Fatalf("global guidance missing:\n%s", body)
 	}
 

@@ -13,7 +13,7 @@ var dangerousPaneSequences = regexp.MustCompile(
 	`\x1b\[[0-9;]*[KJLMSTr]|\x1b[DEM]`,
 )
 
-const capturedCursorMarker = "\x1b]1337;agent-manager-ime-cursor\x07"
+const capturedCursorMarker = "\x1b]1337;aghelm-ime-cursor\x07"
 
 // FrameContext is the copied presentation state needed to prepare one pane
 // frame. OriginY is the first row available to the pane, before top padding.

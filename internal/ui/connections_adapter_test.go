@@ -165,7 +165,7 @@ func TestRemoteCallReportsTheHostsError(t *testing.T) {
 	fake := &fakeSSH{}
 	m := connectedModel(t, fake)
 	fake.mu.Lock()
-	fake.stderr, fake.code = "agent-manager: no session named s1\n", 1
+	fake.stderr, fake.code = "aghelm: no session named s1\n", 1
 	fake.mu.Unlock()
 	_, cmd := m.runRailIntent(uirail.Intent{Kind: uirail.Kill, Target: boxSession("s1")})
 	m.runRemoteCmd(t, m.answerRemote(t, fake, cmd, "y"))
@@ -240,9 +240,9 @@ func TestQuickBarClearsAPromptThatMayHaveReachedARemoteAgent(t *testing.T) {
 		stderr string
 		kept   bool
 	}{
-		{"the host saw the paste start", 3, "agent-manager: prompt may have reached api and was not sent again: tmux: exit status 1", false},
+		{"the host saw the paste start", 3, "aghelm: prompt may have reached api and was not sent again: tmux: exit status 1", false},
 		{"ssh dropped after it started", 255, "Connection to box closed by remote host.", false},
-		{"the host refused it", 1, "agent-manager: prompt was not sent to api: pane is busy", true},
+		{"the host refused it", 1, "aghelm: prompt was not sent to api: pane is busy", true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			fake := &fakeSSH{}
@@ -816,7 +816,7 @@ func TestAFailedConnectionSaveTakesEnterAgain(t *testing.T) {
 	}
 }
 
-// fakeSSH stands in for ssh: it records the agent-manager words each call
+// fakeSSH stands in for ssh: it records the aghelm words each call
 // carried and answers as the remote CLI would.
 type fakeSSH struct {
 	mu       sync.Mutex
@@ -999,7 +999,7 @@ func TestOfflineHostKeepsItsLastRows(t *testing.T) {
 	}
 }
 
-// A host ssh reaches says what is wrong with agent-manager there rather
+// A host ssh reaches says what is wrong with aghelm there rather
 // than reading as down.
 func TestFailedHostNamesItsTrouble(t *testing.T) {
 	for _, tc := range []struct {
@@ -1008,10 +1008,10 @@ func TestFailedHostNamesItsTrouble(t *testing.T) {
 		code    int
 		want    string
 	}{
-		{sessioncmd.SnapshotVersion, "sh: agent-manager: not found", 127, "agent-manager missing"},
-		{sessioncmd.SnapshotVersion - 1, "", 0, "agent-manager too old"},
-		{sessioncmd.SnapshotVersion + 1, "", 0, "agent-manager newer"},
-		{sessioncmd.SnapshotVersion, "agent-manager: database is locked", 1, "error"},
+		{sessioncmd.SnapshotVersion, "sh: aghelm: not found", 127, "aghelm missing"},
+		{sessioncmd.SnapshotVersion - 1, "", 0, "aghelm too old"},
+		{sessioncmd.SnapshotVersion + 1, "", 0, "aghelm newer"},
+		{sessioncmd.SnapshotVersion, "aghelm: database is locked", 1, "error"},
 	} {
 		fake := &fakeSSH{}
 		m := connectedModel(t, fake)

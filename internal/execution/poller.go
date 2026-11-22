@@ -162,7 +162,7 @@ var managerEchoOpenings = []string{
 	"First, run this exact shell command once,",
 	"This session is already named.",
 	"Other agent sessions may be running beside you",
-	"[agent-manager] ",
+	"[aghelm] ",
 }
 
 // transcriptTailCache keeps one transcript's extraction keyed to its file

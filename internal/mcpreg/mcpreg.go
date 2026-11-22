@@ -1,4 +1,4 @@
-// Package mcpreg registers the agent-manager MCP server into the sessions
+// Package mcpreg registers the aghelm MCP server into the sessions
 // the manager spawns, per tool. Each supported tool has a registration
 // style: a launch flag, a generated config file, or a one-time global
 // registration. Generated artifacts live under the manager's hooks
@@ -24,7 +24,7 @@ import (
 	"github.com/Doremi203/aghelm/internal/tmux"
 )
 
-const serverName = "agent-manager"
+const serverName = "aghelm"
 
 const StyleNone = "none"
 
@@ -44,7 +44,7 @@ const registrationWaitDelay = time.Second
 
 // TimeoutError reports a registration that used up RegistrationTimeout. The
 // tool is fine and no marker was written, so the next spawn tries again; the
-// session can start now without the agent-manager tools.
+// session can start now without the aghelm tools.
 type TimeoutError struct {
 	// Tool is the tool whose registration timed out.
 	Tool  string
@@ -115,7 +115,7 @@ func Style(toolName, explicit string) string {
 
 // Apply mutates a session launch so the tool sees the MCP server: it may
 // append flags to command, add environment variables, write a config file
-// under hooksDir, or run a one-time registration. exe is the agent-manager
+// under hooksDir, or run a one-time registration. exe is the aghelm
 // binary the generated configs point at.
 func Apply(style, exe, hooksDir, command string, env map[string]string) (string, error) {
 	// Every command a registration runs shares this one deadline.
@@ -628,7 +628,7 @@ func ensureHermesRegistered(ctx context.Context, exe, hooksDir string) error {
 		if ctx.Err() != nil {
 			return &TimeoutError{Tool: "hermes", Limit: RegistrationTimeout}
 		}
-		return fmt.Errorf("hermes mcp add did not save an enabled agent-manager server%s", outputSuffix(out))
+		return fmt.Errorf("hermes mcp add did not save an enabled aghelm server%s", outputSuffix(out))
 	}
 	if err := os.MkdirAll(hooksDir, 0o755); err != nil {
 		return err

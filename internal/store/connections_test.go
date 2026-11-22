@@ -24,7 +24,7 @@ func TestConnectionsListInTheOrderAdded(t *testing.T) {
 	st := newTestStore(t)
 	for _, c := range []Connection{
 		{Name: "zeta", Destination: "me@zeta"},
-		{Name: "alpha", Destination: "alpha-alias", Binary: "/opt/am/agent-manager"},
+		{Name: "alpha", Destination: "alpha-alias", Binary: "/opt/am/aghelm"},
 		{Name: "mid", Destination: "me@mid"},
 	} {
 		if err := st.AddConnection(c); err != nil {
@@ -37,7 +37,7 @@ func TestConnectionsListInTheOrderAdded(t *testing.T) {
 	}
 	want := []Connection{
 		{Name: "zeta", Destination: "me@zeta"},
-		{Name: "alpha", Destination: "alpha-alias", Binary: "/opt/am/agent-manager"},
+		{Name: "alpha", Destination: "alpha-alias", Binary: "/opt/am/aghelm"},
 		{Name: "mid", Destination: "me@mid"},
 	}
 	if !slices.Equal(got, want) {

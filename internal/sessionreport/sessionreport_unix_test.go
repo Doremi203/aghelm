@@ -20,7 +20,7 @@ import (
 	"github.com/Doremi203/aghelm/internal/tmux"
 )
 
-const oddExe = `/opt/a b/it's "here"/agent-manager`
+const oddExe = `/opt/a b/it's "here"/aghelm`
 
 func testTarget(t *testing.T) Target {
 	t.Helper()
@@ -50,7 +50,7 @@ func TestPiAndOmpLoadAnExtensionBesideTheUsers(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			path := filepath.Join(target.HooksDir, "agent-manager-"+tc.style+".ts")
+			path := filepath.Join(target.HooksDir, "aghelm-"+tc.style+".ts")
 			if want := "pi --session 'abc' -e mine.ts -e " + tmux.ShellQuote(path); command != want {
 				t.Fatalf("command = %q, want %q", command, want)
 			}
@@ -80,7 +80,7 @@ func TestOpencodeLoadsACLIPluginThroughItsEnvironment(t *testing.T) {
 	if command != "opencode --session x" {
 		t.Fatalf("command = %q, want it untouched", command)
 	}
-	dir := filepath.Join(target.HooksDir, "agent-manager-opencode")
+	dir := filepath.Join(target.HooksDir, "aghelm-opencode")
 	if got, want := env["OPENCODE_CLI_CONFIG_CONTENT"], `{"plugins":["file://`+dir+`"]}`; got != want {
 		t.Fatalf("OPENCODE_CLI_CONFIG_CONTENT = %s, want %s", got, want)
 	}
@@ -115,7 +115,7 @@ func TestOpencodeKeepsTheUsersOwnCLIPlugins(t *testing.T) {
 		if _, err := Apply("opencode", target, "opencode", env); err != nil {
 			t.Fatal(err)
 		}
-		want = strings.ReplaceAll(want, "DIR", filepath.Join(target.HooksDir, "agent-manager-opencode"))
+		want = strings.ReplaceAll(want, "DIR", filepath.Join(target.HooksDir, "aghelm-opencode"))
 		if got := env["OPENCODE_CLI_CONFIG_CONTENT"]; got != want {
 			t.Errorf("with %q: OPENCODE_CLI_CONFIG_CONTENT = %s, want %s", inline, got, want)
 		}
@@ -157,7 +157,7 @@ func TestOpencodePluginReportsSwitchesAndRetriesFailedReports(t *testing.T) {
 	if _, err := Apply("opencode", target, "opencode", map[string]string{}); err != nil {
 		t.Fatal(err)
 	}
-	plugin := readFile(t, filepath.Join(target.HooksDir, "agent-manager-opencode", "tui.ts"))
+	plugin := readFile(t, filepath.Join(target.HooksDir, "aghelm-opencode", "tui.ts"))
 	plugin = strings.Replace(plugin, `import { Plugin } from "@opencode/plugin/tui";`, "const Plugin = { define: (plugin) => plugin };", 1)
 	writeFile(t, filepath.Join(target.HooksDir, "plugin.mjs"), strings.ReplaceAll(plugin, "context: any", "context"), 0o644)
 	reportsJSON, _ := json.Marshal(reports)
@@ -204,7 +204,7 @@ func TestCommandCodeLoadsAModForTheSession(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	path := filepath.Join(target.HooksDir, "agent-manager-command-code.ts")
+	path := filepath.Join(target.HooksDir, "aghelm-command-code.ts")
 	if want := "cmd --session abc --mod mine.ts --mod " + tmux.ShellQuote(path); command != want {
 		t.Fatalf("command = %q, want %q", command, want)
 	}
@@ -260,14 +260,14 @@ func TestCopilotLoadsAPluginForTheLaunch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	dir := filepath.Join(target.HooksDir, "agent-manager-copilot")
+	dir := filepath.Join(target.HooksDir, "aghelm-copilot")
 	if want := "copilot --resume abc --plugin-dir " + tmux.ShellQuote(dir); command != want {
 		t.Fatalf("command = %q, want %q", command, want)
 	}
 	var manifest struct {
 		Name string `json:"name"`
 	}
-	if err := json.Unmarshal([]byte(readFile(t, filepath.Join(dir, "plugin.json"))), &manifest); err != nil || manifest.Name != "agent-manager" {
+	if err := json.Unmarshal([]byte(readFile(t, filepath.Join(dir, "plugin.json"))), &manifest); err != nil || manifest.Name != "aghelm" {
 		t.Fatalf("plugin.json = %+v %v", manifest, err)
 	}
 	var parsed struct {
@@ -441,7 +441,7 @@ func TestNoLaunchWritesOutsideTheHooksDir(t *testing.T) {
 		writeFile(t, filepath.Join(home, path), "{}", 0o644)
 	}
 	before := snapshot(t, home)
-	hooksDir := filepath.Join(home, ".config", "agent-manager", "hooks")
+	hooksDir := filepath.Join(home, ".config", "aghelm", "hooks")
 	cfg, err := config.Default()
 	if err != nil {
 		t.Fatal(err)

@@ -1,4 +1,4 @@
-// Package mcpserver exposes agent-manager's session commands as MCP tools
+// Package mcpserver exposes aghelm's session commands as MCP tools
 // over stdio, so any MCP-capable agent discovers and calls them natively.
 // The manager registers this server into every session it spawns; the
 // session id travels via the AGENT_MANAGER_SESSION_ID environment variable.
@@ -66,7 +66,7 @@ type createSessionArgs struct {
 	Model       string  `json:"model,omitempty" jsonschema:"model to run the CLI on, one it lists; omit to keep the CLI's own default, which is what the user set up; a wrong name is refused with the models the CLI lists"`
 	Effort      string  `json:"effort,omitempty" jsonschema:"reasoning effort, one the chosen model takes; omit to keep the CLI's own"`
 	Profile     string  `json:"profile,omitempty" jsonschema:"profile to launch the CLI under, for a CLI that has them (hermes); omit for the CLI's active one"`
-	Environment *string `json:"environment,omitempty" jsonschema:"environment profile from Agent Manager to launch under, a named set of environment variables the user defined; omit to inherit the group's, else this agent's own; pass an empty string for none; not taken with host"`
+	Environment *string `json:"environment,omitempty" jsonschema:"environment profile from aghelm to launch under, a named set of environment variables the user defined; omit to inherit the group's, else this agent's own; pass an empty string for none; not taken with host"`
 	Resume      string  `json:"resume,omitempty" jsonschema:"conversation id the chosen CLI saved earlier. The session opens that conversation instead of a new one, keeps it on every revive, and sends it nothing unless prompt is set. Pass the directory it was saved in, a name when there is no prompt, and no worktree"`
 	Host        string  `json:"host,omitempty" jsonschema:"SSH connection to start the session on, the host list_sessions reports; omit for this machine. There nothing is inherited from this agent: group defaults to the root, directory to the remote user's home and tool to the one picked in that host's settings"`
 }
@@ -208,7 +208,7 @@ type sessionCommands interface {
 	DeleteGroup(sessionID, path string) (sessioncmd.GroupRemoval, error)
 }
 
-const instructionsIntro = `Agent Manager runs this conversation in one of the user's managed tmux sessions. The others are separate CLI processes with contexts of their own, running any CLI the user chose (Claude Code, Codex, Gemini), never subagents of this conversation. These tools operate that workspace.`
+const instructionsIntro = `aghelm runs this conversation in one of the user's managed tmux sessions. The others are separate CLI processes with contexts of their own, running any CLI the user chose (Claude Code, Codex, Gemini), never subagents of this conversation. These tools operate that workspace.`
 
 const instructionsTail = `Shell work the user should see. Open a terminal when the user should watch, attach or take over, as with SSH into a host. Keep one-shot local commands in your normal tools. Call list_terminals first and reuse a running terminal when possible. create_terminal nests under this session unless nest is false, which another group needs. Use send_terminal and read_terminal, and close_terminal when that job is done unless it is left for the user.
 
@@ -270,11 +270,11 @@ func newServer(configDir, sessionID, version string, proactive bool, terminals t
 
 func newServerWithMailbox(sessionID, version string, proactive bool, terminals terminalCommands, sessions sessionCommands, mailbox mailboxCommands, hosts remoteSource) *mcp.Server {
 	server := mcp.NewServer(
-		&mcp.Implementation{Name: "agent-manager", Version: version},
+		&mcp.Implementation{Name: "aghelm", Version: version},
 		&mcp.ServerOptions{Instructions: serverInstructions(proactive)},
 	)
 	// Several CLIs register this server at user scope, so one with no caller is
-	// that CLI running outside Agent Manager, and the workspace stays closed to it.
+	// that CLI running outside aghelm, and the workspace stays closed to it.
 	noCaller := sessioncmd.RequireCaller(sessionID)
 	remotes := &remoteHosts{remoteSource: hosts, sessionID: sessionID, sessions: sessions, terminals: terminals}
 	spawnWhen := "Call it only when the user asks for parallel work, another agent or an independent opinion. "
@@ -290,7 +290,7 @@ func newServerWithMailbox(sessionID, version string, proactive bool, terminals t
 			"Call once at the start only when the session still has a placeholder name (e.g. claude-a1b2). " +
 			"If the session already has a real name, leave it unless the user asks to rename. " +
 			"Prefer a broad feature name over a single subtask. " +
-			"The result reports the name Agent Manager applied, or why the session keeps its current one.",
+			"The result reports the name aghelm applied, or why the session keeps its current one.",
 	}, func(ctx context.Context, req *mcp.CallToolRequest, args renameArgs) (*mcp.CallToolResult, any, error) {
 		return textResult(mailbox.Rename(ctx, sessionID, args.Name))
 	})
@@ -356,7 +356,7 @@ func newServerWithMailbox(sessionID, version string, proactive bool, terminals t
 	addTool(server, noCaller, &mcp.Tool{
 		Name: "list_sessions",
 		Description: "Call first whenever the work involves another agent: before delegating, before reporting what the fleet is doing, and to find the id of a session to read, prompt, revive, kill, delete or archive. " +
-			"Lists every agent session Agent Manager knows with ids, names, CLIs, groups, directories, worktree branches, statuses (starting, working, waiting, finished, idle, errored, dead) and which row is this session. " +
+			"Lists every agent session aghelm knows with ids, names, CLIs, groups, directories, worktree branches, statuses (starting, working, waiting, finished, idle, errored, dead) and which row is this session. " +
 			"These are separate CLI processes running on the user's machine, each with its own context and its own conversation, and any CLI the user configured: Claude Code, Codex, Gemini and others, not only Claude. " +
 			"They are not this conversation's subagents, they outlive this conversation, and the user watches them all in one list; nothing else this session can call reports them. " +
 			"Reuse a relevant idle session instead of creating another; otherwise call create_session. " +
@@ -376,7 +376,7 @@ func newServerWithMailbox(sessionID, version string, proactive bool, terminals t
 
 	addTool(server, noCaller, &mcp.Tool{
 		Name: "create_session",
-		Description: "Start another agent CLI in its own Agent Manager session and hand it a task, so independent work runs beside this conversation instead of queued behind it. " +
+		Description: "Start another agent CLI in its own aghelm session and hand it a task, so independent work runs beside this conversation instead of queued behind it. " +
 			"The new session is a full CLI process of its own on the user's machine, which the user can watch and type into, and it can run a different CLI than this one. " +
 			spawnWhen +
 			"Pass a descriptive name and a prompt stating the whole task, since the new agent cannot see this conversation, and worktree true for repo work so it edits its own checkout and branch. " +
@@ -423,7 +423,7 @@ func newServerWithMailbox(sessionID, version string, proactive bool, terminals t
 		Name: "read_session",
 		Description: "Read what another agent's screen currently shows: call it after create_session to confirm the agent started on the task, and again to check progress, read an answer, or see why a session is waiting. " +
 			"Returns the plain text visible in that session's pane, which is the current screen rather than its full history. " +
-			"A stopped session returns the last screen Agent Manager captured.",
+			"A stopped session returns the last screen aghelm captured.",
 		Annotations: toolAnnotations(true, false, false),
 	}, func(ctx context.Context, req *mcp.CallToolRequest, args sessionTargetArgs) (*mcp.CallToolResult, sessioncmd.SessionScreen, error) {
 		read := func() (sessioncmd.SessionScreen, error) { return sessions.Read(sessionID, args.SessionID) }
@@ -441,7 +441,7 @@ func newServerWithMailbox(sessionID, version string, proactive bool, terminals t
 		Name: "send_session",
 		Description: "Queue a message for another agent, to give a session you spawned its next task, answer a question read_session surfaced, or redirect work going the wrong way. " +
 			"The other agent has no view of this conversation, so send a self-contained instruction. " +
-			"The message is not typed in the instant you send it: Agent Manager holds it until that agent is at rest, so it can never land on an approval prompt and answer it. " +
+			"The message is not typed in the instant you send it: aghelm holds it until that agent is at rest, so it can never land on an approval prompt and answer it. " +
 			"It arrives labelled as coming from another of the user's agents, and the recipient should treat it as the operator's instruction for ordinary work. Commit, push, merge, publish, and delete still wait for the user. " +
 			"Returns a message id for message_status; call read_session to see what the agent did with it. " +
 			"Refused rather than delivered: identical text to the same session inside ten minutes, more than five messages a minute from the same sender to the same recipient, more than twenty undelivered held by a recipient, or a message over 8000 bytes (point the agent at a file or a task instead). " +
@@ -596,7 +596,7 @@ func newServerWithMailbox(sessionID, version string, proactive bool, terminals t
 
 	addTool(server, noCaller, &mcp.Tool{
 		Name: "archive_self",
-		Description: "Archive this session once the turn making this call ends: Agent Manager stops its agent, keeps the last screen, and files the row out of the active list, the way the user's archive key does. " +
+		Description: "Archive this session once the turn making this call ends: aghelm stops its agent, keeps the last screen, and files the row out of the active list, the way the user's archive key does. " +
 			"Call it when the user asks you to archive yourself once the work is done, then finish your reply. Whatever the turn ends on, finished, a question to the user or an error, the archive follows it. " +
 			"Pass cancel true to withdraw a pending archive or kill. archive_session is for other sessions.",
 		Annotations: toolAnnotations(false, true, false),
@@ -869,7 +869,7 @@ func newServerWithMailbox(sessionID, version string, proactive bool, terminals t
 
 // addTool registers a tool that refuses outright when the server has no
 // calling session, so no tool, present or future, opens the workspace to a
-// CLI running outside Agent Manager.
+// CLI running outside aghelm.
 func addTool[In, Out any](server *mcp.Server, noCaller error, tool *mcp.Tool, handler mcp.ToolHandlerFor[In, Out]) {
 	mcp.AddTool(server, tool, func(ctx context.Context, req *mcp.CallToolRequest, args In) (*mcp.CallToolResult, Out, error) {
 		if noCaller != nil {

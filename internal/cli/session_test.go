@@ -29,7 +29,7 @@ func gpuMove(t *testing.T, local *fakeSessions, answer func(words []string) ([]b
 	var calls [][]string
 	client := remote.New(t.TempDir(), remote.WithRunner(func(_ context.Context, argv []string) ([]byte, []byte, error) {
 		words, err := remotetest.Words(argv)
-		if err != nil || words[0] != "agent-manager" {
+		if err != nil || words[0] != "aghelm" {
 			t.Fatalf("remote command %q: %v", argv, err)
 		}
 		calls = append(calls, words[1:])
@@ -346,7 +346,7 @@ func TestWaitCollectsStatesAndFailsOnTimeout(t *testing.T) {
 
 func TestMessageStatusRefusesANonNumericID(t *testing.T) {
 	err := runMessageStatus(&bytes.Buffer{}, &fakeSessions{}, []string{"seven"}, "cafe0001")
-	if err == nil || !strings.Contains(err.Error(), "agent-manager send prints the id it queued") {
+	if err == nil || !strings.Contains(err.Error(), "aghelm send prints the id it queued") {
 		t.Fatalf("error = %v, want it to say where the id comes from", err)
 	}
 }
@@ -416,7 +416,7 @@ func TestTypeReachesTheLayerWithItsPrompt(t *testing.T) {
 func TestSnapshotPrintsOnlyJSON(t *testing.T) {
 	fake := &fakeSessions{session: sampleSession()}
 	err := runSnapshot(&bytes.Buffer{}, fake, nil, "")
-	if err == nil || err.Error() != "usage: agent-manager "+usageSnapshot {
+	if err == nil || err.Error() != "usage: aghelm "+usageSnapshot {
 		t.Fatalf("snapshot without --json = %v, want the usage", err)
 	}
 	if fake.callCount != 0 {
@@ -472,10 +472,10 @@ func TestMoveRunsAHostIDOnThatHost(t *testing.T) {
 func TestARemoteMoveRefusalNamesTheHostAndMovesNothingHere(t *testing.T) {
 	local := &fakeSessions{session: sampleSession()}
 	layer, _ := gpuMove(t, local, func([]string) ([]byte, []byte, error) {
-		return nil, []byte("agent-manager: group \"nope\" does not exist; call agent-manager groups for the existing ones or agent-manager create-group to add it\n"), exitStatus(1)
+		return nil, []byte("aghelm: group \"nope\" does not exist; call aghelm groups for the existing ones or aghelm create-group to add it\n"), exitStatus(1)
 	})
 	err := runMove(&bytes.Buffer{}, layer, []string{"gpu::r1", "nope"}, "cafe0001")
-	if err == nil || err.Error() != `gpu: group "nope" does not exist; call agent-manager groups for the existing ones or agent-manager create-group to add it` {
+	if err == nil || err.Error() != `gpu: group "nope" does not exist; call aghelm groups for the existing ones or aghelm create-group to add it` {
 		t.Fatalf("err = %v", err)
 	}
 	if local.targetID != "" {
@@ -503,7 +503,7 @@ func TestStoredHostsReadsTheConnectionsSavedInTheManager(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := st.AddConnection(store.Connection{Name: "gpu", Destination: "me@gpu", Binary: "~/bin/agent-manager"}); err != nil {
+	if err := st.AddConnection(store.Connection{Name: "gpu", Destination: "me@gpu", Binary: "~/bin/aghelm"}); err != nil {
 		t.Fatal(err)
 	}
 	st.Close()
@@ -511,19 +511,19 @@ func TestStoredHostsReadsTheConnectionsSavedInTheManager(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := []remote.Connection{{Name: "gpu", Destination: "me@gpu", Binary: "~/bin/agent-manager"}}
+	want := []remote.Connection{{Name: "gpu", Destination: "me@gpu", Binary: "~/bin/aghelm"}}
 	if got := client.Connections(); !slices.Equal(got, want) {
 		t.Fatalf("connections = %+v, want %+v", got, want)
 	}
 }
 
-func TestARemoteMoveNeedsACallerInsideAgentManager(t *testing.T) {
+func TestARemoteMoveNeedsACallerInsideAghelm(t *testing.T) {
 	layer, calls := gpuMove(t, &fakeSessions{session: sampleSession()}, func([]string) ([]byte, []byte, error) {
-		t.Error("a caller outside Agent Manager reached ssh")
+		t.Error("a caller outside aghelm reached ssh")
 		return nil, nil, nil
 	})
 	err := runMove(&bytes.Buffer{}, layer, []string{"gpu::r1", "work"}, "")
-	if err == nil || !strings.HasPrefix(err.Error(), "not inside an Agent Manager session or terminal") {
+	if err == nil || !strings.HasPrefix(err.Error(), "not inside an aghelm session or terminal") {
 		t.Fatalf("err = %v", err)
 	}
 	if len(*calls) != 0 {

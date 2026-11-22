@@ -66,7 +66,7 @@ func TestOwnedBackendCanOpenAfterItsStoreIsRepaired(t *testing.T) {
 	if _, err := exec.LookPath("tmux"); err != nil {
 		t.Skip("tmux not installed")
 	}
-	dir := filepath.Join(t.TempDir(), "agent-manager")
+	dir := filepath.Join(t.TempDir(), "aghelm")
 	if err := os.WriteFile(dir, nil, 0o644); err != nil {
 		t.Fatal(err)
 	}

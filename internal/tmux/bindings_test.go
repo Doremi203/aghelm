@@ -38,7 +38,7 @@ func TestEnsureBindingsIgnoresAMissingServer(t *testing.T) {
 	testenv.SkipPOSIXShell(t)
 	dir := t.TempDir()
 	stub := dir + "/tmux"
-	script := "#!/bin/sh\ncase \"$*\" in *list-keys*) exit 0;; esac\necho 'no server running on /tmp/agentmgr' >&2; exit 1\n"
+	script := "#!/bin/sh\ncase \"$*\" in *list-keys*) exit 0;; esac\necho 'no server running on /tmp/aghelm' >&2; exit 1\n"
 	if err := os.WriteFile(stub, []byte(script), 0o700); err != nil {
 		t.Fatalf("stub: %v", err)
 	}
@@ -636,10 +636,10 @@ func TestAttachStatusRightNamesTheKeyTable(t *testing.T) {
 		keys                     keybind.Table
 		want                     string
 	}{
-		{"defaults", "C-b", "None", keybind.DefaultSession(), ` agent-manager · Ctrl+r = review · F3 = editor · Ctrl+q / Ctrl+\ / C-b d = back `},
-		{"no prefix", "None", "None", keybind.DefaultSession(), ` agent-manager · Ctrl+r = review · F3 = editor · Ctrl+q / Ctrl+\ = back `},
-		{"custom", "C-b", "None", custom, " agent-manager · Ctrl+g = review · F9 / Alt+q / C-b d = back "},
-		{"prefix shadows a custom key", "M-q", "None", custom, " agent-manager · Ctrl+g = review · F9 / M-q d = back "},
+		{"defaults", "C-b", "None", keybind.DefaultSession(), ` aghelm · Ctrl+r = review · F3 = editor · Ctrl+q / Ctrl+\ / C-b d = back `},
+		{"no prefix", "None", "None", keybind.DefaultSession(), ` aghelm · Ctrl+r = review · F3 = editor · Ctrl+q / Ctrl+\ = back `},
+		{"custom", "C-b", "None", custom, " aghelm · Ctrl+g = review · F9 / Alt+q / C-b d = back "},
+		{"prefix shadows a custom key", "M-q", "None", custom, " aghelm · Ctrl+g = review · F9 / M-q d = back "},
 	} {
 		if got := attachStatusRight(tc.primary, tc.secondary, tc.keys); got != tc.want {
 			t.Errorf("%s:\n got %q\nwant %q", tc.name, got, tc.want)

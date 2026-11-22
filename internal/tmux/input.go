@@ -78,7 +78,7 @@ func (d *Driver) SubmitTextContext(ctx context.Context, id, text string, drafted
 // whole send at a time while other panes do not wait. The gates are keyed by
 // socket and pane, so every Driver in the process shares them, and each
 // holds a lock file too for a send from another process, such as
-// `agent-manager type` beside a host's manager.
+// `aghelm type` beside a host's manager.
 var paneSendGates = struct {
 	sync.Mutex
 	gates map[string]*paneSendGate

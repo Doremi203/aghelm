@@ -16,7 +16,7 @@ import (
 )
 
 // worktreeSetting is the store key holding the global spawn-in-worktree
-// default the Agent Manager settings screen writes.
+// default the aghelm settings screen writes.
 const worktreeSetting = "worktree_default"
 
 // baseFetchSetting is the store key that, set to "off", skips the fetch
@@ -331,7 +331,7 @@ func (r *runtime) environmentFor(caller store.Session, group string, explicit *s
 		names = append(names, profile.Name)
 	}
 	if len(names) == 0 {
-		return "", fmt.Errorf("environment %q does not exist, and none is defined; create one with agent-manager env set", environment)
+		return "", fmt.Errorf("environment %q does not exist, and none is defined; create one with aghelm env set", environment)
 	}
 	return "", fmt.Errorf("environment %q does not exist; defined are %s", environment, strings.Join(names, ", "))
 }
@@ -380,7 +380,7 @@ func (r *runtime) createTarget(caller store.Session, requestedGroup *string, dir
 		}
 	}
 	if group != "" && store.EffectivelyArchived(archived, group) {
-		return "", "", fmt.Errorf("group %q is archived; restore it in Agent Manager first", group)
+		return "", "", fmt.Errorf("group %q is archived; restore it in aghelm first", group)
 	}
 	if strings.TrimSpace(directory) != "" {
 		dir, err := resolveTerminalDirectory(directory)

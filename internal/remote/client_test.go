@@ -32,7 +32,7 @@ func newTestClient(t *testing.T, run Runner, opts ...Option) *Client {
 }
 
 // newRawTestClient hands run's stdout over as the host printed it, without
-// the marker the login shell prints before agent-manager runs.
+// the marker the login shell prints before aghelm runs.
 func newRawTestClient(t *testing.T, run Runner, opts ...Option) *Client {
 	t.Helper()
 	c := New(t.TempDir(), append([]Option{WithRunner(run)}, opts...)...)
@@ -166,9 +166,9 @@ func TestErrors(t *testing.T) {
 			"gpu: unreachable over SSH: known_hosts has no key for this host yet; run ssh me@gpu once in a terminal to check and accept it", true},
 		{"host key changed", "@@@@@@@@\n@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @\n@@@@@@@@\nHost key verification failed.\n", exitStatus(255),
 			"gpu: unreachable over SSH: the host's key no longer matches known_hosts; find out why before you trust it, then update known_hosts", true},
-		{"binary missing", "sh: agent-manager: not found\n", exitStatus(127),
-			"gpu: agent-manager is not on the login shell's PATH there; install it, add it to PATH in the login profile, or set the connection's path", false},
-		{"remote refused", "agent-manager: session a1 is not running\n", exitStatus(1), "gpu: session a1 is not running", false},
+		{"binary missing", "sh: aghelm: not found\n", exitStatus(127),
+			"gpu: aghelm is not on the login shell's PATH there; install it, add it to PATH in the login profile, or set the connection's path", false},
+		{"remote refused", "aghelm: session a1 is not running\n", exitStatus(1), "gpu: session a1 is not running", false},
 		{"remote silent", "", exitStatus(1), "gpu: exit status 1", false},
 		{"tcsh login shell", "Unknown option: `-lc'\nUsage: tcsh [ -bcdefilmnqstvVxX ] [ argument ... ].\n", exitStatus(1),
 			"gpu: the login shell there is csh or tcsh; SSH connections need a POSIX login shell such as sh, bash or zsh", false},
@@ -198,14 +198,14 @@ func TestConnectionPathRunsAndNamesTheBinary(t *testing.T) {
 	var argv []string
 	c := newTestClient(t, func(_ context.Context, got []string) ([]byte, []byte, error) {
 		argv = got
-		return nil, []byte("sh: /opt/am/bin/agent-manager: not found\n"), exitStatus(127)
+		return nil, []byte("sh: /opt/am/bin/aghelm: not found\n"), exitStatus(127)
 	})
-	c.SetConnections([]Connection{{Name: "gpu", Destination: "me@gpu", Binary: "/opt/am/bin/agent-manager"}})
+	c.SetConnections([]Connection{{Name: "gpu", Destination: "me@gpu", Binary: "/opt/am/bin/aghelm"}})
 	_, err := c.Kill(context.Background(), Ref{Host: "gpu", ID: "a1"})
-	if err == nil || err.Error() != "gpu: agent-manager is not at /opt/am/bin/agent-manager there; install it there or fix the connection's path" || TroubleOf(err) != TroubleMissing {
+	if err == nil || err.Error() != "gpu: aghelm is not at /opt/am/bin/aghelm there; install it there or fix the connection's path" || TroubleOf(err) != TroubleMissing {
 		t.Fatalf("error = %v", err)
 	}
-	if command := argv[len(argv)-1]; !strings.Contains(command, "exec '\\''/opt/am/bin/agent-manager'\\'' '\\''kill'\\''") {
+	if command := argv[len(argv)-1]; !strings.Contains(command, "exec '\\''/opt/am/bin/aghelm'\\'' '\\''kill'\\''") {
 		t.Fatalf("remote command does not run the connection's path: %s", command)
 	}
 	c.SetConnections([]Connection{{Name: "gpu", Destination: "me@gpu", Binary: "~/bin/am"}})

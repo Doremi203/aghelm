@@ -63,7 +63,7 @@ func TestDefaultCommandCodeStyleRegisters(t *testing.T) {
 func TestApplyClaudeWritesConfigAndFlag(t *testing.T) {
 	dir := t.TempDir()
 	env := map[string]string{}
-	command, err := Apply("claude", "/opt/bin/agent-manager", dir, "claude", env)
+	command, err := Apply("claude", "/opt/bin/aghelm", dir, "claude", env)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -83,8 +83,8 @@ func TestApplyClaudeWritesConfigAndFlag(t *testing.T) {
 	if err := json.Unmarshal(content, &parsed); err != nil {
 		t.Fatal(err)
 	}
-	server := parsed["mcpServers"]["agent-manager"]
-	if server.Command != "/opt/bin/agent-manager" || len(server.Args) != 1 || server.Args[0] != "mcp" {
+	server := parsed["mcpServers"]["aghelm"]
+	if server.Command != "/opt/bin/aghelm" || len(server.Args) != 1 || server.Args[0] != "mcp" {
 		t.Fatalf("server = %+v", server)
 	}
 	if server.Env["AGENT_MANAGER_SESSION_ID"] != "${AGENT_MANAGER_SESSION_ID}" {
@@ -97,14 +97,14 @@ func TestApplyClaudeWritesConfigAndFlag(t *testing.T) {
 
 func TestApplyCodexAppendsOverrides(t *testing.T) {
 	env := map[string]string{}
-	command, err := Apply("codex", "/opt/bin/agent-manager", t.TempDir(), "codex", env)
+	command, err := Apply("codex", "/opt/bin/aghelm", t.TempDir(), "codex", env)
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, want := range []string{
-		`mcp_servers.agent-manager.command="/opt/bin/agent-manager"`,
-		`mcp_servers.agent-manager.args=["mcp"]`,
-		`mcp_servers.agent-manager.env_vars=["AGENT_MANAGER_SESSION_ID"]`,
+		`mcp_servers.aghelm.command="/opt/bin/aghelm"`,
+		`mcp_servers.aghelm.args=["mcp"]`,
+		`mcp_servers.aghelm.env_vars=["AGENT_MANAGER_SESSION_ID"]`,
 	} {
 		if !strings.Contains(command, want) {
 			t.Fatalf("command %q missing %q", command, want)
@@ -115,7 +115,7 @@ func TestApplyCodexAppendsOverrides(t *testing.T) {
 func TestApplyOpencodeSetsEnvToConfigFile(t *testing.T) {
 	dir := t.TempDir()
 	env := map[string]string{}
-	command, err := Apply("opencode", "/opt/bin/agent-manager", dir, "opencode", env)
+	command, err := Apply("opencode", "/opt/bin/aghelm", dir, "opencode", env)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -131,7 +131,7 @@ func TestApplyOpencodeSetsEnvToConfigFile(t *testing.T) {
 		t.Fatal(err)
 	}
 	text := string(content)
-	for _, want := range []string{`"/opt/bin/agent-manager"`, `"mcp"`, "{env:AGENT_MANAGER_SESSION_ID}"} {
+	for _, want := range []string{`"/opt/bin/aghelm"`, `"mcp"`, "{env:AGENT_MANAGER_SESSION_ID}"} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("config %q missing %q", text, want)
 		}
@@ -140,10 +140,10 @@ func TestApplyOpencodeSetsEnvToConfigFile(t *testing.T) {
 
 func TestApplyGrokSkipsWhenMarkerMatches(t *testing.T) {
 	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "mcp-grok-registered"), []byte("/opt/bin/agent-manager"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "mcp-grok-registered"), []byte("/opt/bin/aghelm"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	command, err := Apply("grok", "/opt/bin/agent-manager", dir, "grok", map[string]string{})
+	command, err := Apply("grok", "/opt/bin/aghelm", dir, "grok", map[string]string{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -154,10 +154,10 @@ func TestApplyGrokSkipsWhenMarkerMatches(t *testing.T) {
 
 func TestApplyGeminiSkipsWhenMarkerMatches(t *testing.T) {
 	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "mcp-gemini-registered"), []byte("/opt/bin/agent-manager"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "mcp-gemini-registered"), []byte("/opt/bin/aghelm"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	command, err := Apply("gemini", "/opt/bin/agent-manager", dir, "gemini", map[string]string{})
+	command, err := Apply("gemini", "/opt/bin/aghelm", dir, "gemini", map[string]string{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -168,11 +168,11 @@ func TestApplyGeminiSkipsWhenMarkerMatches(t *testing.T) {
 
 func TestApplyCommandCodeSkipsWhenMarkerMatches(t *testing.T) {
 	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "mcp-command-code-registered"), []byte("/opt/bin/agent-manager"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "mcp-command-code-registered"), []byte("/opt/bin/aghelm"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	env := map[string]string{hooks.EnvSessionID: "sess-abcd"}
-	command, err := Apply("command-code", "/opt/bin/agent-manager", dir, "cmd", env)
+	command, err := Apply("command-code", "/opt/bin/aghelm", dir, "cmd", env)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -204,7 +204,7 @@ exit 1
 		t.Fatal(err)
 	}
 	argsPath := filepath.Join(dir, "args")
-	exe := "/opt/bin/agent-manager"
+	exe := "/opt/bin/aghelm"
 	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
 	t.Setenv("FAKE_CMD_ARGS", argsPath)
 	t.Setenv(hooks.EnvSessionID, "parent-session")
@@ -224,7 +224,7 @@ exit 1
 	if err != nil {
 		t.Fatal(err)
 	}
-	wantArgs := "mcp\nadd\n--scope\nuser\nagent-manager\n--\n/opt/bin/agent-manager\nmcp\n"
+	wantArgs := "mcp\nadd\n--scope\nuser\naghelm\n--\n/opt/bin/aghelm\nmcp\n"
 	if string(args) != wantArgs {
 		t.Fatalf("cmd args = %q want %q", args, wantArgs)
 	}
@@ -259,7 +259,7 @@ exit 1
 		t.Fatal(err)
 	}
 	argsPath := filepath.Join(dir, "args")
-	exe := "/opt/bin/agent-manager"
+	exe := "/opt/bin/aghelm"
 	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
 	t.Setenv("FAKE_AGY_ARGS", argsPath)
 
@@ -275,7 +275,7 @@ exit 1
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := "mcp\nadd\nagent-manager\n--\n/opt/bin/agent-manager\nmcp\n"; string(args) != want {
+	if want := "mcp\nadd\naghelm\n--\n/opt/bin/aghelm\nmcp\n"; string(args) != want {
 		t.Fatalf("agy args = %q want %q", args, want)
 	}
 	marker, err := os.ReadFile(filepath.Join(dir, "mcp-antigravity-registered"))
@@ -285,8 +285,8 @@ exit 1
 }
 
 func TestEnsureRegisteredOnceNamesFailedCommand(t *testing.T) {
-	err := ensureRegisteredOnce(context.Background(), "gemini", "/opt/bin/agent-manager", t.TempDir(),
-		command{name: "agent-manager-no-such-binary"})
+	err := ensureRegisteredOnce(context.Background(), "gemini", "/opt/bin/aghelm", t.TempDir(),
+		command{name: "aghelm-no-such-binary"})
 	if err == nil {
 		t.Fatal("expected an error when the add command cannot run")
 	}
@@ -336,7 +336,7 @@ func TestApplyGivesUpOnAnAddThatNeverReturns(t *testing.T) {
 	shortenRegistrationTimeout(t, 300*time.Millisecond)
 
 	start := time.Now()
-	_, err := Apply("grok", "/opt/bin/agent-manager", dir, "grok", map[string]string{})
+	_, err := Apply("grok", "/opt/bin/aghelm", dir, "grok", map[string]string{})
 	if elapsed := time.Since(start); elapsed > 5*time.Second {
 		t.Fatalf("Apply waited %s on a hung add", elapsed)
 	}
@@ -359,7 +359,7 @@ func TestApplySharesOneBudgetAcrossTheCommandsOfARegistration(t *testing.T) {
 	dir := fakeCLI(t, "hermes", "sleep 0.3\nexit 0\n")
 	shortenRegistrationTimeout(t, 500*time.Millisecond)
 
-	_, err := Apply("hermes", "/opt/bin/agent-manager", dir, "hermes", map[string]string{})
+	_, err := Apply("hermes", "/opt/bin/aghelm", dir, "hermes", map[string]string{})
 	var timeout *TimeoutError
 	if !errors.As(err, &timeout) {
 		t.Fatalf("err = %v, want the whole registration timed out", err)
@@ -375,7 +375,7 @@ func TestApplySharesOneBudgetAcrossTheCommandsOfARegistration(t *testing.T) {
 func TestApplyErrorHasNoDanglingColonWhenTheCommandPrintsNothing(t *testing.T) {
 	dir := fakeCLI(t, "grok", "exit 3\n")
 
-	_, err := Apply("grok", "/opt/bin/agent-manager", dir, "grok", map[string]string{})
+	_, err := Apply("grok", "/opt/bin/aghelm", dir, "grok", map[string]string{})
 	if err == nil {
 		t.Fatal("expected the failed add to be an error")
 	}
@@ -390,7 +390,7 @@ func TestApplyErrorHasNoDanglingColonWhenTheCommandPrintsNothing(t *testing.T) {
 func TestApplyErrorKeepsTheOutputOfAFailedCommand(t *testing.T) {
 	dir := fakeCLI(t, "grok", "echo 'no such scope' >&2\nexit 3\n")
 
-	_, err := Apply("grok", "/opt/bin/agent-manager", dir, "grok", map[string]string{})
+	_, err := Apply("grok", "/opt/bin/aghelm", dir, "grok", map[string]string{})
 	if err == nil || !strings.HasSuffix(err.Error(), ": no such scope") {
 		t.Fatalf("err = %v, want the command's output at the end", err)
 	}
@@ -402,14 +402,14 @@ func TestApplyDoesNotWaitOnAChildHoldingTheAddsOutput(t *testing.T) {
 	dir := fakeCLI(t, "grok", "sleep 30 &\nexit 0\n")
 
 	start := time.Now()
-	if _, err := Apply("grok", "/opt/bin/agent-manager", dir, "grok", map[string]string{}); err != nil {
+	if _, err := Apply("grok", "/opt/bin/aghelm", dir, "grok", map[string]string{}); err != nil {
 		t.Fatal(err)
 	}
 	if elapsed := time.Since(start); elapsed > registrationWaitDelay+5*time.Second {
 		t.Fatalf("Apply waited %s on the add's leftover child", elapsed)
 	}
 	marker, err := os.ReadFile(filepath.Join(dir, "mcp-grok-registered"))
-	if err != nil || string(marker) != "/opt/bin/agent-manager" {
+	if err != nil || string(marker) != "/opt/bin/aghelm" {
 		t.Fatalf("marker = %q err=%v", marker, err)
 	}
 }
@@ -457,14 +457,14 @@ func museSettingsFixture(t *testing.T, content string) string {
 }
 
 var wantMuseEntry = map[string]any{
-	"type": "stdio", "command": "/opt/bin/agent-manager", "args": []any{"mcp"}, "mode": "optional",
+	"type": "stdio", "command": "/opt/bin/aghelm", "args": []any{"mcp"}, "mode": "optional",
 }
 
 func TestApplyMuseAddsServerAndKeepsSettings(t *testing.T) {
 	path := museSettingsFixture(t, `{"schema_version": 1, "theme": "dark",
   "mcpServers": {"github": {"type": "stdio", "command": "npx"}}}`)
 	env := map[string]string{}
-	command, err := Apply("muse", "/opt/bin/agent-manager", t.TempDir(), "muse", env)
+	command, err := Apply("muse", "/opt/bin/aghelm", t.TempDir(), "muse", env)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -479,8 +479,8 @@ func TestApplyMuseAddsServerAndKeepsSettings(t *testing.T) {
 	if fmt.Sprint(servers["github"]) != fmt.Sprint(map[string]any{"type": "stdio", "command": "npx"}) {
 		t.Fatalf("github server = %v, want it kept", servers["github"])
 	}
-	if fmt.Sprint(servers["agent-manager"]) != fmt.Sprint(wantMuseEntry) {
-		t.Fatalf("agent-manager server = %v, want %v", servers["agent-manager"], wantMuseEntry)
+	if fmt.Sprint(servers["aghelm"]) != fmt.Sprint(wantMuseEntry) {
+		t.Fatalf("aghelm server = %v, want %v", servers["aghelm"], wantMuseEntry)
 	}
 	// Windows has no POSIX permission bits to keep.
 	if runtime.GOOS == "windows" {
@@ -494,12 +494,12 @@ func TestApplyMuseAddsServerAndKeepsSettings(t *testing.T) {
 
 func TestApplyMuseCreatesSettings(t *testing.T) {
 	path := museSettingsFixture(t, "")
-	if _, err := Apply("muse", "/opt/bin/agent-manager", t.TempDir(), "muse", map[string]string{}); err != nil {
+	if _, err := Apply("muse", "/opt/bin/aghelm", t.TempDir(), "muse", map[string]string{}); err != nil {
 		t.Fatal(err)
 	}
 	settings := readMuseSettings(t, path)
 	servers := settings["mcpServers"].(map[string]any)
-	if settings["schema_version"] != float64(1) || fmt.Sprint(servers["agent-manager"]) != fmt.Sprint(wantMuseEntry) {
+	if settings["schema_version"] != float64(1) || fmt.Sprint(servers["aghelm"]) != fmt.Sprint(wantMuseEntry) {
 		t.Fatalf("settings = %v", settings)
 	}
 }
@@ -507,7 +507,7 @@ func TestApplyMuseCreatesSettings(t *testing.T) {
 // Muse drops every server when both spellings are present.
 func TestApplyMuseKeepsTheLegacyServersKey(t *testing.T) {
 	path := museSettingsFixture(t, `{"mcp_servers": {"github": {"command": "npx"}}}`)
-	if _, err := Apply("muse", "/opt/bin/agent-manager", t.TempDir(), "muse", map[string]string{}); err != nil {
+	if _, err := Apply("muse", "/opt/bin/aghelm", t.TempDir(), "muse", map[string]string{}); err != nil {
 		t.Fatal(err)
 	}
 	settings := readMuseSettings(t, path)
@@ -515,7 +515,7 @@ func TestApplyMuseKeepsTheLegacyServersKey(t *testing.T) {
 		t.Fatalf("settings = %v, want no mcpServers next to mcp_servers", settings)
 	}
 	servers := settings["mcp_servers"].(map[string]any)
-	if servers["github"] == nil || fmt.Sprint(servers["agent-manager"]) != fmt.Sprint(wantMuseEntry) {
+	if servers["github"] == nil || fmt.Sprint(servers["aghelm"]) != fmt.Sprint(wantMuseEntry) {
 		t.Fatalf("mcp_servers = %v", servers)
 	}
 }
@@ -533,7 +533,7 @@ func TestApplyMuseWritesThroughASymlinkedSettingsFile(t *testing.T) {
 	if err := os.Symlink(target, path); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := Apply("muse", "/opt/bin/agent-manager", t.TempDir(), "muse", map[string]string{}); err != nil {
+	if _, err := Apply("muse", "/opt/bin/aghelm", t.TempDir(), "muse", map[string]string{}); err != nil {
 		t.Fatal(err)
 	}
 	if info, err := os.Lstat(path); err != nil || info.Mode()&os.ModeSymlink == 0 {
@@ -541,7 +541,7 @@ func TestApplyMuseWritesThroughASymlinkedSettingsFile(t *testing.T) {
 	}
 	settings := readMuseSettings(t, target)
 	servers := settings["mcpServers"].(map[string]any)
-	if settings["theme"] != "dark" || fmt.Sprint(servers["agent-manager"]) != fmt.Sprint(wantMuseEntry) {
+	if settings["theme"] != "dark" || fmt.Sprint(servers["aghelm"]) != fmt.Sprint(wantMuseEntry) {
 		t.Fatalf("linked settings = %v", settings)
 	}
 }
@@ -549,7 +549,7 @@ func TestApplyMuseWritesThroughASymlinkedSettingsFile(t *testing.T) {
 func TestApplyMuseRefusesUnreadableSettings(t *testing.T) {
 	const content = "{ not json"
 	path := museSettingsFixture(t, content)
-	if _, err := Apply("muse", "/opt/bin/agent-manager", t.TempDir(), "muse", map[string]string{}); err == nil {
+	if _, err := Apply("muse", "/opt/bin/aghelm", t.TempDir(), "muse", map[string]string{}); err == nil {
 		t.Fatal("expected an error for settings that do not parse")
 	}
 	data, err := os.ReadFile(path)
@@ -610,7 +610,7 @@ func TestApplyCursorWritesTheUserFileAndEnables(t *testing.T) {
 		t.Fatal(err)
 	}
 	env := map[string]string{}
-	command, err := Apply("cursor", "/opt/bin/agent-manager", t.TempDir(), "cursor-agent", env)
+	command, err := Apply("cursor", "/opt/bin/aghelm", t.TempDir(), "cursor-agent", env)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -628,12 +628,12 @@ func TestApplyCursorWritesTheUserFileAndEnables(t *testing.T) {
 	if fmt.Sprint(servers["github"]) != fmt.Sprint(map[string]any{"command": "npx"}) {
 		t.Fatalf("github = %v", servers["github"])
 	}
-	want := map[string]any{"command": "/opt/bin/agent-manager", "args": []any{"mcp"}}
-	if fmt.Sprint(servers["agent-manager"]) != fmt.Sprint(want) {
-		t.Fatalf("agent-manager = %v, want %v", servers["agent-manager"], want)
+	want := map[string]any{"command": "/opt/bin/aghelm", "args": []any{"mcp"}}
+	if fmt.Sprint(servers["aghelm"]) != fmt.Sprint(want) {
+		t.Fatalf("aghelm = %v, want %v", servers["aghelm"], want)
 	}
 	calls, err := os.ReadFile(logPath)
-	if err != nil || !strings.Contains(string(calls), "mcp enable agent-manager") {
+	if err != nil || !strings.Contains(string(calls), "mcp enable aghelm") {
 		t.Fatalf("enable log = %q, err = %v", calls, err)
 	}
 	if runtime.GOOS == "windows" {
@@ -648,7 +648,7 @@ func TestApplyCursorWritesTheUserFileAndEnables(t *testing.T) {
 func TestApplyCursorEnablesAgainWhenTheEntryMatches(t *testing.T) {
 	home := cursorHome(t)
 	logPath := stubCursorAgent(t, 0)
-	if _, err := Apply("cursor", "/opt/bin/agent-manager", t.TempDir(), "cursor-agent", map[string]string{}); err != nil {
+	if _, err := Apply("cursor", "/opt/bin/aghelm", t.TempDir(), "cursor-agent", map[string]string{}); err != nil {
 		t.Fatal(err)
 	}
 	path := filepath.Join(home, ".cursor", "mcp.json")
@@ -656,7 +656,7 @@ func TestApplyCursorEnablesAgainWhenTheEntryMatches(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := Apply("cursor", "/opt/bin/agent-manager", t.TempDir(), "cursor-agent", map[string]string{}); err != nil {
+	if _, err := Apply("cursor", "/opt/bin/aghelm", t.TempDir(), "cursor-agent", map[string]string{}); err != nil {
 		t.Fatal(err)
 	}
 	second, err := os.ReadFile(path)
@@ -670,7 +670,7 @@ func TestApplyCursorEnablesAgainWhenTheEntryMatches(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := strings.Count(string(calls), "mcp enable agent-manager"); got != 2 {
+	if got := strings.Count(string(calls), "mcp enable aghelm"); got != 2 {
 		t.Fatalf("enable ran %d times, want 2\n%s", got, calls)
 	}
 }
@@ -689,7 +689,7 @@ func TestApplyCursorWritesThroughASymlink(t *testing.T) {
 	if err := os.Symlink(target, path); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := Apply("cursor", "/opt/bin/agent-manager", t.TempDir(), "cursor-agent", map[string]string{}); err != nil {
+	if _, err := Apply("cursor", "/opt/bin/aghelm", t.TempDir(), "cursor-agent", map[string]string{}); err != nil {
 		t.Fatal(err)
 	}
 	if info, err := os.Lstat(path); err != nil || info.Mode()&os.ModeSymlink == 0 {
@@ -697,7 +697,7 @@ func TestApplyCursorWritesThroughASymlink(t *testing.T) {
 	}
 	settings := readCursorMCP(t, target)
 	servers := settings["mcpServers"].(map[string]any)
-	if settings["theme"] != "dark" || servers["agent-manager"] == nil {
+	if settings["theme"] != "dark" || servers["aghelm"] == nil {
 		t.Fatalf("linked settings = %v", settings)
 	}
 }
@@ -713,7 +713,7 @@ func TestApplyCursorAcceptsJSONC(t *testing.T) {
 	if err := os.WriteFile(path, []byte(original), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := Apply("cursor", "/opt/bin/agent-manager", t.TempDir(), "cursor-agent", map[string]string{}); err != nil {
+	if _, err := Apply("cursor", "/opt/bin/aghelm", t.TempDir(), "cursor-agent", map[string]string{}); err != nil {
 		t.Fatal(err)
 	}
 	settings := readCursorMCP(t, path)
@@ -725,11 +725,11 @@ func TestApplyCursorAcceptsJSONC(t *testing.T) {
 	if github["command"] != "npx" || fmt.Sprint(github["args"]) != fmt.Sprint([]any{"mcp"}) {
 		t.Fatalf("github = %v", github)
 	}
-	if servers["agent-manager"] == nil {
-		t.Fatal("agent-manager missing")
+	if servers["aghelm"] == nil {
+		t.Fatal("aghelm missing")
 	}
 	calls, err := os.ReadFile(logPath)
-	if err != nil || !strings.Contains(string(calls), "mcp enable agent-manager") {
+	if err != nil || !strings.Contains(string(calls), "mcp enable aghelm") {
 		t.Fatalf("enable log = %q, err = %v", calls, err)
 	}
 }
@@ -744,7 +744,7 @@ func TestApplyCursorTreatsNullServersAsEmpty(t *testing.T) {
 	if err := os.WriteFile(path, []byte("{\"other\": true, \"mcpServers\": null}\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := Apply("cursor", "/opt/bin/agent-manager", t.TempDir(), "cursor-agent", map[string]string{}); err != nil {
+	if _, err := Apply("cursor", "/opt/bin/aghelm", t.TempDir(), "cursor-agent", map[string]string{}); err != nil {
 		t.Fatal(err)
 	}
 	settings := readCursorMCP(t, path)
@@ -752,11 +752,11 @@ func TestApplyCursorTreatsNullServersAsEmpty(t *testing.T) {
 		t.Fatalf("settings = %v", settings)
 	}
 	servers := settings["mcpServers"].(map[string]any)
-	if servers["agent-manager"] == nil {
-		t.Fatal("agent-manager missing")
+	if servers["aghelm"] == nil {
+		t.Fatal("aghelm missing")
 	}
 	calls, err := os.ReadFile(logPath)
-	if err != nil || !strings.Contains(string(calls), "mcp enable agent-manager") {
+	if err != nil || !strings.Contains(string(calls), "mcp enable aghelm") {
 		t.Fatalf("enable log = %q, err = %v", calls, err)
 	}
 }
@@ -772,7 +772,7 @@ func TestApplyCursorRefusesUnreadableJSON(t *testing.T) {
 	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := Apply("cursor", "/opt/bin/agent-manager", t.TempDir(), "cursor-agent", map[string]string{}); err == nil {
+	if _, err := Apply("cursor", "/opt/bin/aghelm", t.TempDir(), "cursor-agent", map[string]string{}); err == nil {
 		t.Fatal("expected an error for mcp.json that does not parse")
 	}
 	data, err := os.ReadFile(path)
@@ -787,7 +787,7 @@ func TestApplyCursorRefusesUnreadableJSON(t *testing.T) {
 func TestApplyCursorReportsEnableFailure(t *testing.T) {
 	cursorHome(t)
 	stubCursorAgent(t, 1)
-	_, err := Apply("cursor", "/opt/bin/agent-manager", t.TempDir(), "cursor-agent", map[string]string{})
+	_, err := Apply("cursor", "/opt/bin/aghelm", t.TempDir(), "cursor-agent", map[string]string{})
 	if err == nil || !strings.Contains(err.Error(), "cursor-agent mcp enable") {
 		t.Fatalf("error = %v", err)
 	}
@@ -795,7 +795,7 @@ func TestApplyCursorReportsEnableFailure(t *testing.T) {
 
 func TestApplyNoneLeavesEverything(t *testing.T) {
 	env := map[string]string{}
-	command, err := Apply("none", "/opt/bin/agent-manager", t.TempDir(), "aider", env)
+	command, err := Apply("none", "/opt/bin/aghelm", t.TempDir(), "aider", env)
 	if err != nil || command != "aider" || len(env) != 0 {
 		t.Fatalf("command = %q, env = %v, err = %v", command, env, err)
 	}
@@ -809,7 +809,7 @@ func TestApplyGivesUpOnACursorEnableThatNeverReturns(t *testing.T) {
 	shortenRegistrationTimeout(t, 300*time.Millisecond)
 
 	start := time.Now()
-	_, err := Apply("cursor", "/opt/bin/agent-manager", t.TempDir(), "cursor-agent", map[string]string{})
+	_, err := Apply("cursor", "/opt/bin/aghelm", t.TempDir(), "cursor-agent", map[string]string{})
 	if elapsed := time.Since(start); elapsed > 5*time.Second {
 		t.Fatalf("Apply waited %s on a hung enable", elapsed)
 	}
@@ -828,7 +828,7 @@ func TestApplyCursorRefusesAnUnterminatedComment(t *testing.T) {
 	if err := os.WriteFile(path, before, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	err := ensureCursorRegistered(context.Background(), "/opt/agent-manager")
+	err := ensureCursorRegistered(context.Background(), "/opt/aghelm")
 	if err == nil || !strings.Contains(err.Error(), "never closes") {
 		t.Fatalf("err = %v, want the unterminated comment refused", err)
 	}

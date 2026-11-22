@@ -973,7 +973,7 @@ func TestRenameGroupDirectoryCheckRunsBeforeMutation(t *testing.T) {
 	m.selectGroupRow(t, "old")
 	m.openRename()
 	m.groupSurface().SetName("new")
-	m.groupSurface().SetDir("/definitely/missing/agent-manager")
+	m.groupSurface().SetDir("/definitely/missing/aghelm")
 	cmd := m.saveGroupEdit()
 	groups, _ := m.services.store.Groups()
 	if len(groups) != 1 || groups[0].Name != "old" {

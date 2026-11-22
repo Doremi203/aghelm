@@ -57,7 +57,7 @@ func TestWindowClampsAndMarksHiddenContent(t *testing.T) {
 }
 
 func TestTruncateTailRuneSafe(t *testing.T) {
-	hebrew := "/home/dev/פרויקטים/agent-manager"
+	hebrew := "/home/dev/פרויקטים/aghelm"
 	tail := TruncateTail(hebrew, 10)
 	if !strings.HasPrefix(tail, "…") || len([]rune(tail)) != 10 {
 		t.Fatalf("TruncateTail broken: %q (%d runes)", tail, len([]rune(tail)))

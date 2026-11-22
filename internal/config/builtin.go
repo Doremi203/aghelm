@@ -430,7 +430,7 @@ profile_args = "-p {profile}"
 # Hermes only accepts startup text through chat -q, which is one-shot and
 # exits. Start the real REPL, then submit the prompt when its composer appears.
 prompt_mode = "send"
-# Hermes sessions carry the agent-manager MCP tools. Registration needs
+# Hermes sessions carry the aghelm MCP tools. Registration needs
 # Hermes's MCP SDK; when it is missing, the spawn stops and the manager
 # offers the pip line that adds it to the Python that runs Hermes.
 mcp = "hermes"
@@ -491,7 +491,7 @@ default_status = "finished"
 # draft out.
 input_prefix = "^"
 # Start the activity region at the pane origin. Pane reflow then cannot look
-# like streaming output when Agent Manager attaches or detaches. The rows
+# like streaming output when aghelm attaches or detaches. The rows
 # that bound the composer are the plain rule and, since pi 0.85, the top
 # one with the spinner drawn inside it ("── ⠹ Working ───"); the arrow-step
 # head check reads either as the input box's edge rather than a draft.

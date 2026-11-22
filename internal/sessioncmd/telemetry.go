@@ -18,7 +18,7 @@ import (
 	"github.com/Doremi203/aghelm/internal/store"
 )
 
-const followTelemetryUsage = "usage: agent-manager follow-telemetry --file <telemetry file>"
+const followTelemetryUsage = "usage: aghelm follow-telemetry --file <telemetry file>"
 
 const telemetryPoll = 2 * time.Second
 

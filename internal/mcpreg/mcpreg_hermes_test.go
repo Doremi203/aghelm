@@ -16,10 +16,10 @@ import (
 
 func TestApplyHermesSkipsWhenMarkerMatches(t *testing.T) {
 	dir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(dir, "mcp-hermes-registered"), []byte("/opt/bin/agent-manager"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "mcp-hermes-registered"), []byte("/opt/bin/aghelm"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	command, err := Apply("hermes", "/opt/bin/agent-manager", dir, "hermes --cli", map[string]string{})
+	command, err := Apply("hermes", "/opt/bin/aghelm", dir, "hermes --cli", map[string]string{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -31,16 +31,16 @@ func TestApplyHermesSkipsWhenMarkerMatches(t *testing.T) {
 func TestValidHermesMCPEntry(t *testing.T) {
 	enabled := true
 	entry := hermesMCPEntry{
-		Command: "/opt/bin/agent-manager",
+		Command: "/opt/bin/aghelm",
 		Args:    []string{"mcp"},
 		Env:     map[string]string{"AGENT_MANAGER_SESSION_ID": "${AGENT_MANAGER_SESSION_ID}"},
 		Enabled: &enabled,
 	}
-	if !validHermesMCPEntry(entry, "/opt/bin/agent-manager") {
+	if !validHermesMCPEntry(entry, "/opt/bin/aghelm") {
 		t.Fatal("valid Hermes MCP entry was rejected")
 	}
 	entry.Args = []string{"wrong"}
-	if validHermesMCPEntry(entry, "/opt/bin/agent-manager") {
+	if validHermesMCPEntry(entry, "/opt/bin/aghelm") {
 		t.Fatal("Hermes MCP entry with wrong args was accepted")
 	}
 }
@@ -80,7 +80,7 @@ exit 1
 	argsPath := filepath.Join(dir, "args")
 	stdinPath := filepath.Join(dir, "stdin")
 	leakPath := filepath.Join(dir, "leaked")
-	exe := "/opt/bin/agent-manager"
+	exe := "/opt/bin/aghelm"
 	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
 	t.Setenv("FAKE_HERMES_STATE", state)
 	t.Setenv("FAKE_HERMES_ARGS", argsPath)
@@ -100,7 +100,7 @@ exit 1
 	if err != nil {
 		t.Fatal(err)
 	}
-	wantArgs := "mcp\nadd\nagent-manager\n--command\n/opt/bin/agent-manager\n--env\nAGENT_MANAGER_SESSION_ID=${AGENT_MANAGER_SESSION_ID}\n--args\nmcp\n"
+	wantArgs := "mcp\nadd\naghelm\n--command\n/opt/bin/aghelm\n--env\nAGENT_MANAGER_SESSION_ID=${AGENT_MANAGER_SESSION_ID}\n--args\nmcp\n"
 	if string(args) != wantArgs {
 		t.Fatalf("hermes args = %q want %q", args, wantArgs)
 	}
@@ -131,7 +131,7 @@ func TestApplyHermesReportsMissingMCPSupport(t *testing.T) {
 if [ "$1" = "config" ]; then
   exit 1
 fi
-printf "Failed to connect: MCP server 'agent-manager' requires the 'mcp' Python SDK, but it is not installed. Run 'hermes setup' to install MCP support, then retry.\n"
+printf "Failed to connect: MCP server 'aghelm' requires the 'mcp' Python SDK, but it is not installed. Run 'hermes setup' to install MCP support, then retry.\n"
 exit 0
 `
 	if err := os.WriteFile(filepath.Join(bin, "hermes"), []byte(script), 0o755); err != nil {
@@ -139,7 +139,7 @@ exit 0
 	}
 	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
 
-	_, err := Apply("hermes", "/opt/bin/agent-manager", t.TempDir(), "hermes --cli", map[string]string{})
+	_, err := Apply("hermes", "/opt/bin/aghelm", t.TempDir(), "hermes --cli", map[string]string{})
 	var unavailable HermesMCPUnavailableError
 	if !errors.As(err, &unavailable) {
 		t.Fatalf("err = %v, want HermesMCPUnavailableError", err)
@@ -227,7 +227,7 @@ exit 7
 		t.Fatal(err)
 	}
 	t.Setenv("PATH", bin+string(os.PathListSeparator)+os.Getenv("PATH"))
-	err := ensureHermesRegistered(context.Background(), "/opt/bin/agent-manager", t.TempDir())
+	err := ensureHermesRegistered(context.Background(), "/opt/bin/aghelm", t.TempDir())
 	var exitErr *exec.ExitError
 	if !errors.As(err, &exitErr) {
 		t.Fatalf("error should wrap exec.ExitError, got %v", err)

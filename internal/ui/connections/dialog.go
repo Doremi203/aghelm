@@ -177,7 +177,7 @@ func (d *Dialog) View(view DialogView) uidialogs.Card {
 	body := view.Field("name", view.Input(d.name), d.focus == NameField) +
 		view.Field("ssh to", view.Input(d.destination), d.focus == DestinationField) +
 		view.Field("binary", view.Input(d.binary), d.focus == BinaryField) + "\n" +
-		view.Muted.Render("  Its sessions show under this name. The host needs agent-manager, on") + "\n" +
+		view.Muted.Render("  Its sessions show under this name. The host needs aghelm, on") + "\n" +
 		view.Muted.Render("  its login PATH or at the binary path (/… or ~/…), and a key this") + "\n" +
 		view.Muted.Render("  machine's ssh can use without a prompt.")
 	return uidialogs.Card{Title: title, Body: body, Hints: [][2]string{{presentation.NavigationLabel(view.GlyphMode, "tab/↑↓"), "move"}, {"↵", "save"}, {"esc", "cancel"}}}

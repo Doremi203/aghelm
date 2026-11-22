@@ -31,16 +31,16 @@ import (
 // posts through that copy. Notification Center then shows the manager's
 // name and icon, and a click relaunches the copy, which brings the
 // terminal that started the manager to the front and asks the manager to
-// select the session. The user allows "Agent Manager" once, on the first
+// select the session. The user allows "aghelm" once, on the first
 // banner, the way any app asks.
 
-//go:embed agent-manager.icns
+//go:embed aghelm.icns
 var helperIcon []byte
 
 const (
-	helperBundle     = "Agent Manager.app"
-	helperExecutable = "agent-manager"
-	helperBundleID   = "dev.agent-manager.notifier"
+	helperBundle     = "aghelm.app"
+	helperExecutable = "aghelm"
+	helperBundleID   = "io.github.doremi203.aghelm.notifier"
 	// helperTimeout leaves room for the first-run permission prompt,
 	// which the helper waits on before it can post anything.
 	helperTimeout = 90 * time.Second
@@ -84,7 +84,7 @@ func runHelper(dir, sessionID, subtitle, body, sound string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), helperTimeout)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, helper, "post",
-		"agent-manager", subtitle, body, soundName, getenv("__CFBundleIdentifier"),
+		"aghelm", subtitle, body, soundName, getenv("__CFBundleIdentifier"),
 		sessionID, strconv.Itoa(os.Getpid()))
 	err = cmd.Run()
 	var exit *exec.ExitError
@@ -101,7 +101,7 @@ func installHelperSound(sound string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	name := "agent-manager-" + sound + ".aiff"
+	name := "aghelm-" + sound + ".aiff"
 	path := filepath.Join(home, "Library", "Sounds", name)
 	if _, err := os.Stat(path); err == nil {
 		return name, nil
@@ -226,7 +226,7 @@ func buildHelper(bundle, source, stamp string) error {
 	if err := copyFile(source, filepath.Join(macos, helperExecutable), 0o755); err != nil {
 		return err
 	}
-	if err := os.WriteFile(filepath.Join(resources, "agent-manager.icns"), helperIcon, 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(resources, "aghelm.icns"), helperIcon, 0o644); err != nil {
 		return err
 	}
 	if err := os.WriteFile(filepath.Join(bundle, "Contents", "Info.plist"), []byte(helperInfoPlist), 0o644); err != nil {
@@ -247,13 +247,13 @@ const helperInfoPlist = `<?xml version="1.0" encoding="UTF-8"?>
 	<key>CFBundleIdentifier</key>
 	<string>` + helperBundleID + `</string>
 	<key>CFBundleName</key>
-	<string>Agent Manager</string>
+	<string>aghelm</string>
 	<key>CFBundleDisplayName</key>
-	<string>Agent Manager</string>
+	<string>aghelm</string>
 	<key>CFBundleExecutable</key>
 	<string>` + helperExecutable + `</string>
 	<key>CFBundleIconFile</key>
-	<string>agent-manager</string>
+	<string>aghelm</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -330,7 +330,7 @@ func HelperMain(args []string) int {
 			info.Send(sel("setObject:forKey:"), nsString(strconv.Itoa(manager)), nsString("manager"))
 			content.Send(sel("setUserInfo:"), info)
 			request := objc.ID(objc.GetClass("UNNotificationRequest")).Send(sel("requestWithIdentifier:content:trigger:"),
-				nsString(fmt.Sprintf("agent-manager-%d", time.Now().UnixNano())), content, objc.ID(0))
+				nsString(fmt.Sprintf("aghelm-%d", time.Now().UnixNano())), content, objc.ID(0))
 			posted := objc.NewBlock(func(_ objc.Block, nserr objc.ID) {
 				if nserr != 0 {
 					exit <- 1
@@ -364,7 +364,7 @@ func HelperMain(args []string) int {
 var helperExit chan<- int
 
 func newHelperDelegate() (objc.ID, error) {
-	class, err := objc.RegisterClass("AgentManagerNotifierDelegate", objc.GetClass("NSObject"),
+	class, err := objc.RegisterClass("AghelmNotifierDelegate", objc.GetClass("NSObject"),
 		[]*objc.Protocol{objc.GetProtocol("UNUserNotificationCenterDelegate")}, nil,
 		[]objc.MethodDef{
 			{

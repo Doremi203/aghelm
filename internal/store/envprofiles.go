@@ -47,7 +47,7 @@ func CheckEnvKey(key string) error {
 		}
 	}
 	if strings.HasPrefix(strings.ToUpper(key), reservedEnvPrefix) {
-		return fmt.Errorf("variable %s is set by agent-manager itself", key)
+		return fmt.Errorf("variable %s is set by aghelm itself", key)
 	}
 	return nil
 }
@@ -183,7 +183,7 @@ func (s *Store) LaunchEnv(environment string) (map[string]string, error) {
 		return nil, err
 	}
 	if !found {
-		return nil, fmt.Errorf("environment %q no longer exists; recreate it with agent-manager env set", environment)
+		return nil, fmt.Errorf("environment %q no longer exists; recreate it with aghelm env set", environment)
 	}
 	return profile.Vars, nil
 }

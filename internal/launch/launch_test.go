@@ -420,7 +420,7 @@ func TestEnvironmentWiresTheSessionReport(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Environment pi: %v", err)
 	}
-	if want := agentLaunch(manager, "cat --model 'big' --session-id abc -e "+tmux.ShellQuote(filepath.Join(manager.Dir(), "agent-manager-pi.ts"))); command != want {
+	if want := agentLaunch(manager, "cat --model 'big' --session-id abc -e "+tmux.ShellQuote(filepath.Join(manager.Dir(), "aghelm-pi.ts"))); command != want {
 		t.Fatalf("pi command = %q, want %q", command, want)
 	}
 
@@ -429,7 +429,7 @@ func TestEnvironmentWiresTheSessionReport(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Environment opencode: %v", err)
 	}
-	plugin := `{"plugins":["file://` + filepath.ToSlash(filepath.Join(manager.Dir(), "agent-manager-opencode")) + `"]}`
+	plugin := `{"plugins":["file://` + filepath.ToSlash(filepath.Join(manager.Dir(), "aghelm-opencode")) + `"]}`
 	if command != agentLaunch(manager, "cat") || env["OPENCODE_CLI_CONFIG_CONTENT"] != plugin {
 		t.Fatalf("opencode launch = %q %v, want the plugin in the environment", command, env)
 	}
@@ -512,7 +512,7 @@ func TestEnvironmentKeepsGrokOffTheSharedLeader(t *testing.T) {
 
 func TestAssembleCarriesTheDirectiveOverAPastedImagePath(t *testing.T) {
 	flagged := config.Tool{Command: "claude", PromptFlag: "-p"}
-	prompt := "/var/folders/_b/T/agent-manager-pastes/paste-268.png why is this session working?"
+	prompt := "/var/folders/_b/T/aghelm-pastes/paste-268.png why is this session working?"
 	plan := Assemble("claude", flagged, prompt, true, true)
 	if len(plan.PendingInputs) != 0 {
 		t.Fatalf("a prompt led by an image path is no slash command, got %v", plan.PendingInputs)
@@ -570,7 +570,7 @@ func TestAntigravityLaunchAndRevive(t *testing.T) {
 }
 
 // A CLI that stops answering while the manager registers the MCP server must
-// not keep the session from starting: it starts without the agent-manager
+// not keep the session from starting: it starts without the aghelm
 // tools, with a warning, and the next launch tries to register again.
 func TestEnvironmentStartsWithoutMCPWhenRegistrationTimesOut(t *testing.T) {
 	if runtime.GOOS == "windows" {
@@ -594,7 +594,7 @@ func TestEnvironmentStartsWithoutMCPWhenRegistrationTimesOut(t *testing.T) {
 		t.Fatalf("a registration timeout failed the launch: %v", err)
 	}
 	if !strings.Contains(warning, "grok MCP registration did not finish within 300ms") ||
-		!strings.Contains(warning, "without the agent-manager tools") {
+		!strings.Contains(warning, "without the aghelm tools") {
 		t.Fatalf("warning = %q, want the timeout and what the session lost", warning)
 	}
 	if env[hooks.EnvSessionID] != "abcd1234" {
@@ -642,14 +642,14 @@ func executableBehindLink(t *testing.T) (exe, link string) {
 		t.Fatal(err)
 	}
 	dir := t.TempDir()
-	exe = filepath.Join(dir, "0.1.0", "agent-manager"+filepath.Ext(self))
+	exe = filepath.Join(dir, "0.1.0", "aghelm"+filepath.Ext(self))
 	if err := os.MkdirAll(filepath.Dir(exe), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(exe, []byte("binary"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	link = filepath.Join(dir, "agent-manager"+filepath.Ext(self))
+	link = filepath.Join(dir, "aghelm"+filepath.Ext(self))
 	if err := os.Symlink(exe, link); err != nil {
 		t.Skipf("no symlinks here: %v", err)
 	}

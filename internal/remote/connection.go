@@ -22,12 +22,12 @@ var (
 
 var idPattern = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
 
-// program is how the remote command names agent-manager: a path under ~/
+// program is how the remote command names aghelm: a path under ~/
 // expands against $HOME there, and the rest is quoted as is.
 func program(c Connection) string {
 	switch {
 	case c.Binary == "":
-		return quote("agent-manager")
+		return quote("aghelm")
 	case strings.HasPrefix(c.Binary, "~/"):
 		return `"$HOME"/` + quote(strings.TrimPrefix(c.Binary, "~/"))
 	}

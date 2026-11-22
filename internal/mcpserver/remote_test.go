@@ -30,7 +30,7 @@ type hostCall struct {
 }
 
 // fakeHosts stands in for ssh: it decodes the remote command back into the
-// agent-manager argv each host would run, and answers per host.
+// aghelm argv each host would run, and answers per host.
 type fakeHosts struct {
 	t      *testing.T
 	mu     sync.Mutex
@@ -40,7 +40,7 @@ type fakeHosts struct {
 
 func (f *fakeHosts) run(_ context.Context, argv []string) ([]byte, []byte, error) {
 	words, err := remotetest.Words(argv)
-	if err != nil || words[0] != "agent-manager" {
+	if err != nil || words[0] != "aghelm" {
 		f.t.Fatalf("remote command %q: %v", argv, err)
 	}
 	call := hostCall{destination: argv[len(argv)-2], words: words[1:]}
@@ -423,7 +423,7 @@ func TestRemoteReadsCarryTheHostsRow(t *testing.T) {
 
 func TestARemoteRefusalReachesTheAgent(t *testing.T) {
 	f := newRemoteFixture(t, "cafe", func(string, []string) ([]byte, []byte, error) {
-		return nil, []byte("agent-manager: terminal t1 is nested under remote-worker; only that session drives it\n"), exitStatus(1)
+		return nil, []byte("aghelm: terminal t1 is nested under remote-worker; only that session drives it\n"), exitStatus(1)
 	})
 	if err := f.withStore(func(st *store.Store) error { return st.SetRemoteTerminalOpener("gpu", "t1", "cafe") }); err != nil {
 		t.Fatal(err)
@@ -436,10 +436,10 @@ func TestARemoteRefusalReachesTheAgent(t *testing.T) {
 
 func TestARemoteMoveRefusalReachesTheAgentAndMovesNothingHere(t *testing.T) {
 	f := newRemoteFixture(t, "cafe", func(string, []string) ([]byte, []byte, error) {
-		return nil, []byte("agent-manager: group \"nope\" does not exist; call agent-manager groups for the existing ones or agent-manager create-group to add it\n"), exitStatus(1)
+		return nil, []byte("aghelm: group \"nope\" does not exist; call aghelm groups for the existing ones or aghelm create-group to add it\n"), exitStatus(1)
 	})
 	text, isError := callText(t, f.session, "move_session", map[string]any{"session_id": "gpu::r1", "group": "nope"})
-	if !isError || text != `gpu: group "nope" does not exist; call agent-manager groups for the existing ones or agent-manager create-group to add it` {
+	if !isError || text != `gpu: group "nope" does not exist; call aghelm groups for the existing ones or aghelm create-group to add it` {
 		t.Fatalf("move_session = %q, error %v", text, isError)
 	}
 	if f.local.movedID != "" {
@@ -541,7 +541,7 @@ func TestLocalOnlyToolsRefuseQualifiedIDsWithoutIO(t *testing.T) {
 
 func TestRemoteToolsStayClosedWithoutACaller(t *testing.T) {
 	f := newRemoteFixture(t, "", func(string, []string) ([]byte, []byte, error) {
-		t.Error("a caller outside Agent Manager reached ssh")
+		t.Error("a caller outside aghelm reached ssh")
 		return nil, nil, nil
 	})
 	for _, tc := range []struct {

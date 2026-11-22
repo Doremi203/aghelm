@@ -75,7 +75,7 @@ func TestMessagePaneShowsKindChipBannerAndExpiry(t *testing.T) {
 func TestMessageCallToActionUsesTheActionOrOpenLink(t *testing.T) {
 	useTrueColor(t)
 	theme := testTheme()
-	n := Notice{Kind: KindNews, Subtitle: "Agent Manager has a Discord now", Title: "Join the community", Body: []string{"Ask in #help."}, URL: discordURL, Action: "Join on Discord"}
+	n := Notice{Kind: KindNews, Subtitle: "aghelm has a Discord now", Title: "Join the community", Body: []string{"Ask in #help."}, URL: discordURL, Action: "Join on Discord"}
 	rows := messagePane(n, 80, theme, presentation.DefaultGlyphMode)
 	plain := plainRows(rows)
 	last := strings.TrimRight(plain[len(plain)-1], " ")

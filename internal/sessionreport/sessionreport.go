@@ -42,7 +42,7 @@ const spawnedFlag = "--spawned"
 
 // Target is the launch a reporter is wired into.
 type Target struct {
-	// Exe is the agent-manager binary a report runs.
+	// Exe is the aghelm binary a report runs.
 	Exe string
 	// HooksDir is the manager's own directory for generated files.
 	HooksDir string
@@ -59,9 +59,9 @@ type Target struct {
 func Apply(style string, target Target, command string, env map[string]string) (string, error) {
 	switch style {
 	case "pi":
-		return withExtension(target.HooksDir, "agent-manager-pi.ts", extensionSource(target.Exe, []string{"--tool", style, spawnedFlag}, "session_start"), command)
+		return withExtension(target.HooksDir, "aghelm-pi.ts", extensionSource(target.Exe, []string{"--tool", style, spawnedFlag}, "session_start"), command)
 	case "omp":
-		return withExtension(target.HooksDir, "agent-manager-omp.ts", extensionSource(target.Exe, []string{"--tool", style}, "session_start", "session_switch", "session_branch"), command)
+		return withExtension(target.HooksDir, "aghelm-omp.ts", extensionSource(target.Exe, []string{"--tool", style}, "session_start", "session_switch", "session_branch"), command)
 	case "opencode":
 		return wireOpencode(target.Exe, target.HooksDir, command, env)
 	case "command-code":
@@ -81,7 +81,7 @@ func Apply(style string, target Target, command string, env map[string]string) (
 // agent runs as it did before this wiring existed, and the pane says so
 // before the agent starts.
 func warnUnwired(tool, command, reason string) string {
-	notice := fmt.Sprintf("agent-manager: %s will not report conversation switches, so revive reopens the conversation it started with: %s", tool, reason)
+	notice := fmt.Sprintf("aghelm: %s will not report conversation switches, so revive reopens the conversation it started with: %s", tool, reason)
 	return "printf '%s\\n' " + tmux.ShellQuote(notice) + " >&2; " + command
 }
 
@@ -138,7 +138,7 @@ export default function (cmd: any) {
 // /resume, with the conversation now current. A mod runs in the CLI's own
 // process, which /reload respawns as a child in the same process group.
 func withMod(hooksDir string, source []byte, command string) (string, error) {
-	path := filepath.Join(hooksDir, "agent-manager-command-code.ts")
+	path := filepath.Join(hooksDir, "aghelm-command-code.ts")
 	if err := atomicfile.WriteIfChanged(path, source, 0o644); err != nil {
 		return "", err
 	}
@@ -166,8 +166,8 @@ func codexHooks(exe string) string {
 // prompt of a new conversation; a /fork or /resume fires nothing, so the
 // next prompt names the conversation the agent switched to.
 func withCopilotPlugin(exe, hooksDir, command string) (string, error) {
-	dir := filepath.Join(hooksDir, "agent-manager-copilot")
-	manifest, _ := json.Marshal(map[string]string{"name": "agent-manager", "description": "Reports the conversation this session is on to Agent Manager.", "version": "1.0.0"})
+	dir := filepath.Join(hooksDir, "aghelm-copilot")
+	manifest, _ := json.Marshal(map[string]string{"name": "aghelm", "description": "Reports the conversation this session is on to aghelm.", "version": "1.0.0"})
 	if err := atomicfile.WriteIfChanged(filepath.Join(dir, "plugin.json"), manifest, 0o644); err != nil {
 		return "", err
 	}
@@ -185,7 +185,7 @@ const opencodePluginTemplate = `import { Plugin } from "@opencode/plugin/tui";
 import { execFileSync } from "node:child_process";
 
 export default Plugin.define({
-  id: "agent-manager.track-conversation",
+  id: "aghelm.track-conversation",
   setup(context: any) {
     let last = "";
     const check = () => {
@@ -215,7 +215,7 @@ const opencodeCLIConfigVar = "OPENCODE_CLI_CONFIG_CONTENT"
 // user's cli.json rather than adding to it, so theirs is read and carried
 // along, from the variable when they set it and from the file otherwise.
 func wireOpencode(exe, hooksDir, command string, env map[string]string) (string, error) {
-	dir := filepath.Join(hooksDir, "agent-manager-opencode")
+	dir := filepath.Join(hooksDir, "aghelm-opencode")
 	if err := atomicfile.WriteIfChanged(filepath.Join(dir, "tui.ts"), fmt.Appendf(nil, opencodePluginTemplate, jsString(exe)), 0o644); err != nil {
 		return "", err
 	}

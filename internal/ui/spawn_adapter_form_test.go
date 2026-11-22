@@ -534,7 +534,7 @@ func TestFormChipRendersInTheCard(t *testing.T) {
 	m := buildModel(t)
 	m.openForm()
 	focusFormPrompt(t, m)
-	m.formPromptFor().Attachments = []composer.Attachment{{ID: 1, Path: "/tmp/agent-manager-pastes/paste-123.png"}}
+	m.formPromptFor().Attachments = []composer.Attachment{{ID: 1, Path: "/tmp/aghelm-pastes/paste-123.png"}}
 	m.formPromptFor().Input.SetValue("match " + composer.Token(1))
 
 	view := m.viewForm()
@@ -781,7 +781,7 @@ func TestDeferredDirectiveSentWhenPaneReady(t *testing.T) {
 	if err != nil {
 		t.Fatalf("capture: %v", err)
 	}
-	if !strings.Contains(pane, "agent-manager rename") {
+	if !strings.Contains(pane, "aghelm rename") {
 		t.Fatalf("pane should hold the directive, got:\n%s", pane)
 	}
 }

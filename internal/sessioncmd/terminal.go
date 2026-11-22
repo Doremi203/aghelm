@@ -17,10 +17,10 @@ import (
 
 type Terminal struct {
 	ID         string `json:"id" jsonschema:"managed terminal session id"`
-	Name       string `json:"name" jsonschema:"terminal name shown in Agent Manager"`
+	Name       string `json:"name" jsonschema:"terminal name shown in aghelm"`
 	Group      string `json:"group" jsonschema:"group path holding the terminal; empty is the root"`
 	Directory  string `json:"directory" jsonschema:"terminal's current working directory, or its launch directory when stopped"`
-	Status     string `json:"status" jsonschema:"stored Agent Manager status"`
+	Status     string `json:"status" jsonschema:"stored aghelm status"`
 	Running    bool   `json:"running" jsonschema:"whether the terminal currently has a live tmux pane"`
 	ParentID   string `json:"parent_id" jsonschema:"id of the parent session when nested; empty when un-nested"`
 	ParentName string `json:"parent_name" jsonschema:"name of the parent session when nested; empty when un-nested"`
@@ -86,7 +86,7 @@ func (r *runtime) terminal(id string) (store.Session, error) {
 		return store.Session{}, fmt.Errorf("session %s is an agent, not a terminal", id)
 	}
 	if sess.Archived {
-		return store.Session{}, fmt.Errorf("terminal %s is archived; restore it in Agent Manager first", id)
+		return store.Session{}, fmt.Errorf("terminal %s is archived; restore it in aghelm first", id)
 	}
 	return sess, nil
 }
@@ -122,7 +122,7 @@ func (r *runtime) unnestedTerminal(terminalID string) (store.Session, error) {
 		return store.Session{}, fmt.Errorf("terminal %s belongs to session %s; only it can drive it", terminal.ID, terminal.ParentID)
 	}
 	if !terminal.OpenedWithoutSession {
-		return store.Session{}, fmt.Errorf("terminal %s was opened in Agent Manager, not by a caller with no session; only Agent Manager and its sessions can drive it", terminal.ID)
+		return store.Session{}, fmt.Errorf("terminal %s was opened in aghelm, not by a caller with no session; only aghelm and its sessions can drive it", terminal.ID)
 	}
 	return terminal, nil
 }
@@ -349,7 +349,7 @@ func (t *Terminals) Send(sessionID, terminalID, command string, keys []string) (
 		return TerminalInput{}, err
 	}
 	if !runtime.driver.Exists(terminal.ID) {
-		return TerminalInput{}, fmt.Errorf("terminal %s is not running; revive it in Agent Manager first", terminal.ID)
+		return TerminalInput{}, fmt.Errorf("terminal %s is not running; revive it in aghelm first", terminal.ID)
 	}
 	if hasCommand {
 		if err := runtime.driver.SendText(terminal.ID, command); err != nil {
@@ -388,7 +388,7 @@ func (t *Terminals) read(sessionID, terminalID string, styled bool) (TerminalScr
 		return TerminalScreen{}, err
 	}
 	if !runtime.driver.Exists(terminal.ID) {
-		return TerminalScreen{}, fmt.Errorf("terminal %s is not running; revive it in Agent Manager first", terminal.ID)
+		return TerminalScreen{}, fmt.Errorf("terminal %s is not running; revive it in aghelm first", terminal.ID)
 	}
 	output, err := runtime.driver.CapturePane(terminal.ID)
 	if err != nil {

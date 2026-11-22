@@ -26,10 +26,10 @@ func (r *runtime) deliverable(target store.Session) error {
 		return fmt.Errorf("session %s is not running; revive it with %s first", target.ID, r.words.Revive)
 	}
 	if target.Archived {
-		return fmt.Errorf("session %s is archived, so Agent Manager no longer polls it; restore it with %s first", target.ID, r.words.Restore)
+		return fmt.Errorf("session %s is archived, so aghelm no longer polls it; restore it with %s first", target.ID, r.words.Restore)
 	}
 	if r.cfg.Tools[target.Tool].ActivityCutoff == "" {
-		return fmt.Errorf("session %s gives Agent Manager no way to tell when it is ready to read a message: %s", target.ID, unreadableTool(r.cfg, target.Tool))
+		return fmt.Errorf("session %s gives aghelm no way to tell when it is ready to read a message: %s", target.ID, unreadableTool(r.cfg, target.Tool))
 	}
 	return nil
 }
@@ -46,7 +46,7 @@ func unreadableTool(cfg config.Config, name string) string {
 type SendResult struct {
 	MessageID     int64 `json:"message_id" jsonschema:"pass to message_status to see whether it arrived"`
 	QueuePosition int   `json:"queue_position" jsonschema:"this message's place in the recipient's queue; 1 means it is next"`
-	ManagerAwake  bool  `json:"manager_awake" jsonschema:"whether Agent Manager is running to deliver it; a message queued while it is closed waits until it opens again"`
+	ManagerAwake  bool  `json:"manager_awake" jsonschema:"whether aghelm is running to deliver it; a message queued while it is closed waits until it opens again"`
 }
 
 // maxMessageBytes bounds one message. An instruction to another agent is
@@ -258,7 +258,7 @@ func (s *Sessions) MessageStatus(sessionID string, messageID int64) (MessageStat
 	// will ever type leaves the queue, and is read first for that reason.
 	case !msg.DroppedAt.IsZero():
 		state.State = "dropped"
-		state.Reason = "Agent Manager could not type it into the pane, and never retries a message; send it again"
+		state.Reason = "aghelm could not type it into the pane, and never retries a message; send it again"
 	case !msg.ReadAt.IsZero():
 		state.State = "answered"
 		state.DeliveredAt = msg.DeliveredAt.Format(time.RFC3339)
@@ -290,13 +290,13 @@ func (r *runtime) heldReason(sessionID string) (string, error) {
 		return "", err
 	}
 	if target.Archived {
-		return fmt.Sprintf("session %s is archived, so Agent Manager no longer polls it and nothing will type this in; restore it with %s", sessionID, r.words.Restore), nil
+		return fmt.Sprintf("session %s is archived, so aghelm no longer polls it and nothing will type this in; restore it with %s", sessionID, r.words.Restore), nil
 	}
 	if !r.driver.Exists(target.ID) {
 		return fmt.Sprintf("session %s is not running, so nothing will type this in; revive it with %s", sessionID, r.words.Revive), nil
 	}
 	if r.cfg.Tools[target.Tool].ActivityCutoff == "" {
-		return fmt.Sprintf("Agent Manager cannot tell when %s is ready, so nothing will type this in: %s", sessionID, unreadableTool(r.cfg, target.Tool)), nil
+		return fmt.Sprintf("aghelm cannot tell when %s is ready, so nothing will type this in: %s", sessionID, unreadableTool(r.cfg, target.Tool)), nil
 	}
 	// The poller types into a resting session, and an errored one is not
 	// resting: it is showing whatever stopped it, often a limit its agent

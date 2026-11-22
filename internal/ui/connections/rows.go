@@ -70,17 +70,17 @@ func (r Row) of(sess Session, terminal bool) Row {
 
 // TroubleLabel names a failed refresh in a few words for the connection's
 // row, telling a host ssh cannot reach from one it reaches where
-// agent-manager is missing or on another version.
+// aghelm is missing or on another version.
 func TroubleLabel(trouble remote.Trouble) string {
 	switch trouble {
 	case remote.TroubleUnreachable:
 		return "unreachable"
 	case remote.TroubleMissing:
-		return "agent-manager missing"
+		return "aghelm missing"
 	case remote.TroubleOutdated:
-		return "agent-manager too old"
+		return "aghelm too old"
 	case remote.TroubleNewer:
-		return "agent-manager newer"
+		return "aghelm newer"
 	}
 	return "error"
 }

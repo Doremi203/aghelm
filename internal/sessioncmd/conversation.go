@@ -18,7 +18,7 @@ import (
 	"github.com/Doremi203/aghelm/internal/store"
 )
 
-const trackConversationUsage = "usage: agent-manager track-conversation --tool <tool> (--id <id> | --key <json-field> [--unless <json-field>])"
+const trackConversationUsage = "usage: aghelm track-conversation --tool <tool> (--id <id> | --key <json-field> [--unless <json-field>])"
 
 // A report can arrive before the row it names exists, since a spawn creates
 // the row once the pane is up. The wait stays short because the agent that

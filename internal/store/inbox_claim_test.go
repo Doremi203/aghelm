@@ -28,8 +28,8 @@ func backdateHeartbeat(t *testing.T, st *Store, at time.Time) {
 
 func TestClaimPollerStealsOnlyStaleStamps(t *testing.T) {
 	st := openTwoManagerStore(t)
-	socketA := "/tmp/manager-a/tmux-501/agentmgr"
-	socketB := "/tmp/manager-b/tmux-501/agentmgr"
+	socketA := "/tmp/manager-a/tmux-501/aghelm"
+	socketB := "/tmp/manager-b/tmux-501/aghelm"
 	now := time.Now()
 
 	holder, err := st.ClaimPoller(socketA, now)
@@ -178,7 +178,7 @@ func TestClaimMessageIsSingleWinnerUnderConcurrentClaims(t *testing.T) {
 func TestManagerAwakeAgesWithTheNewestStamp(t *testing.T) {
 	st := openTwoManagerStore(t)
 	now := time.Now()
-	if _, err := st.ClaimPoller("/tmp/a/agentmgr", now); err != nil {
+	if _, err := st.ClaimPoller("/tmp/a/aghelm", now); err != nil {
 		t.Fatal(err)
 	}
 	awake, err := st.ManagerAwake(now.Add(1 * time.Second))
@@ -190,7 +190,7 @@ func TestManagerAwakeAgesWithTheNewestStamp(t *testing.T) {
 	if err != nil || awake {
 		t.Fatalf("aged stamp awake = %v, %v; want the manager reading as closed", awake, err)
 	}
-	if _, err := st.ClaimPoller("/tmp/b/agentmgr", now.Add(40*time.Second)); err != nil {
+	if _, err := st.ClaimPoller("/tmp/b/aghelm", now.Add(40*time.Second)); err != nil {
 		t.Fatal(err)
 	}
 	awake, err = st.ManagerAwake(now.Add(41 * time.Second))

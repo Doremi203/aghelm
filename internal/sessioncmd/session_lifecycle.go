@@ -158,7 +158,7 @@ type AfterTurn struct {
 	Pending      string `json:"pending,omitempty" jsonschema:"archive or kill, which the manager runs once this turn ends; empty when nothing is pending"`
 	Replaced     string `json:"replaced,omitempty" jsonschema:"the action this call replaced"`
 	Canceled     string `json:"canceled,omitempty" jsonschema:"the action this call withdrew"`
-	ManagerAwake bool   `json:"manager_awake" jsonschema:"whether Agent Manager is running; it carries the action out, so while it is closed the action waits for it to open"`
+	ManagerAwake bool   `json:"manager_awake" jsonschema:"whether aghelm is running; it carries the action out, so while it is closed the action waits for it to open"`
 }
 
 // EndAfterTurn asks the manager to archive or kill the calling session once

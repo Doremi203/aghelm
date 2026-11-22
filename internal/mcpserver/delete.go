@@ -11,7 +11,7 @@ import (
 func addDeleteSession(server *mcp.Server, noCaller error, sessionID string, sessions sessionCommands, remotes *remoteHosts) {
 	addTool(server, noCaller, &mcp.Tool{
 		Name: "delete_session",
-		Description: "Remove a finished session the way the user's delete key does: its agent stops, its row and terminals go, and Agent Manager removes the worktree and am/ branch it created. " +
+		Description: "Remove a finished session the way the user's delete key does: its agent stops, its row and terminals go, and aghelm removes the worktree and am/ branch it created. " +
 			"A worktree with uncommitted or untracked files, or commits on no remote and not on its base, stays with its branch, as does one another session still works in, and the result's notice says so. " +
 			"Unlike kill_session the session cannot come back with revive_session, so ask first unless the user asked for it. To end yourself, call kill_self or archive_self.",
 		Annotations: toolAnnotations(false, true, true),

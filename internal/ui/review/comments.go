@@ -322,7 +322,7 @@ func (m *Model) BeginSend() ApplyResult {
 	if len(parts) == 0 {
 		return ApplyResult{Accepted: true, Error: "no comments to send - press c on a line first"}
 	}
-	prompt := fmt.Sprintf("Code review of %s. Address each numbered point, then mark its comment handled with the review_comment tool (or `agent-manager review-comment <comment-id>`), and summarize what you changed per point: %s", reviewSubject(m.scope, m.set, m.repoSel), strings.Join(parts, "; "))
+	prompt := fmt.Sprintf("Code review of %s. Address each numbered point, then mark its comment handled with the review_comment tool (or `aghelm review-comment <comment-id>`), and summarize what you changed per point: %s", reviewSubject(m.scope, m.set, m.repoSel), strings.Join(parts, "; "))
 	round.Number = nextRound
 	round.Scope = m.scopeKey()
 	round.Fingerprint = m.fingerprint

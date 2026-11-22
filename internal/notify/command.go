@@ -131,7 +131,7 @@ var newCommandPresentation = presentation{
 	linuxSound:    "dialog-warning",
 	linuxUrgency:  "normal",
 	linuxIcon:     "dialog-warning",
-	linuxCategory: "x-agent-manager.notify-command",
+	linuxCategory: "x-aghelm.notify-command",
 }
 
 // ShowCommand shows the user a notify command about to run for the first

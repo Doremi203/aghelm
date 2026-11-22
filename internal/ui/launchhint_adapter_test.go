@@ -341,7 +341,7 @@ func installSDKlessHermes(t *testing.T) {
 if [ "$1" = "config" ]; then
   exit 1
 fi
-printf "Failed to connect: MCP server 'agent-manager' requires the 'mcp' Python SDK, but it is not installed. Run 'hermes setup' to install MCP support, then retry.\n"
+printf "Failed to connect: MCP server 'aghelm' requires the 'mcp' Python SDK, but it is not installed. Run 'hermes setup' to install MCP support, then retry.\n"
 exit 0
 `
 	if err := os.WriteFile(filepath.Join(bin, "hermes"), []byte(script), 0o755); err != nil {

@@ -22,7 +22,7 @@ var ErrNotAtPromptHead = errors.New("the caret is not at the head of the prompt"
 // error is a no, so ← reaches the agent.
 func PromptHead(profileDir string, driver *tmux.Driver, args []string) error {
 	if len(args) != 1 {
-		return errors.New("usage: agent-manager " + sessioncmd.PromptHeadCommand + " <tmux session name>")
+		return errors.New("usage: aghelm " + sessioncmd.PromptHeadCommand + " <tmux session name>")
 	}
 	id, managed := strings.CutPrefix(args[0], "am_")
 	if !managed {

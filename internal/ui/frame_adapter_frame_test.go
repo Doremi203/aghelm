@@ -365,7 +365,7 @@ func TestEscapeControlsKeepsTextWhoseBytesLookLikeC1(t *testing.T) {
 	}
 }
 
-// The agent in the pane runs `agent-manager rename` itself, so the session
+// The agent in the pane runs `aghelm rename` itself, so the session
 // name is content the review header paints, not something the user typed.
 func TestSessionNameCannotDriveTheTerminal(t *testing.T) {
 	t.Parallel()

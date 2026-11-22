@@ -1,4 +1,4 @@
-// Package remote drives the agent-manager on another machine over SSH,
+// Package remote drives the aghelm on another machine over SSH,
 // through that machine's own CLI.
 package remote
 
@@ -142,7 +142,7 @@ func (c *Client) hostSlot(host string) chan struct{} {
 	return slot
 }
 
-// call runs agent-manager on host with args. The host's slot is taken
+// call runs aghelm on host with args. The host's slot is taken
 // before the global one, so a call queued behind its own host never holds
 // a slot another host could use. stdout comes back on failure too.
 func (c *Client) call(ctx context.Context, host string, timeout time.Duration, args ...string) ([]byte, error) {
@@ -177,7 +177,7 @@ func (c *Client) call(ctx context.Context, host string, timeout time.Duration, a
 		return out, failed
 	}
 	if !marked {
-		return nil, &Error{Host: host, Err: errors.New("the login shell there exited before it ran agent-manager")}
+		return nil, &Error{Host: host, Err: errors.New("the login shell there exited before it ran aghelm")}
 	}
 	return out, nil
 }
@@ -187,7 +187,7 @@ type Error struct {
 	Host    string
 	Err     error
 	trouble Trouble
-	// ran is set once agent-manager started there, so the call may have
+	// ran is set once aghelm started there, so the call may have
 	// done its work before it was cut off.
 	ran bool
 	// mayHaveReached is the host saying a prompt's paste had started.
@@ -228,7 +228,7 @@ func (e *Error) Unwrap() error {
 
 // MayHaveReached reports a failed Type whose prompt may sit in the pane:
 // the host said its paste had started, or the call was cut off after
-// agent-manager started there. Such a prompt is not offered again.
+// aghelm started there. Such a prompt is not offered again.
 func MayHaveReached(err error) bool {
 	var failed *Error
 	return errors.As(err, &failed) && failed.mayHaveReached
@@ -268,9 +268,9 @@ func classify(ctx context.Context, conn Connection, stderr []byte, err error) *E
 		return &Error{Host: host, Err: errors.New("unreachable over SSH: " + text), trouble: TroubleUnreachable}
 	case exitNotFound:
 		if conn.Binary != "" {
-			return &Error{Host: host, Err: fmt.Errorf("agent-manager is not at %s there; install it there or fix the connection's path", conn.Binary), trouble: TroubleMissing}
+			return &Error{Host: host, Err: fmt.Errorf("aghelm is not at %s there; install it there or fix the connection's path", conn.Binary), trouble: TroubleMissing}
 		}
-		return &Error{Host: host, Err: errors.New("agent-manager is not on the login shell's PATH there; install it, add it to PATH in the login profile, or set the connection's path"), trouble: TroubleMissing}
+		return &Error{Host: host, Err: errors.New("aghelm is not on the login shell's PATH there; install it, add it to PATH in the login profile, or set the connection's path"), trouble: TroubleMissing}
 	}
 	if bytes.Contains(stderr, []byte("Unknown option: `-lc'")) {
 		// csh and tcsh take -l only on its own, and say so with their usage.
@@ -278,7 +278,7 @@ func classify(ctx context.Context, conn Connection, stderr []byte, err error) *E
 	}
 	failed := &Error{Host: host, Err: err, mayHaveReached: exited.ExitCode() == sessioncmd.ExitMayHaveReached}
 	if text != "" {
-		failed.Err = errors.New(strings.TrimPrefix(text, "agent-manager: "))
+		failed.Err = errors.New(strings.TrimPrefix(text, "aghelm: "))
 	}
 	return failed
 }
@@ -293,7 +293,7 @@ func lastLine(output []byte) string {
 func (c *Client) decode(ctx context.Context, host string, timeout time.Duration, into any, args ...string) error {
 	out, err := c.call(ctx, host, timeout, args...)
 	if err != nil {
-		// A command an older agent-manager does not know falls through to
+		// A command an older aghelm does not know falls through to
 		// its interactive manager, which fails without a terminal after
 		// printing escape sequences instead of JSON.
 		if !Unreachable(err) && !errors.Is(err, errTooLong) && len(bytes.TrimSpace(out)) > 0 && !json.Valid(out) {
@@ -305,11 +305,11 @@ func (c *Client) decode(ctx context.Context, host string, timeout time.Duration,
 }
 
 func outdated(host string) error {
-	return &Error{Host: host, Err: errors.New("agent-manager there is too old for SSH connections; update agent-manager on that host"), trouble: TroubleOutdated}
+	return &Error{Host: host, Err: errors.New("aghelm there is too old for SSH connections; update aghelm on that host"), trouble: TroubleOutdated}
 }
 
 func newer(host string) error {
-	return &Error{Host: host, Err: errors.New("agent-manager there is newer than this one; update agent-manager on this machine"), trouble: TroubleNewer}
+	return &Error{Host: host, Err: errors.New("aghelm there is newer than this one; update aghelm on this machine"), trouble: TroubleNewer}
 }
 
 func unreadable(host, command string, err error) error {
