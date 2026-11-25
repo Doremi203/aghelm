@@ -11,14 +11,12 @@ import (
 
 const discordURL = "https://discord.gg/ecS88An7pF"
 
-func inIsraelTime(t *testing.T) {
+// aheadOfUTC puts the viewer east of UTC, so an expiry late in the UTC day
+// reads as the next date only when it is converted to the viewer's clock.
+func aheadOfUTC(t *testing.T) {
 	t.Helper()
-	zone, err := time.LoadLocation("Asia/Jerusalem")
-	if err != nil {
-		t.Fatal(err)
-	}
 	previous := displayZone
-	displayZone = zone
+	displayZone = time.FixedZone("UTC+2", 2*60*60)
 	t.Cleanup(func() { displayZone = previous })
 }
 
@@ -37,7 +35,7 @@ func messageText(n Notice, width int) []string {
 
 func TestMessagePaneShowsKindChipBannerAndExpiry(t *testing.T) {
 	useTrueColor(t)
-	inIsraelTime(t)
+	aheadOfUTC(t)
 	theme := testTheme()
 	n := Notice{
 		Kind:     KindHeadsUp,
