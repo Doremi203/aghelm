@@ -7,7 +7,6 @@ import (
 	uilink "github.com/Doremi203/aghelm/internal/ui/connections/link"
 	uiapply "github.com/Doremi203/aghelm/internal/ui/dialogs/apply"
 	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
-	focusruntime "github.com/Doremi203/aghelm/internal/ui/focus/runtime"
 	uiinstall "github.com/Doremi203/aghelm/internal/ui/launchhint/install"
 	uiquicksend "github.com/Doremi203/aghelm/internal/ui/quick/send"
 	uirailpersist "github.com/Doremi203/aghelm/internal/ui/rail/persist"
@@ -25,10 +24,7 @@ type effectState struct {
 }
 
 func (m *Model) laneFor(request uieffects.Request) *uieffects.Lane {
-	switch request.(type) {
-	case focusruntime.InputRequest:
-		return &m.effects.Input
-	case uilink.Call:
+	if _, remote := request.(uilink.Call); remote {
 		return &m.effects.Remote
 	}
 	return &m.effects.Main
@@ -55,48 +51,7 @@ func (m *Model) enqueueEffect(request uieffects.Request, chain uint64, first boo
 	m.effects.Push(m.laneFor(request), request, chain, first, m.bindEffect(request))
 }
 
-func (m *Model) nextEffectCmd() tea.Cmd { return m.effects.Next(m.heldBy) }
-
-// heldSessions names the panes a main-lane job kills or relaunches: the
-// sessions a lifecycle action targets, and a session ending after its turn
-// together with the terminals nested under it.
-func (m *Model) heldSessions(request uieffects.Request) []string {
-	switch value := request.(type) {
-	case uilifecycle.Request:
-		ids := make([]string, 0, len(value.Target.Sessions))
-		for _, sess := range value.Target.Sessions {
-			ids = append(ids, sess.ID)
-		}
-		return ids
-	case uilifecycle.AfterTurnRequest:
-		if value.Cancel {
-			return nil
-		}
-		ids := []string{value.ID}
-		for _, sess := range m.workspace.sessions {
-			if sess.ParentID == value.ID {
-				ids = append(ids, sess.ID)
-			}
-		}
-		return ids
-	}
-	return nil
-}
-
-func inputTarget(job *uieffects.Job) (string, bool) {
-	if job == nil {
-		return "", false
-	}
-	request, ok := job.Request.(focusruntime.InputRequest)
-	return request.Value.Session.ID, ok
-}
-
-// heldBy reports whether the main-lane job kills or relaunches the pane the
-// input job writes to.
-func (m *Model) heldBy(main, input *uieffects.Job) bool {
-	id, ok := inputTarget(input)
-	return ok && slices.Contains(m.heldSessions(main.Request), id)
-}
+func (m *Model) nextEffectCmd() tea.Cmd { return m.effects.Next() }
 
 func (m *Model) requestQuit() (tea.Model, tea.Cmd) {
 	if install := m.ledger.install.Pending; install != nil {
@@ -123,7 +78,6 @@ func (m *Model) requestQuit() (tea.Model, tea.Cmd) {
 	if m.effects.Quitting {
 		return m, m.effects.Abandon(effectName)
 	}
-	m.prepareSplitForQuit()
 	m.effects.Quitting = true
 	if awaited, ok := m.effects.FirstUnfinished(); ok {
 		m.reportErr("finishing " + effectName(awaited.Request) + " before quitting; press the quit key again to leave without waiting")
@@ -136,15 +90,8 @@ func (m *Model) handleEffectCompleted(msg uieffects.Completed) (tea.Model, tea.C
 	if job == nil {
 		return m, nil
 	}
-	// Keys, paste and mouse change no stored row, so they neither fence a
-	// listing nor ask for a poll; a typed prompt records LastPrompt and does.
-	if request, ok := job.Request.(focusruntime.InputRequest); ok && request.Value.Kind != focusruntime.Prompt {
-		result, _ := msg.Result.(focusruntime.Result)
-		m.applyInputEffect(result, msg.Err)
-		return m, m.nextEffectCmd()
-	}
 	switch job.Request.(type) {
-	case focusruntime.InputRequest, uiquicksend.SendRequest, uiinstall.StartRequest, uilifecycle.Request, uilifecycle.AfterTurnRequest, uirailpersist.Request, uiapply.ForkEffect, uilaunch.Request, uilaunch.GroupRequest, uiapply.RenameEffect, focusruntime.ProbeRequest, focusruntime.AckRequest, uilifecycle.AttachRequest:
+	case uiquicksend.SendRequest, uiinstall.StartRequest, uilifecycle.Request, uilifecycle.AfterTurnRequest, uirailpersist.Request, uiapply.ForkEffect, uilaunch.Request, uilaunch.GroupRequest, uiapply.RenameEffect, uilifecycle.AckRequest, uilifecycle.AttachRequest:
 		if msg.FinishedAt.After(m.effects.latestObservation) {
 			m.effects.latestObservation = msg.FinishedAt
 		}

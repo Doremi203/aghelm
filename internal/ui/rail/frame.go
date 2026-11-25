@@ -60,8 +60,6 @@ type RenderContext struct {
 	ListKeys        keybind.Table
 	ComfortableRows bool
 	MouseDisabled   bool
-	Focused         bool
-	EnterFocuses    bool
 	StartupPhase    int
 	CursorMarker    string
 	Rename          Rename
@@ -92,10 +90,7 @@ func (f Frame) Hits() []Selection {
 	return hits
 }
 
-func (f Frame) RowAt(x, y, dividerX int, fullWidth bool) (Selection, bool) {
-	if !fullWidth && x >= dividerX {
-		return Selection{}, false
-	}
+func (f Frame) RowAt(y int) (Selection, bool) {
 	if y < 0 || y >= len(f.Lines) {
 		return Selection{}, false
 	}
@@ -115,9 +110,9 @@ func (f Frame) Overlay(frame string) string {
 }
 
 type palette struct {
-	theme                                           Theme
-	section, muted, subtle, value, key              lipgloss.Style
-	searchMatch, scopeBadge, focusBadge, inboxBadge lipgloss.Style
+	theme                               Theme
+	section, muted, subtle, value, key  lipgloss.Style
+	searchMatch, scopeBadge, inboxBadge lipgloss.Style
 }
 
 func newPalette(theme Theme) palette {
@@ -130,7 +125,6 @@ func newPalette(theme Theme) palette {
 		key:         lipgloss.NewStyle().Foreground(lipgloss.Color(theme.Accent)).Bold(true),
 		searchMatch: lipgloss.NewStyle().Foreground(lipgloss.Color(theme.Bg)).Background(lipgloss.Color(theme.Accent)),
 		scopeBadge:  lipgloss.NewStyle().Foreground(lipgloss.Color(theme.Bg)).Background(lipgloss.Color(theme.Accent2)).Bold(true).Padding(0, 1),
-		focusBadge:  lipgloss.NewStyle().Foreground(lipgloss.Color(theme.Bg)).Background(lipgloss.Color(theme.Accent)).Bold(true),
 		inboxBadge:  lipgloss.NewStyle().Foreground(lipgloss.Color(theme.Accent)).Bold(true),
 	}
 }

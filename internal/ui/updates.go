@@ -6,7 +6,7 @@ import (
 )
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	if key, ok := msg.(tea.KeyMsg); ok && m.routeQuit(key) == quitNow {
+	if key, ok := msg.(tea.KeyMsg); ok && m.routeQuit(key) {
 		return m.requestQuit()
 	}
 	if m.effects.Quitting {
@@ -21,12 +21,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			mm.prepareFrame()
 		}
 		mm.layout.keepFrame = false
-		mm.focus.runtime.Pace(mm.focused())
-		mm.syncPointerShape()
 		return mm, tea.Batch(cmd, mm.syncMouseCapture(), mm.refreshSpawnBase(), mm.nextEffectCmd())
 	}
 	m.prepareFrame()
-	m.syncPointerShape()
 	return model, tea.Batch(cmd, m.syncMouseCapture(), m.nextEffectCmd())
 }
 
@@ -37,11 +34,9 @@ var messageRoutes = []func(*Model, tea.Msg) (tea.Model, tea.Cmd, bool){
 	(*Model).routeSettingsMsg,
 	(*Model).routeResizeMsg,
 	(*Model).routeStartupMsg,
-	(*Model).routePreviewMsg,
 	(*Model).routeRefreshMsg,
 	(*Model).routeNoticesMsg,
 	(*Model).routePasteMsg,
-	(*Model).routeFocusMsg,
 	(*Model).routeSessionMsg,
 	(*Model).routeReviewMsg,
 	(*Model).routeEditorMsg,

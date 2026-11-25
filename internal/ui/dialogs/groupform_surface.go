@@ -243,8 +243,6 @@ func (s *GroupFormSurface) View(h surface.Host, _ string) string {
 // Footer is empty: the card paints its own hints.
 func (s *GroupFormSurface) Footer() [][2]string { return nil }
 
-func (s *GroupFormSurface) Owner() surface.Owner { return surface.Manager }
-
 // Dismissible: the form holds a typed draft, so a stray click keeps it.
 func (s *GroupFormSurface) Dismissible() bool { return false }
 

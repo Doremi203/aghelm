@@ -45,7 +45,7 @@ type Snapshot struct {
 
 type ProcStat struct {
 	// CPUPercent is host capacity share 0–100 after interval scaling
-	// (or after ScaleToHost's pcpu fallback).
+	// (or after the HostCPUPercent pcpu fallback).
 	CPUPercent float64
 	// RamPercent is 0 until host scaling; then 0–100 of installed RAM.
 	RamPercent float64
@@ -347,20 +347,4 @@ func clampPct(p float64) float64 {
 		return 100
 	}
 	return p
-}
-
-// ScaleToHost sets CPU/RAM to machine shares using pcpu fallback for CPU.
-// Prefer interval scaling in the poller; this path is for one-shot samples
-// (preview) that have no previous CPU-seconds reading.
-func (s ProcStat) ScaleToHost(ncpu int, memTotal uint64) ProcStat {
-	if !s.OK {
-		return s
-	}
-	pcpu := s.PCPU
-	if pcpu == 0 {
-		pcpu = s.CPUPercent
-	}
-	s.CPUPercent = HostCPUPercent(pcpu, ncpu)
-	s.RamPercent = HostRAMPercent(s.RSS, memTotal)
-	return s
 }

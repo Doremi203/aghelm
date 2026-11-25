@@ -41,8 +41,8 @@ func TestCursorWrapsAroundTheList(t *testing.T) {
 	}
 }
 
-// Right steps into the row under the cursor: a session is focused, and a
-// collapsed group opens without the toggle closing an open one.
+// Right steps into the row under the cursor: a collapsed group opens
+// without the toggle closing an open one, and a session is left alone.
 func TestRightStepsIntoTheRow(t *testing.T) {
 	t.Parallel()
 	m := buildModel(t)
@@ -72,9 +72,8 @@ func TestRightStepsIntoTheRow(t *testing.T) {
 	m.selectSessionRow(t, "stepin")
 	updated, _ = m.handleKey(tea.KeyMsg{Type: tea.KeyRight})
 	*m = *updated.(*Model)
-	m.drainEffects(t)
-	if !m.focused() {
-		t.Fatalf("right did not focus the session, screen = %v, err = %q", m.screenID(), m.errBar.text)
+	if got := attachQueued(t, m); got != "" || !m.onList() {
+		t.Fatalf("right on a session should do nothing, attach = %q, screen = %v", got, m.screenID())
 	}
 }
 
@@ -85,7 +84,7 @@ func TestNamesContainingTheHandleStillSelectAndDrag(t *testing.T) {
 	createSession(t, m, "other", t.TempDir(), "")
 	m.View()
 	line := paintedRailLines(t, m, name)[0]
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	frame := strings.Split(ansi.Strip(m.View()), "\n")
 	head := frame[y0+line]
 	nameAt := strings.Index(head, name)
@@ -262,7 +261,7 @@ func withGroups(t *testing.T, m *Model, dir string, paths ...string) {
 func dragOnto(t *testing.T, m *Model, from treeRow, line int) (*Model, tea.MouseMsg) {
 	t.Helper()
 	preparedView(m)
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	start := -1
 	for index, row := range railHitRows(m) {
 		if row >= 0 && rowKey(railRows(m)[row]) == rowKey(from) {
@@ -440,7 +439,7 @@ func dragToBottomEdge(t *testing.T, m *Model, name string) (*Model, uirail.AutoS
 			last = i
 		}
 	}
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	updated, cmd := m.handleMouse(tea.MouseMsg{X: 2, Y: y0 + last, Button: tea.MouseButtonLeft, Action: tea.MouseActionMotion})
 	m = updated.(*Model)
 	tick, ok := m.takeAutoscrollTick(t, cmd)
@@ -717,24 +716,9 @@ func TestReorderAgentSkipsChildren(t *testing.T) {
 	}
 }
 
-func TestHandleLiftsARowStraightFromFocus(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	createSession(t, m, "alpha", t.TempDir(), "")
-	createSession(t, m, "beta", t.TempDir(), "")
-	m.selectSessionRow(t, "alpha")
-	updated, _ := m.focusSelected()
-	m = updated.(*Model)
-	m.drainEffects(t)
-	m = liftByHandle(t, m, "beta")
-	if selected, ok := m.selected(); !m.onList() || !m.rail.Reordering() || !ok || selected.Name != "beta" {
-		t.Fatalf("one press on beta's handle should leave focus and lift beta, screen = %v selected = %q", m.screenID(), selected.Name)
-	}
-}
-
 func liftByHandle(t *testing.T, m *Model, name string) *Model {
 	t.Helper()
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	line := paintedRailLines(t, m, name)[0]
 	updated, _ := m.handleMouse(tea.MouseMsg{X: m.layout.displayedRail.Handles[rowKey(railRows(m)[railHitRows(m)[line]])], Y: y0 + line, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft})
 	m.drainEffects(t)
@@ -762,7 +746,7 @@ func TestEveryMovableRowPaintsItsHandle(t *testing.T) {
 	createSession(t, m, "beta", t.TempDir(), "")
 	frame := strings.Split(ansi.Strip(preparedView(m)), "\n")
 	for _, name := range []string{"alpha", "beta"} {
-		y0, _ := m.bodyYRange()
+		y0 := m.listChromeRows()
 		row := frame[y0+paintedRailLines(t, m, name)[0]]
 		if !strings.Contains(row, reorderGrip+" "+name) {
 			t.Fatalf("%s should carry the handle right before its name, got %q", name, row)
@@ -840,7 +824,7 @@ func TestAPressOnALiftedRowsLabelPutsItDownAndClicks(t *testing.T) {
 	createSession(t, m, "alpha", t.TempDir(), "")
 	m = liftByHandle(t, m, "alpha")
 	m = railMouse(t, m, "alpha", tea.MouseActionRelease, tea.MouseButtonLeft)
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	at := tea.MouseMsg{X: m.layout.displayedRail.Handles["s:"+sessionRow(t, m, "alpha").sess.ID] + 4, Y: y0 + paintedRailLines(t, m, "alpha")[0], Button: tea.MouseButtonLeft}
 	at.Action = tea.MouseActionPress
 	updated, _ := m.handleMouse(at)
@@ -850,38 +834,20 @@ func TestAPressOnALiftedRowsLabelPutsItDownAndClicks(t *testing.T) {
 	updated, _ = m.handleMouse(at)
 	m.drainEffects(t)
 	m = updated.(*Model)
-	if m.rail.Reordering() || !m.focused() {
-		t.Fatalf("a label click should drop the row and focus it, reorder = %v screen = %v", m.rail.Reordering(), m.screenID())
-	}
-}
-
-// Lifting a row selects it, and its preview has to follow: the handle's
-// press is the only event before the drag, so its fetch cannot be dropped.
-func TestLiftingARowFetchesItsPreview(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	createSession(t, m, "alpha", t.TempDir(), "")
-	createSession(t, m, "beta", t.TempDir(), "")
-	m.selectSessionRow(t, "alpha")
-	preparedView(m)
-	y0, _ := m.bodyYRange()
-	line := paintedRailLines(t, m, "beta")[0]
-	_, cmd := m.handleMouse(tea.MouseMsg{X: m.layout.displayedRail.Handles["s:"+sessionRow(t, m, "beta").sess.ID], Y: y0 + line, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft})
-	m.drainEffects(t)
-	if !m.rail.Reordering() || cmd == nil {
-		t.Fatalf("lifting beta should schedule its preview, reorder = %v cmd = %v", m.rail.Reordering(), cmd != nil)
+	if selected, ok := m.selected(); m.rail.Reordering() || !ok || selected.Name != "alpha" {
+		t.Fatalf("a label click should drop the row and select it, reorder = %v selected = %q", m.rail.Reordering(), selected.Name)
 	}
 }
 
 // The handle sits on a row's first line only: in a comfortable row the
-// prompt and reply lines below it are the row's label, which a click focuses.
+// prompt and reply lines below it are the row's label, which a click selects.
 func TestHandleColumnBelowTheFirstLineIsTheLabel(t *testing.T) {
 	t.Parallel()
 	m := buildModel(t)
 	m.prefs.comfortableRows = true
 	createSession(t, m, "alpha", t.TempDir(), "")
 	preparedView(m)
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	lines := paintedRailLines(t, m, "alpha")
 	if len(lines) < 2 {
 		t.Fatalf("test setup: a comfortable row paints more than one line, got %v", lines)

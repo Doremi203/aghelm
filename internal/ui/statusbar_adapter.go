@@ -75,24 +75,11 @@ func (m *Model) routeStatusMsg(msg tea.Msg) (tea.Model, tea.Cmd, bool) {
 // errors. It floats in a card over the frame rather than taking a row, so the
 // body keeps its height whether or not a notice is up.
 func (m *Model) statusLine() string {
-	focusStatus := m.focus.pane.Status()
-	pagesScrollback := false
-	if sess, ok := m.selected(); ok && m.focus.pane.PagesScrollback(sess.ID) {
-		pagesScrollback = true
-	}
 	return uistatusbar.Line(uistatusbar.Message{
-		GlyphMode:       m.prefs.glyphMode,
-		Report:          m.errBar.text,
-		Kind:            m.errBar.kind(),
-		Focused:         m.focused(),
-		ScrolledBack:    m.focus.pane.ScrolledBack(),
-		ScrollOffset:    focusStatus.ScrollOffset,
-		PagesScrollback: pagesScrollback,
-		Copied:          focusStatus.CopiedChars,
-		Link:            m.hoveredLink(),
-		ResizeMode:      m.layout.split.ResizeMode,
-		Dragging:        m.layout.split.Dragging,
-		Notice:          m.review.Snapshot().Notice,
+		GlyphMode: m.prefs.glyphMode,
+		Report:    m.errBar.text,
+		Kind:      m.errBar.kind(),
+		Notice:    m.review.Snapshot().Notice,
 	}, m.glyphs(), uistatusbar.TonesFor(uitheme.Current()))
 }
 
@@ -107,8 +94,7 @@ func (m *Model) statusMessage(fail, done, warn string) string {
 // statusToast is the transient message rendered as a card that floats over
 // the frame's top right, so a notice never costs the body a row.
 func (m *Model) statusToast() []string {
-	leftWidth, _ := m.splitWidths()
-	return uistatusbar.Toast(m.statusLine(), m.layout.width-leftWidth-2, uistatusbar.TonesFor(uitheme.Current()), m.prefs.glyphMode)
+	return uistatusbar.Toast(m.statusLine(), m.layout.width, uistatusbar.TonesFor(uitheme.Current()), m.prefs.glyphMode)
 }
 
 // overlayTopRight splices a pre-painted box over the frame's rows, anchored

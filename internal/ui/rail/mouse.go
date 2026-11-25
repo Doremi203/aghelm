@@ -13,7 +13,7 @@ const (
 )
 
 func (m *Model) Hit(frame Frame, msg tea.MouseMsg, ctx MouseContext) (Selection, bool) {
-	return frame.RowAt(msg.X, msg.Y-ctx.BodyOriginY, ctx.DividerX, ctx.FullWidth)
+	return frame.RowAt(msg.Y - ctx.BodyOriginY)
 }
 
 func (m *Model) Mouse(msg tea.MouseMsg, frame Frame, ctx MouseContext) Decision {
@@ -32,23 +32,12 @@ func (m *Model) Mouse(msg tea.MouseMsg, frame Frame, ctx MouseContext) Decision 
 	switch msg.Action {
 	case tea.MouseActionPress:
 		return m.mousePress(msg, frame, ctx)
-	case tea.MouseActionMotion:
-		if m.clickFocusKey != "" {
-			selection, ok := m.Hit(frame, msg, ctx)
-			if !ok || selection.key() != m.clickFocusKey {
-				m.clickFocusKey = ""
-			}
-		}
-		return Decision{Consumed: true}
-	case tea.MouseActionRelease:
-		return m.mouseRelease(msg, frame, ctx)
 	default:
 		return Decision{Consumed: true}
 	}
 }
 
 func (m *Model) mousePress(msg tea.MouseMsg, frame Frame, ctx MouseContext) Decision {
-	m.clickFocusKey = ""
 	if msg.Button == tea.MouseButtonRight {
 		selection, ok := m.Hit(frame, msg, ctx)
 		if !ok || m.searching {
@@ -94,14 +83,6 @@ func (m *Model) mousePress(msg tea.MouseMsg, frame Frame, ctx MouseContext) Deci
 	m.cursor = index
 	row := m.rows[index]
 	decision := previewSelectionDecision(previous != index, selection)
-	// A remote row's focus is an SSH attach that takes the terminal, which
-	// a single click should not start.
-	if !ctx.FullLayout && row.kind == SessionRow && row.host == "" {
-		if !row.sess.Archived {
-			m.clickFocusKey = key
-		}
-		return decision
-	}
 	if !double {
 		return decision
 	}
@@ -116,28 +97,7 @@ func (m *Model) mousePress(msg tea.MouseMsg, frame Frame, ctx MouseContext) Deci
 	if row.sess.Archived {
 		return decision
 	}
-	decision.Intent = Intent{Kind: Focus, Target: selection}
-	return decision
-}
-
-func (m *Model) mouseRelease(msg tea.MouseMsg, frame Frame, ctx MouseContext) Decision {
-	key := m.clickFocusKey
-	m.clickFocusKey = ""
-	if key == "" || m.searching {
-		return Decision{Consumed: true}
-	}
-	selection, ok := m.Hit(frame, msg, ctx)
-	if !ok || selection.key() != key {
-		return Decision{Consumed: true}
-	}
-	index := m.rowIndex(key)
-	if index < 0 {
-		return Decision{Consumed: true}
-	}
-	previous := m.cursor
-	m.cursor = index
-	decision := previewSelectionDecision(previous != index, selection)
-	decision.Intent = Intent{Kind: Focus, Target: selection}
+	decision.Intent = Intent{Kind: Attach, Target: selection}
 	return decision
 }
 

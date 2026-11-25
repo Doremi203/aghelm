@@ -60,7 +60,7 @@ func Normalize(tea string) string {
 
 // Parse reads one key written by name: a character, a key name, ctrl+<key>,
 // alt+<key>, shift+<arrow> or f1..f12. esc and ctrl+c are not keys a table
-// may take. esc cancels everywhere. ctrl+c quits outside a focused session.
+// may take. esc cancels everywhere. ctrl+c quits the manager.
 func Parse(spec string) (Key, error) {
 	// The bare space bar is named before trimming would erase it.
 	name := Normalize(strings.TrimSpace(Normalize(spec)))
@@ -69,7 +69,7 @@ func Parse(spec string) (Key, error) {
 	case name == "":
 		return Key{}, errors.New("a key is empty; write a character, a key name, ctrl+<key>, alt+<key> or f1..f12")
 	case lower == "esc" || lower == "ctrl+c":
-		return Key{}, fmt.Errorf("%q stays as it is: esc cancels, and ctrl+c quits outside a focused session", spec)
+		return Key{}, fmt.Errorf("%q stays as it is: esc cancels, and ctrl+c quits the manager", spec)
 	case utf8.RuneCountInString(name) == 1:
 		return Key{tea: name}, nil
 	case strings.HasPrefix(lower, "ctrl+"):
@@ -235,7 +235,6 @@ const (
 	Detach      = "detach"
 	Review      = "review"
 	Editor      = "editor"
-	SavedPrompt = "saved_prompt"
 	TmuxPrefix  = "tmux_prefix"
 	Quit        = "quit"
 	Up          = "up"
@@ -243,7 +242,6 @@ const (
 	ReorderUp   = "reorder_up"
 	ReorderDown = "reorder_down"
 	Open        = "open"
-	Attach      = "attach"
 	StepIn      = "step_in"
 	StepOut     = "step_out"
 	NewSession  = "new_session"
@@ -269,7 +267,6 @@ const (
 	Archived    = "archived"
 	EmptyGroups = "empty_groups"
 	FoldAll     = "fold_all"
-	Resize      = "resize"
 	Settings    = "settings"
 	Messages    = "messages"
 	Help        = "help"
@@ -287,16 +284,13 @@ var sessionActions = []Action{
 	{Review, "open the session's diff", keys("ctrl+r")},
 	{Editor, "open its directory", keys("f3")},
 	{TmuxPrefix, "replaces your tmux prefix while attached", Binding{}},
-	{SavedPrompt, "open saved prompts", keys("f4")},
-	{Resize, "resize the split", keys("ctrl+]")},
 }
 
 var listActions = []Action{
 	{Up, "move the cursor up", keys("up", "k")},
 	{Down, "move the cursor down", keys("down", "j")},
-	{Open, "session: focus it (or attach); group: fold it", keys("enter")},
-	{Attach, "session: attach it (or focus)", keys("A")},
-	{StepIn, "step in: focus the session, open the group", keys("right")},
+	{Open, "session: attach it; group: fold it", keys("enter")},
+	{StepIn, "step in: open the group", keys("right")},
 	{StepOut, "step out: close the group", keys("left")},
 	{ReorderUp, "move the row up among its siblings", keys("shift+up", "K")},
 	{ReorderDown, "move the row down among its siblings", keys("shift+down", "J")},
@@ -326,7 +320,6 @@ var listActions = []Action{
 	{Archived, "archived view", keys("t")},
 	{EmptyGroups, "hide / show empty groups", keys("e")},
 	{FoldAll, "fold / unfold every group", keys("F")},
-	{Resize, "resize the split", keys("ctrl+]")},
 	{Settings, "settings", keys("s")},
 	{Messages, "messages", keys("M")},
 	{Help, "the key map", keys("?")},
@@ -480,7 +473,7 @@ func (t Table) ActionFor(key string) (string, bool) {
 }
 
 // Validate refuses a table with one key on two actions, and one with no
-// way back: a focused session with no detach key has no exit, and a list
+// way back: an attached session with no detach key has no exit, and a list
 // with no settings key has no way to the picker. Inside a session every
 // plain key belongs to the agent, so only a key tmux can bind is taken,
 // and tmux holds two prefix keys at most.
@@ -488,7 +481,7 @@ func (t Table) Validate() error {
 	switch t.scope {
 	case ScopeSession:
 		if len(t.bound[Detach].keys) == 0 {
-			return errors.New("keybindings.session.detach needs at least one key: it is the way back from a focused session")
+			return errors.New("keybindings.session.detach needs at least one key: it is the way back from an attached session")
 		}
 		for _, action := range t.actions {
 			for _, key := range t.bound[action.Name].keys {

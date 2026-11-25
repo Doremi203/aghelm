@@ -82,14 +82,3 @@ func TestTemperaturesReadsSensorsInDisplayOrder(t *testing.T) {
 		})
 	}
 }
-
-// The meter column stays readable on a narrow rail and stops growing once
-// the label and the reading need the room.
-func TestMeterWidthBounds(t *testing.T) {
-	if got := MeterWidth(20); got != 4 {
-		t.Fatalf("narrow meter width = %d, want the floor of 4", got)
-	}
-	if got := MeterWidth(120); got != 10 {
-		t.Fatalf("wide meter width = %d, want the ceiling of 10", got)
-	}
-}

@@ -38,92 +38,6 @@ func lastSGR(s string) string {
 	return code
 }
 
-func TestComputerLinesTemperatures(t *testing.T) {
-	cases := []struct {
-		name string
-		r    Readings
-		want string
-	}{
-		{
-			name: "cpu and gpu",
-			r:    Readings{CPUTempOK: true, CPUTemp: 61, GPUTempOK: true, GPUTemp: 55},
-			want: "temp cpu 61°C gpu 55°C",
-		},
-		{
-			name: "soc alone",
-			r:    Readings{SoCTempOK: true, SoCTemp: 60.4},
-			want: "temp soc 60°C",
-		},
-		{
-			name: "no sensors",
-			want: "",
-		},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			var temp string
-			for _, line := range ComputerLines(tc.r, Net{}, 40, presentation.GlyphModeAdvanced) {
-				plain := strings.TrimSpace(ansi.Strip(line))
-				if strings.HasPrefix(plain, "temp") {
-					temp = strings.Join(strings.Fields(plain), " ")
-				}
-			}
-			if tc.want == "" {
-				if temp != "" {
-					t.Fatalf("expected no temp row, got %q", temp)
-				}
-				return
-			}
-			if temp != tc.want {
-				t.Fatalf("temp row = %q, want %q", temp, tc.want)
-			}
-		})
-	}
-}
-
-func TestComputerLinesBattery(t *testing.T) {
-	cases := []struct {
-		name string
-		r    Readings
-		want string
-	}{
-		{
-			name: "discharging",
-			r:    Readings{BatteryOK: true, BatteryPercent: 84},
-			want: "batt " + strings.Repeat("━", 10) + " 84%",
-		},
-		{
-			name: "charging",
-			r:    Readings{BatteryOK: true, BatteryPercent: 50, BatteryCharging: true},
-			want: "batt " + strings.Repeat("━", 10) + " 50% charging",
-		},
-		{
-			name: "no battery",
-			want: "",
-		},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			var batt string
-			for _, line := range ComputerLines(tc.r, Net{}, 40, presentation.GlyphModeAdvanced) {
-				plain := strings.TrimSpace(ansi.Strip(line))
-				if strings.HasPrefix(plain, "batt") {
-					batt = strings.Join(strings.Fields(plain), " ")
-				}
-			}
-			if tc.want == "" {
-				if batt != "" {
-					t.Fatalf("expected no battery row, got %q", batt)
-				}
-				return
-			}
-			if batt != tc.want {
-				t.Fatalf("battery row = %q, want %q", batt, tc.want)
-			}
-		})
-	}
-}
-
 // The separator carries its own reset, so a reading cannot inherit color.
 func TestTemperatureReadingsEachKeepTheirColor(t *testing.T) {
 	forceANSI256(t)
@@ -137,22 +51,6 @@ func TestTemperatureReadingsEachKeepTheirColor(t *testing.T) {
 		}
 		if got := lastSGR(before); got != want {
 			t.Fatalf("%q renders under %q, want %q", reading, got, want)
-		}
-	}
-}
-
-func TestComputerDiskAvailable(t *testing.T) {
-	r := Readings{DiskOK: true, DiskPercent: 66, DiskAvailable: 167_950_000_000}
-	for _, width := range []int{29, 34, 40, 55} {
-		lines := ComputerLines(r, Net{}, width, presentation.GlyphModeAdvanced)
-		plain := ansi.Strip(strings.Join(lines, "\n"))
-		if !strings.Contains(plain, "66%") || !strings.Contains(plain, "167.9GB available") {
-			t.Fatalf("disk reading = %q", plain)
-		}
-		for _, line := range lines {
-			if got := ansi.StringWidth(line); got > width {
-				t.Fatalf("disk line width %d exceeds %d: %q", got, width, plain)
-			}
 		}
 	}
 }

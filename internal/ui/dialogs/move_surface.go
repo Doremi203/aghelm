@@ -69,8 +69,6 @@ func (s *MoveSurface) View(h surface.Host, _ string) string {
 
 func (s *MoveSurface) Footer() [][2]string { return MoveHints(s.mode) }
 
-func (s *MoveSurface) Owner() surface.Owner { return surface.Manager }
-
 func (s *MoveSurface) Dismissible() bool { return true }
 
 func (s *MoveSurface) Leave(surface.Host) {}

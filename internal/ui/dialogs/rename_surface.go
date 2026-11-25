@@ -62,8 +62,6 @@ func (s *RenameSurface) View(_ surface.Host, below string) string { return below
 
 func (s *RenameSurface) Footer() [][2]string { return s.Hints() }
 
-func (s *RenameSurface) Owner() surface.Owner { return surface.Manager }
-
 // Dismissible: the name is a draft, so a stray click or ctrl+c keeps it;
 // esc cancels. The row also holds the list still, so the mouse treats it as
 // no card at all.

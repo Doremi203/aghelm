@@ -78,8 +78,6 @@ func (s *Surface) View(h surface.Host, _ string) string {
 // Footer is empty: the card paints its own hints.
 func (s *Surface) Footer() [][2]string { return nil }
 
-func (s *Surface) Owner() surface.Owner { return surface.Manager }
-
 // Dismissible: the fields hold a draft, so a stray click keeps it.
 func (s *Surface) Dismissible() bool { return false }
 

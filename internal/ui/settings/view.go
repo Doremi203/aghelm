@@ -170,12 +170,6 @@ func (s *State) View(ctx ViewContext) Frame {
 			lines = append(lines, ctaRow(FieldBugReport, "report a bug", "open the bug report form"))
 		case FieldFeatureRequest:
 			lines = append(lines, ctaRow(FieldFeatureRequest, "suggest a change", "open the feature request form"))
-		case FieldArrowStep:
-			name := label(FieldArrowStep)
-			if ctx.GlyphMode.Effective() == presentation.GlyphModeBasic {
-				name = "arrow step in/out"
-			}
-			lines = append(lines, row(FieldArrowStep, name, presentation.NavigationLabel(ctx.GlyphMode, arrowStepLabel(s.ArrowStep))))
 		default:
 			setting := byField[field]
 			lines = append(lines, row(field, setting.Row, presentation.KeyLabel(ctx.GlyphMode, setting.label(*setting.Flag(s)))))

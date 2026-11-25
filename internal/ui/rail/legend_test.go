@@ -10,7 +10,7 @@ import (
 
 func TestRowLegendReadsTheRowRootPasses(t *testing.T) {
 	model := rail.New([]string{"work"})
-	ctx := rail.LegendContext{ListKeys: keybind.DefaultList(), EnterFocuses: true}
+	ctx := rail.LegendContext{ListKeys: keybind.DefaultList()}
 	if legend := model.RowLegend(ctx); legend.Title != "" || legend.Pairs != nil {
 		t.Fatalf("no row should give no tier, got %+v", legend)
 	}

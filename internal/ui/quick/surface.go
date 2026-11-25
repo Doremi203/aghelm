@@ -62,8 +62,6 @@ func (s *Surface) View(_ surface.Host, below string) string { return below }
 // Footer is empty: the bar is the footer, painted by the list.
 func (s *Surface) Footer() [][2]string { return nil }
 
-func (s *Surface) Owner() surface.Owner { return surface.Manager }
-
 // Dismissible: the prompt is a draft, so a stray click keeps it.
 func (s *Surface) Dismissible() bool { return false }
 

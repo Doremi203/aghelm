@@ -5,33 +5,11 @@ import (
 	"testing"
 
 	"github.com/Doremi203/aghelm/internal/tmux"
-	uigeometry "github.com/Doremi203/aghelm/internal/ui/geometry"
 )
 
 type fakeStore struct {
-	settings map[string]string
-	readErr  error
-	writeErr error
-	panes    [][2]int
-	paneErr  error
-}
-
-func (s *fakeStore) Setting(key string) (string, error) {
-	if s.readErr != nil {
-		return "", s.readErr
-	}
-	return s.settings[key], nil
-}
-
-func (s *fakeStore) SetSetting(key, value string) error {
-	if s.writeErr != nil {
-		return s.writeErr
-	}
-	if s.settings == nil {
-		s.settings = map[string]string{}
-	}
-	s.settings[key] = value
-	return nil
+	panes   [][2]int
+	paneErr error
 }
 
 func (s *fakeStore) SetPaneSize(width, height int) error {
@@ -59,93 +37,12 @@ func (d *fakeDriver) Resize(id string, width, height int) error {
 }
 
 type fakeRoot struct {
-	fits     map[string]bool
-	queued   []Resize
-	saves    []string
-	nextID   uint64
-	err      string
-	reported []string
+	fits   map[string]bool
+	queued []Resize
 }
 
 func (r *fakeRoot) FitsHeight(tool string) bool { return r.fits[tool] }
 func (r *fakeRoot) Queue(request Resize)        { r.queued = append(r.queued, request) }
-func (r *fakeRoot) SaveSplitRatio(value string) uint64 {
-	r.saves = append(r.saves, value)
-	r.nextID++
-	return r.nextID
-}
-func (r *fakeRoot) ReportErr(text string) { r.reported = append(r.reported, text); r.err = text }
-func (r *fakeRoot) ClearErr()             { r.err = "" }
-func (r *fakeRoot) ErrorIs(text string) bool {
-	return r.err == text
-}
-
-func TestLoadFallsBackForUnreadableOrUnusableRatios(t *testing.T) {
-	if got := Load(&fakeStore{readErr: errors.New("locked")}); got != uigeometry.DefaultSplitRatio {
-		t.Fatalf("unreadable row gave %v, want the default", got)
-	}
-	if got := Load(&fakeStore{settings: map[string]string{uigeometry.SplitRatioSetting: "0.42"}}); got != 0.42 {
-		t.Fatalf("stored ratio gave %v, want 0.42", got)
-	}
-	if got := Load(&fakeStore{settings: map[string]string{uigeometry.SplitRatioSetting: "nope"}}); got != uigeometry.DefaultSplitRatio {
-		t.Fatalf("garbage ratio gave %v, want the default", got)
-	}
-}
-
-func TestSaveRatioWrapsAStoreFailure(t *testing.T) {
-	store := &fakeStore{writeErr: errors.New("database is locked")}
-	if err := SaveRatio(store, "0.4"); err == nil || err.Error() != "save split ratio: database is locked" {
-		t.Fatalf("err = %v", err)
-	}
-	if ErrNoStore == nil || ErrNoStore.Error() != "save split ratio: store is unavailable" {
-		t.Fatalf("ErrNoStore = %v", ErrNoStore)
-	}
-	if err := SaveRatio(&fakeStore{}, "0.42"); err != nil {
-		t.Fatalf("save: %v", err)
-	}
-}
-
-func TestPersistCapturesFourDecimals(t *testing.T) {
-	root := &fakeRoot{}
-	p := &Panes{}
-	p.Persist(root, 0.41666)
-	if len(root.saves) != 1 || root.saves[0] != "0.4167" {
-		t.Fatalf("saves = %v, want one 0.4167", root.saves)
-	}
-	if p.SaveID != root.nextID {
-		t.Fatalf("SaveID = %d, want the newest job %d", p.SaveID, root.nextID)
-	}
-}
-
-func TestApplySplitIgnoresOlderSavesAndOtherFeaturesText(t *testing.T) {
-	root := &fakeRoot{}
-	p := &Panes{SaveID: 2}
-
-	p.ApplySplit(root, 1, errors.New("save split ratio: database is locked"))
-	if root.err != "" {
-		t.Fatalf("an older save wrote %q", root.err)
-	}
-
-	p.ApplySplit(root, 2, errors.New("save split ratio: database is locked"))
-	if root.err != "save split ratio: database is locked" {
-		t.Fatalf("the newest save left %q", root.err)
-	}
-
-	root.err = "another operation failed"
-	p.SaveID = 3
-	p.ApplySplit(root, 3, nil)
-	if root.err != "another operation failed" {
-		t.Fatalf("a split success erased unrelated status %q", root.err)
-	}
-
-	p.SaveID = 4
-	p.ApplySplit(root, 4, errors.New("save split ratio: disk full"))
-	p.SaveID = 5
-	p.ApplySplit(root, 5, nil)
-	if root.err != "" || p.SaveError != "" {
-		t.Fatalf("a success after this adapter's failure left %q / %q", root.err, p.SaveError)
-	}
-}
 
 func TestApplyRecordsTheBoxAPassLanded(t *testing.T) {
 	p := &Panes{}
@@ -201,29 +98,6 @@ func TestQueueAllFollowsTheBoxDownForFittingTools(t *testing.T) {
 	p.QueueAll(root, Box{Width: 40, Height: 20}, []Session{{ID: "a", Tool: "claude"}}, panes)
 	if len(root.queued) != 1 || root.queued[0].Targets[0].Size != [2]int{40, 20} {
 		t.Fatalf("queued %+v, want the fitting tool down to the box", root.queued)
-	}
-}
-
-func TestQueueAllSkipsTheFullFocusSession(t *testing.T) {
-	root := &fakeRoot{fits: map[string]bool{}}
-	p := &Panes{}
-	p.QueueAll(root, Box{Width: 40, Height: 20, FullFocusID: "a"},
-		[]Session{{ID: "a", Tool: "codex"}}, map[string]tmux.Pane{"a": {PID: 1}})
-	if len(root.queued) != 0 {
-		t.Fatalf("the full focus session was resized to the preview box: %+v", root.queued)
-	}
-}
-
-func TestPinFullFocusKeepsATallerPane(t *testing.T) {
-	root := &fakeRoot{}
-	p := &Panes{LastSizes: map[string][2]int{"a": {100, 40}}}
-	p.PinFullFocus(root, "a", 100, 30)
-	if len(root.queued) != 0 {
-		t.Fatalf("a taller pane was shrunk: %+v", root.queued)
-	}
-	p.PinFullFocus(root, "a", 100, 45)
-	if len(root.queued) != 1 || root.queued[0].Targets[0].Size != [2]int{100, 45} {
-		t.Fatalf("queued %+v, want the taller body", root.queued)
 	}
 }
 

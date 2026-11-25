@@ -73,7 +73,7 @@ func TestDragEdgeSchedulesTypedAutoscroll(t *testing.T) {
 	model.enterReorder(model.rows[1].key())
 	frame := model.Render(RenderContext{Width: 30, Height: 5, TerminalWidth: 80, TerminalHeight: 24}, Frame{})
 	last := len(frame.Lines) - 1
-	decision := model.Mouse(tea.MouseMsg{X: 2, Y: last, Action: tea.MouseActionMotion, Button: tea.MouseButtonLeft}, frame, MouseContext{FullWidth: true})
+	decision := model.Mouse(tea.MouseMsg{X: 2, Y: last, Action: tea.MouseActionMotion, Button: tea.MouseButtonLeft}, frame, MouseContext{})
 	if decision.AutoScroll == nil || decision.AutoScroll.Lift != model.reorder.lift {
 		t.Fatalf("autoscroll request = %+v", decision.AutoScroll)
 	}

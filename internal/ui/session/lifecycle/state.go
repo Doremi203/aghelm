@@ -216,8 +216,6 @@ func (s *State) ReconcileListing(listing Listing) Listing {
 	return listing
 }
 
-func SessionGone(sessions []store.Session, id string) bool { return sessionGone(sessions, id) }
-
 func sessionGone(sessions []store.Session, id string) bool {
 	for _, sess := range sessions {
 		if sess.ID == id {

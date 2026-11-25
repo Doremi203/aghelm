@@ -47,11 +47,6 @@ func TestListFooterLayoutAcrossViewStates(t *testing.T) {
 				if got := lipgloss.Height(m.listFooter()); got != wantRows {
 					t.Fatalf("footer height=%d want %d", got, wantRows)
 				}
-				for _, tier := range []legendSection{{Title: "Resize", Pairs: [][2]string{{"←→", "nudge"}, {"enter", "set"}, {"esc", "cancel"}}}, {Title: "Rename", Pairs: [][2]string{{"enter", "save"}, {"esc", "cancel"}}}, {Title: "Focused", Pairs: [][2]string{{"ctrl+q", "back"}}}} {
-					if got := lipgloss.Height(m.transientFooter(tier).Text); got != wantRows {
-						t.Fatalf("%s footer height=%d want %d", tier.Title, got, wantRows)
-					}
-				}
 			}
 		}
 	}

@@ -46,23 +46,3 @@ func TestResizeRequestRunsAgainstItsServices(t *testing.T) {
 		t.Fatalf("published box = %v, want the request's", landed.Publish)
 	}
 }
-
-// A ratio save writes the setting, and reports the manager built without a
-// store rather than panicking on it.
-func TestSplitSaveRequestWritesTheRatio(t *testing.T) {
-	t.Parallel()
-	st := &fakeStore{}
-	result, err := SplitSaveRequest{Value: "0.4200"}.Run(Services{Store: st})
-	if err != nil {
-		t.Fatalf("save: %v", err)
-	}
-	if result != nil {
-		t.Fatalf("result = %T, want nothing", result)
-	}
-	if st.settings["split_ratio"] != "0.4200" {
-		t.Fatalf("stored ratio = %q", st.settings["split_ratio"])
-	}
-	if _, err := (SplitSaveRequest{Value: "0.5"}).Run(Services{}); err != ErrNoStore {
-		t.Fatalf("a storeless save reported %v, want %v", err, ErrNoStore)
-	}
-}

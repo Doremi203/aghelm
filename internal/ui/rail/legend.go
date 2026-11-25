@@ -29,29 +29,21 @@ type Legend struct {
 // Session is filled for session rows. Unread is the messages alert, empty
 // when nothing is unread.
 type LegendContext struct {
-	GlyphMode      presentation.GlyphMode
-	ListKeys       keybind.Table
-	EnterFocuses   bool
-	MouseDisabled  bool
-	ArrowStep      bool
-	StepInAttaches bool
-	FullLayout     bool
-	Row            Selection
-	RowOK          bool
-	Session        Session
-	Widest         bool
-	Unread         [2]string
-	Messages       [2]string
+	GlyphMode     presentation.GlyphMode
+	ListKeys      keybind.Table
+	MouseDisabled bool
+	Row           Selection
+	RowOK         bool
+	Session       Session
+	Widest        bool
+	Unread        [2]string
+	Messages      [2]string
 }
 
 // RowLegend is the tier for the entry under the cursor: what this session or
 // this group can be told to do.
 func (m Model) RowLegend(ctx LegendContext) Legend {
 	k := ctx.glyph
-	enterHint, attachHint := "focus / fold", "attach"
-	if !ctx.EnterFocuses {
-		enterHint, attachHint = "attach / fold", "focus"
-	}
 	if !ctx.RowOK {
 		return Legend{}
 	}
@@ -78,9 +70,7 @@ func (m Model) RowLegend(ctx LegendContext) Legend {
 		if !ctx.MouseDisabled {
 			pairs = append(pairs, [2]string{"double click", foldAction})
 		}
-		if ctx.ArrowStep {
-			pairs = append(pairs, ctx.pair(keybind.StepOut, "close", keybind.StepIn, "open"))
-		}
+		pairs = append(pairs, ctx.pair(keybind.StepOut, "close", keybind.StepIn, "open"))
 		pairs = append(pairs, [][2]string{
 			{k(keybind.Editor), "editor"}, {k(keybind.Rename), "rename"}, {k(keybind.Move), "move"},
 			ctx.pair(keybind.Kill, "kill", keybind.KillAll, "all"), ctx.pair(keybind.Revive, "revive", keybind.ReviveAll, "all"),
@@ -101,20 +91,9 @@ func (m Model) RowLegend(ctx LegendContext) Legend {
 		// review or fork one are left off rather than offered and refused.
 		title, leads, hint, conversation = "Shell", nil, "", nil
 	}
-	pairs := [][2]string{{k(keybind.Open), enterHint}, {k(keybind.Attach), attachHint}}
+	pairs := [][2]string{{k(keybind.Open), "attach"}}
 	if !ctx.MouseDisabled {
-		gesture := "double click"
-		if !ctx.FullLayout {
-			gesture = "click"
-		}
-		pairs = append(pairs, [2]string{gesture, "focus"})
-	}
-	if ctx.ArrowStep {
-		stepIn := "focus"
-		if ctx.StepInAttaches {
-			stepIn = "attach"
-		}
-		pairs = append(pairs, [2]string{k(keybind.StepIn), stepIn})
+		pairs = append(pairs, [2]string{"double click", "attach"})
 	}
 	if (session.Status == "finished" || session.Status == "waiting") && !session.Archived {
 		pairs = append(pairs, [2]string{k(keybind.MarkIdle), "mark idle"})
@@ -192,12 +171,7 @@ func (m Model) ViewLegend(ctx LegendContext) Legend {
 		{k(keybind.Help), "keys"}, {k(keybind.Quit), "quit"}, {k(keybind.NewConnection), "connection"},
 	}...)
 	add(false, [2]string{k(keybind.ReorderUp, keybind.ReorderDown), "reorder"})
-	tail := [][2]string{{foldAllKey, foldAllAction}}
-	if !ctx.FullLayout {
-		// Full screen paints no divider, so the key has nothing to move there.
-		tail = append(tail, [2]string{k(keybind.Resize), "resize"})
-	}
-	add(true, append(tail, [2]string{k(keybind.Settings), "settings"})...)
+	add(true, [2]string{foldAllKey, foldAllAction}, [2]string{k(keybind.Settings), "settings"})
 
 	return Legend{Title: "View", Quiet: true, Alerts: alerts, Pairs: pairs, ActionPairs: actions}
 }
@@ -294,7 +268,7 @@ func (m Model) RemoteLegend(ctx LegendContext, row RemoteRow, collapsed bool) Le
 	if row.Terminal {
 		title, kill, leads = "Shell", "close", nil
 	}
-	pairs := [][2]string{{k(keybind.Open, keybind.Attach), "attach over SSH"}, {k(keybind.Kill), kill}}
+	pairs := [][2]string{{k(keybind.Open), "attach over SSH"}, {k(keybind.Kill), kill}}
 	if !row.Terminal {
 		pairs = append(pairs, [2]string{k(keybind.Delete), "delete"})
 	}

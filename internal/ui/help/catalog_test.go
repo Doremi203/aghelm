@@ -157,78 +157,12 @@ func TestCatalogSearchMatchesRowsAndWholeSections(t *testing.T) {
 	t.Fatal("title match did not retain the whole review section")
 }
 
-func TestCatalogArrowRowsFollowTheSetting(t *testing.T) {
-	hasRow := func(sections []helpSection, title, key string) bool {
-		for _, section := range sections {
-			if section.title != title {
-				continue
-			}
-			for _, row := range section.rows {
-				if row[0] == key {
-					return true
-				}
-			}
-		}
-		return false
-	}
-	for _, enabled := range []bool{true, false} {
-		ctx := testContext(84)
-		ctx.ArrowStep = enabled
-		for _, row := range []struct{ title, key string }{
-			{"list", "→"},
-			{"list", "←"},
-			{"inside a session (attached or focused)", "←"},
-		} {
-			if got := hasRow(helpSections(ctx), row.title, row.key); got != enabled {
-				t.Errorf("enabled = %v: %q in %q = %v", enabled, row.key, row.title, got)
-			}
-		}
-	}
-}
-
-// The ← row names an attach only while the arrow step attaches on a host
-// that binds it, and the → row says which way it opens a session.
-func TestCatalogArrowRowsNameTheAttachStep(t *testing.T) {
-	does := func(ctx Context, title, key string) string {
-		for _, section := range helpSections(ctx) {
-			if section.title != title {
-				continue
-			}
-			for _, row := range section.rows {
-				if row[0] == key {
-					return row[1]
-				}
-			}
-		}
-		return ""
-	}
-	const inside = "inside a session (attached or focused)"
-	ctx := testContext(84)
-	if got := does(ctx, inside, "←"); got != "focused: back to the manager, at the prompt's start" {
-		t.Errorf("focus default ← = %q", got)
-	}
-	if got := does(ctx, "list", "→"); got != "step in: focus the session, open the group" {
-		t.Errorf("focus default → = %q", got)
-	}
-	ctx.ArrowAttach = true
-	if got := does(ctx, inside, "←"); got != "focused: back to the manager, at the prompt's start" {
-		t.Errorf("attach ← on a host that leaves it to the agent = %q", got)
-	}
-	if got := does(ctx, "list", "→"); got != "step in: attach to the session full screen, open the group" {
-		t.Errorf("attach → = %q", got)
-	}
-	ctx.AttachedBack = true
-	if got := does(ctx, inside, "←"); got != "focused or attached: back to the manager, at the prompt's start" {
-		t.Errorf("attach ← = %q", got)
-	}
-}
-
 func TestCatalogSessionRowsFollowCustomBindings(t *testing.T) {
 	rowFor := func(keys keybind.Table, key string) (string, bool) {
 		ctx := testContext(84)
 		ctx.SessionKeys = keys
 		for _, section := range helpSections(ctx) {
-			if section.title != "inside a session (attached or focused)" {
+			if section.title != "inside an attached session" {
 				continue
 			}
 			for _, row := range section.rows {
@@ -263,27 +197,8 @@ func TestCatalogSessionRowsFollowCustomBindings(t *testing.T) {
 	}
 
 	pinned := defaults.With(keybind.TmuxPrefix, bindingOf(t, "ctrl+b"))
-	if desc, ok := rowFor(pinned, "ctrl+b"); !ok || desc != "attached: tmux's prefix, in place of yours" {
+	if desc, ok := rowFor(pinned, "ctrl+b"); !ok || desc != "tmux's prefix, in place of yours" {
 		t.Errorf("tmux_prefix row = %q, %v", desc, ok)
-	}
-}
-
-// The saved prompts panel's keys are in the map, and the focused session's
-// row names whatever the saved prompt key is bound to.
-func TestCatalogNamesTheSavedPromptKeys(t *testing.T) {
-	ctx := testContext(84)
-	ctx.SessionKeys = ctx.SessionKeys.With(keybind.SavedPrompt, bindingOf(t, "f6"))
-	rows := map[string]string{}
-	for _, section := range helpSections(ctx) {
-		for _, row := range section.rows {
-			rows[section.title+"/"+row[0]] = row[1]
-		}
-	}
-	if rows["saved prompts/ctrl+s"] != "save" || rows["saved prompts/ctrl+o"] != "open the list" {
-		t.Fatalf("saved prompts section = %v", rows)
-	}
-	if rows["inside a session (attached or focused)/f6"] != "focused: open saved prompts and paste the pick" {
-		t.Fatal("the session section does not follow the saved prompt binding")
 	}
 }
 
@@ -302,26 +217,6 @@ func TestCatalogNamesTheSetupStepKeys(t *testing.T) {
 	}
 	if rows["setup step/click command"] != "copy it, the same as c" {
 		t.Fatalf("click row = %q", rows["setup step/click command"])
-	}
-}
-
-// A focused session's key map names the divider it can arm, with the
-// session's own binding rather than the list's.
-func TestSessionKeyMapNamesTheDivider(t *testing.T) {
-	ctx := testContext(84)
-	ctx.SessionKeys = ctx.SessionKeys.With(keybind.Resize, bindingOf(t, "ctrl+@"))
-	rows := map[string]string{}
-	for _, section := range helpSections(ctx) {
-		for _, row := range section.rows {
-			rows[section.title+"/"+row[0]] = row[1]
-		}
-	}
-	const title = "inside a session (attached or focused)"
-	if got := rows[title+"/ctrl+@"]; got != "focused: "+resizeHelp(ctx.Glyphs.Mode) {
-		t.Fatalf("session resize row = %q, want %q", got, resizeHelp(ctx.Glyphs.Mode))
-	}
-	if _, stale := rows[title+"/ctrl+]"]; stale {
-		t.Fatal("the default resize key remains after the session binding moved")
 	}
 }
 

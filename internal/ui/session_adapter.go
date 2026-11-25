@@ -3,15 +3,17 @@ package ui
 import (
 	"os/exec"
 	"time"
+	"unicode/utf8"
 
+	"github.com/Doremi203/aghelm/internal/clipboard"
 	"github.com/Doremi203/aghelm/internal/config"
 	"github.com/Doremi203/aghelm/internal/sessioncmd"
 	"github.com/Doremi203/aghelm/internal/store"
 	uidialogs "github.com/Doremi203/aghelm/internal/ui/dialogs"
-	focusruntime "github.com/Doremi203/aghelm/internal/ui/focus/runtime"
 	uiinstall "github.com/Doremi203/aghelm/internal/ui/launchhint/install"
 	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
 	uireview "github.com/Doremi203/aghelm/internal/ui/review"
+	uireviewsource "github.com/Doremi203/aghelm/internal/ui/review/source"
 	uisession "github.com/Doremi203/aghelm/internal/ui/session"
 	sessiondialogs "github.com/Doremi203/aghelm/internal/ui/session/dialogs"
 	uilifecycle "github.com/Doremi203/aghelm/internal/ui/session/lifecycle"
@@ -93,7 +95,7 @@ func (m *Model) cancelEndSelected() (tea.Model, tea.Cmd) {
 // it.
 func (m *Model) endAfterTurns(ids []string) {
 	for _, id := range ids {
-		m.enqueueEffect(uilifecycle.AfterTurnRequest{ID: id, Watched: m.focus.runtime.Watching()}, 0, false)
+		m.enqueueEffect(uilifecycle.AfterTurnRequest{ID: id}, 0, false)
 	}
 }
 
@@ -106,7 +108,6 @@ func (m *Model) applyAfterTurn(request uilifecycle.AfterTurnRequest, result uili
 		if apply.Err != nil {
 			m.reportErr(apply.Err.Error())
 		}
-		m.rewatchSurvivor(request.Watched, apply.Survivor)
 	}
 	if apply.ClearID != "" {
 		m.clearAfterTurn(apply.ClearID)
@@ -154,10 +155,6 @@ func (m *Model) applyLifecycleEffect(request uilifecycle.Request, result uilifec
 			m.bindReviveLocally(each.ID, each.Result.LaunchedAt)
 		}
 	}
-	if len(change.Launches) > 0 {
-		m.focus.runtime.Retry()
-	}
-	m.rewatchSurvivor(request.Watched, change.Survivor)
 	m.rebuildRows()
 	for _, notice := range change.Notices {
 		m.reportErr(notice)
@@ -304,20 +301,6 @@ func (m *Model) bindRestartLocally(id, agentSessionID string, launchedAt time.Ti
 // loader can paint before the next poll re-reads them.
 func (m *Model) bindReviveLocally(id string, launchedAt time.Time) {
 	uilifecycle.BindRevive(m.workspace.sessions, id, launchedAt)
-	if sel, ok := m.selected(); ok && sel.ID == id {
-		// A killed or archived row still holds its last pane; that would count
-		// as painted and hide the loader.
-		m.workspace.preview = ""
-	}
-}
-
-func (m *Model) rewatchSurvivor(watched string, survivor bool) {
-	if !survivor {
-		return
-	}
-	if sess, ok := m.selected(); ok && sess.ID == watched && !sess.Archived {
-		m.watchSelection()
-	}
 }
 
 // sessionWindowProjectedLive combines the last poll with launches accepted
@@ -380,26 +363,20 @@ func cardTarget(card sessiondialogs.Card) confirmTarget {
 func (m *Model) queueLifecycle(target uilifecycle.Target, allowLive bool, emptyNotice string) {
 	target.Sessions = append([]store.Session(nil), target.Sessions...)
 	w, h := m.paneTargetSize()
-	m.enqueueEffect(uilifecycle.Request{Target: target, Pane: sessioncmd.PaneSize{Width: w, Height: h}, Watched: m.focus.runtime.Watching(), AllowLive: allowLive, EmptyNotice: emptyNotice}, 0, false)
+	m.enqueueEffect(uilifecycle.Request{Target: target, Pane: sessioncmd.PaneSize{Width: w, Height: h}, AllowLive: allowLive, EmptyNotice: emptyNotice}, 0, false)
 }
 
 // lifecycleServices is the effect services as a lifecycle run reaches them.
 func (s effectServices) lifecycleServices() uilifecycle.Services {
-	services := uilifecycle.Services{
+	return uilifecycle.Services{
 		Lifecycle: s.lifecycle,
 		Store:     s.store,
 		Driver:    s.driver,
 		Reflow:    s.reflowSessions,
 	}
-	// A nil watcher stored in the interface would read as present.
-	if s.watch != nil {
-		services.Watch = s.watch
-	}
-	return services
 }
 
-// reflowSessions holds the panes a lifecycle run touches, the lane contract
-// that keeps an input job from writing into a session it is killing.
+// reflowSessions holds the poller off the panes a lifecycle run touches.
 func (s effectServices) reflowSessions(ids []string, work func()) error { return s.reflow(ids, work) }
 
 func (m *Model) attachSelected() (tea.Model, tea.Cmd) {
@@ -422,14 +399,14 @@ func (m *Model) acknowledgeSelected() (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 	m.clearErr()
-	m.enqueueEffect(focusruntime.AckRequest{SessionID: id}, 0, false)
+	m.enqueueEffect(uilifecycle.AckRequest{SessionID: id}, 0, false)
 	return m, m.nextEffectCmd()
 }
 
 // fence is the screen a request was made from, in the shape a queued request
 // carries, so the package that runs the work never holds a root type.
 func (m *Model) fence() uilifecycle.Fence {
-	return uilifecycle.Fence{Base: uint8(m.base), Focused: m.focused(), Depth: len(m.surfaces)}
+	return uilifecycle.Fence{Base: uint8(m.base), Depth: len(m.surfaces)}
 }
 
 func (m *Model) attachCmd(id string) tea.Cmd {
@@ -523,8 +500,7 @@ func (m *Model) attachDone(msg attachDoneMsg) tea.Cmd {
 	// unchanged, so the detach restores the theme's here.
 	SyncTerminalColors()
 	// The attach client sized the window to the full terminal and tmux keeps
-	// that size on detach; pin it back to the current layout's box so the
-	// capture is not clipped on the right.
+	// that size on detach; pin it back to the body's box.
 	m.adoptPaneGeom(msg.sessID)
 	if msg.err != nil {
 		m.reportErr(msg.err.Error())
@@ -534,8 +510,87 @@ func (m *Model) attachDone(msg attachDoneMsg) tea.Cmd {
 	// Ctrl+R and F3 inside the session leave a marker before detaching; the
 	// lane reads it once and clears it, and the completion carries it out for
 	// the session just attached.
-	m.enqueueEffect(focusruntime.DetachRequest{SessionID: msg.sessID}, 0, false)
+	m.enqueueEffect(uilifecycle.DetachRequest{SessionID: msg.sessID}, 0, false)
 	return nil
+}
+
+// applyDetachEffect opens what a session asked for before it detached.
+func (m *Model) applyDetachEffect(request uilifecycle.DetachRequest, result uilifecycle.Detach, err error) tea.Cmd {
+	return uilifecycle.ApplyDetach(detachHost{m}, request, result, err)
+}
+
+func (m *Model) applyAckEffect(err error) {
+	if err != nil {
+		m.reportErr(err.Error())
+		return
+	}
+	m.requestRefresh()
+}
+
+// foregroundTakenSinceDetach reports whether, since the detach, the user
+// opened a view or a rail prompt, or asked to enter a session.
+func (m *Model) foregroundTakenSinceDetach() bool {
+	if m.base != baseList || len(m.surfaces) > 0 || m.rail.Busy() {
+		return true
+	}
+	for _, job := range m.effects.Main.Pending {
+		if _, attach := job.Request.(uilifecycle.AttachRequest); attach {
+			return true
+		}
+	}
+	return false
+}
+
+// openReviewForReturn opens Review and remembers the session to come back to.
+func (m *Model) openReviewForReturn(sessionID string) tea.Cmd {
+	cmd := m.openDiff()
+	if m.base == baseReview {
+		m.reviewNav.Set(uireviewsource.Return{Kind: uireviewsource.ReturnAttach, SessionID: sessionID})
+	}
+	return cmd
+}
+
+// openEditorForReturn opens the editor over the session's directory.
+func (m *Model) openEditorForReturn(sessionID string) tea.Cmd {
+	_, cmd := m.openEditorWithReaderForReturn(newSystemTerminalDirectoryReader(m), sessionID)
+	return cmd
+}
+
+// detachHost is the root as a detached session's request reaches it.
+type detachHost struct{ m *Model }
+
+func (h detachHost) ReportErr(text string) { h.m.reportErr(text) }
+
+func (h detachHost) Warn(text string) { h.m.reportWarn(text) }
+
+func (h detachHost) Refresh() { h.m.requestRefresh() }
+
+func (h detachHost) Quitting() bool { return h.m.effects.Quitting }
+
+func (h detachHost) TakenSinceDetach() bool { return h.m.foregroundTakenSinceDetach() }
+
+func (h detachHost) Name(sessionID string) string {
+	if sess, ok := h.m.sessionByID(sessionID); ok {
+		return sess.Name
+	}
+	return sessionID
+}
+
+func (h detachHost) Select(sessionID string) bool { return h.m.focusSession(sessionID) }
+
+func (h detachHost) Review(sessionID string) tea.Cmd { return h.m.openReviewForReturn(sessionID) }
+
+func (h detachHost) Editor(sessionID string) tea.Cmd { return h.m.openEditorForReturn(sessionID) }
+
+var _ uilifecycle.DetachHost = detachHost{}
+
+func copyTextCmd(text string, done func(chars int) tea.Msg) tea.Cmd {
+	return func() tea.Msg {
+		if err := clipboard.WriteText(text); err != nil {
+			return errMsg{err}
+		}
+		return done(utf8.RuneCountInString(text))
+	}
 }
 
 // lookPath and startEditor are the seams tests swap to control which editors
@@ -615,7 +670,6 @@ func (m *Model) launchEditor(editor uisession.Launch, returnTo editorReturnTarge
 	}
 	m.clearErr()
 	if editor.TakesScreen() {
-		m.handOffTerminal()
 		return m, uiterminal.ExecProcess(editor.Command, func(err error) tea.Msg {
 			return editorDoneMsg{err: err, tookScreen: true, returnTo: returnTo}
 		})
@@ -644,29 +698,24 @@ func (m *Model) routeEditorMsg(msg tea.Msg) (tea.Model, tea.Cmd, bool) {
 		return routed(m.handleDiffFileChecked(msg))
 
 	case editorDoneMsg:
-		var resume tea.Cmd
 		if msg.tookScreen {
 			// The terminal comes back from an editor the way it comes back
-			// from an attach: painted in the editor's background, and
-			// without the mouse reporting focus mode armed on the way in.
+			// from an attach: painted in the editor's background.
 			SyncTerminalColors()
-			if m.focused() {
-				resume = tea.EnableMouseAllMotion
-			}
 		}
 		if msg.err != nil {
 			// Going back into the session would hide the only account of
 			// what went wrong, so a failed editor keeps the list.
 			m.reportErr(msg.err.Error())
-			return routed(m, resume)
+			return routed(m, nil)
 		}
 		if msg.name != "" {
 			m.reportDone("opened " + msg.path + " in " + msg.name)
 		}
 		if target := msg.returnTo; target.resumes(m.gens.foreground, m.screenID(), m.effects.Quitting) {
-			return routed(m, tea.Batch(resume, m.reattach(target.sessionID, m.review.Generation())))
+			return routed(m, m.reattach(target.sessionID, m.review.Generation()))
 		}
-		return routed(m, resume)
+		return routed(m, nil)
 	}
 	return nil, nil, false
 }
@@ -746,7 +795,6 @@ func (m *Model) applyAttachEffect(request uilifecycle.AttachRequest, result uili
 	if result.Warning != nil {
 		m.reportErr(result.Warning.Error())
 	}
-	m.handOffTerminal()
 	return uiterminal.ExecProcess(m.services.tmux.AttachCommand(request.ID), func(err error) tea.Msg { return attachDoneMsg{sessID: request.ID, err: err} })
 }
 

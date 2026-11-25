@@ -4,8 +4,6 @@ import (
 	"github.com/Doremi203/aghelm/internal/keybind"
 	uidialogs "github.com/Doremi203/aghelm/internal/ui/dialogs"
 	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
-	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
-	"github.com/charmbracelet/lipgloss"
 )
 
 type Op uint8
@@ -81,13 +79,13 @@ type KeyHint func(action, format string) string
 // row, and the root runs it.
 func SessionCall(row Row, kind uirail.ActionKind, hint KeyHint) Call {
 	switch {
-	case (kind == uirail.Focus || kind == uirail.Attach) && row.Status == "dead":
+	case kind == uirail.Attach && row.Status == "dead":
 		// Its tmux session is gone, so an attach could only fail.
 		if row.Terminal {
 			return Call{Refusal: "terminal " + row.Name + " has exited on " + row.Host + hint(keybind.Kill, " - %s closes it"), Answered: true}
 		}
 		return Call{Refusal: row.Name + " is dead on " + row.Host + hint(keybind.Revive, " - press %s to revive it"), Answered: true}
-	case kind == uirail.Focus || kind == uirail.Attach:
+	case kind == uirail.Attach:
 		return Call{Op: OpAttach, Answered: true}
 	case row.Terminal && (kind == uirail.Revive || kind == uirail.Archive || kind == uirail.Restore):
 		return Call{Refusal: "a terminal on " + row.Host + " is not archived or revived" + hint(keybind.Kill, " - %s closes it"), Answered: true}
@@ -129,18 +127,4 @@ func asking(op Op, dead bool, hint KeyHint) Call {
 		call.Consequence += hint(keybind.Revive, ", %s revives it") + "."
 	}
 	return call
-}
-
-func StatusColor(state string) lipgloss.Color {
-	switch state {
-	case "working", "starting":
-		return uitheme.ColorWorking()
-	case "waiting":
-		return uitheme.ColorWaiting()
-	case "finished":
-		return uitheme.ColorFinished()
-	case "errored", "dead":
-		return uitheme.ColorErrored()
-	}
-	return uitheme.ColorIdle()
 }

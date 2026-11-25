@@ -18,9 +18,9 @@ import (
 // them.
 const remoteTerminalTool = "terminal"
 
-// State is the stored connections, each host's last refresh, the refreshes
-// in flight and the selected row's screen, next to the client that
-// refreshes and calls the hosts.
+// State is the stored connections, each host's last refresh and the
+// refreshes in flight, next to the client that refreshes and calls the
+// hosts.
 type State struct {
 	Client *remote.Client
 	uiconnections.Connections
@@ -36,7 +36,6 @@ const (
 
 type Root interface {
 	RebuildRows()
-	SyncPreview() tea.Cmd
 	RailConnection(change RailChange)
 	AnswerSave(gen uint64, failed bool)
 	// CloseAsker closes the form or card a completed call came from, when
@@ -151,12 +150,6 @@ type RefreshMsg struct {
 	State uiconnections.Host
 }
 
-type PreviewMsg struct {
-	Read uiconnections.Read
-	Text string
-	Err  error
-}
-
 // AttachReadyMsg carries the SSH attach command built off the update path.
 type AttachReadyMsg struct {
 	Host string
@@ -190,37 +183,6 @@ func (s *State) Poll() tea.Cmd {
 	return tea.Batch(commands...)
 }
 
-// Follow tracks the selected row: a remote session or terminal it has not
-// read yet gets a fresh read, anything else clears the preview.
-func (s *State) Follow(row uiconnections.Row, ok bool) tea.Cmd {
-	if !s.Preview.Follow(row, ok) {
-		return nil
-	}
-	return s.Read()
-}
-
-// Tick re-reads the selected screen, following the selection first when it
-// has moved to another remote row since.
-func (s *State) Tick(row uiconnections.Row, ok bool) tea.Cmd {
-	if cmd := s.Follow(row, ok); cmd != nil {
-		return cmd
-	}
-	return s.Read()
-}
-
-// Read reads the tracked row's screen once, off the update path.
-func (s *State) Read() tea.Cmd {
-	read, ok := s.StartRead()
-	if !ok {
-		return nil
-	}
-	client := s.Client
-	return func() tea.Msg {
-		text, err := client.ReadScreen(context.Background(), read.Ref, read.Terminal)
-		return PreviewMsg{Read: read, Text: text, Err: err}
-	}
-}
-
 // Attach builds the SSH attach to the row's tmux session in this terminal,
 // off the update path.
 func (s *State) Attach(row uiconnections.Row) tea.Cmd {
@@ -238,10 +200,6 @@ func (s *State) Route(root Root, msg tea.Msg) (tea.Cmd, bool) {
 			return nil, true
 		}
 		root.RebuildRows()
-		return root.SyncPreview(), true
-
-	case PreviewMsg:
-		s.Preview.Apply(msg.Read, msg.Text, msg.Err)
 		return nil, true
 
 	case AttachReadyMsg:
@@ -264,8 +222,7 @@ func (s *State) attachReady(root Root, msg AttachReadyMsg) tea.Cmd {
 	return uiterminal.ExecProcess(msg.Cmd, func(err error) tea.Msg { return AttachDoneMsg{Host: host, Err: err} })
 }
 
-// attachDone reports how the attach ended and picks the host and its screen
-// back up. A key the host asked for and a failure on the way back share the
+// attachDone reports how the attach ended and picks the host back up. A key the host asked for and a failure on the way back share the
 // one status line.
 func (s *State) attachDone(root Root, msg AttachDoneMsg) tea.Cmd {
 	key, err := remote.AttachKey(msg.Err)
@@ -284,5 +241,5 @@ func (s *State) attachDone(root Root, msg AttachDoneMsg) tea.Cmd {
 	case note != "":
 		root.ReportErr(note)
 	}
-	return tea.Batch(s.PollHost(msg.Host), s.Read())
+	return s.PollHost(msg.Host)
 }

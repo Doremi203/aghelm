@@ -229,8 +229,6 @@ func linkSeams() uiterminal.Seams {
 
 func openLink(target string) tea.Cmd { return terminalMsgCmd(uiterminal.OpenLink(target, linkSeams())) }
 
-func openLinkCmd(url string) tea.Cmd { return terminalMsgCmd(uiterminal.OpenLinkCmd(url, linkSeams())) }
-
 // terminalMsgCmd turns a link's outcome into the message the root routes.
 func terminalMsgCmd(cmd tea.Cmd) tea.Cmd {
 	return func() tea.Msg {
@@ -259,9 +257,6 @@ func (m *Model) handleBrowserOpen(msg browserOpenMsg) {
 }
 
 func DisableAlternateScroll() error { return uiterminal.DisableAlternateScroll() }
-
-// ResetPointer gives the terminal its own pointer back when the manager exits.
-func ResetPointer() { uiterminal.ShowHand(false) }
 
 // EnableColorSchemeReports turns mode 2031 on for the manager's run, so
 // theme follows OS holds past startup.

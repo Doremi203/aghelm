@@ -125,7 +125,6 @@ func newThemeStyles(t Theme) *themeStyles {
 func Current() Theme { return activeStyles.Load().theme }
 
 func ColorBg() lipgloss.Color       { return lipgloss.Color(Current().Bg) }
-func ColorOverlay() lipgloss.Color  { return lipgloss.Color(Current().Overlay) }
 func ColorBorder() lipgloss.Color   { return lipgloss.Color(Current().Border) }
 func ColorBright() lipgloss.Color   { return lipgloss.Color(Current().Bright) }
 func ColorSubtle() lipgloss.Color   { return lipgloss.Color(Current().Subtle) }
@@ -149,9 +148,7 @@ func DoneStyle() lipgloss.Style             { return activeStyles.Load().done }
 func WarnStyle() lipgloss.Style             { return activeStyles.Load().warn }
 func KeyStyle() lipgloss.Style              { return activeStyles.Load().key }
 func AnnotationStyle() lipgloss.Style       { return activeStyles.Load().annotation }
-func InboxBadgeStyle() lipgloss.Style       { return activeStyles.Load().inboxBadge }
 func SearchMatchStyle() lipgloss.Style      { return activeStyles.Load().searchMatch }
-func FocusEdgeStyle() lipgloss.Style        { return activeStyles.Load().focusEdge }
 func ChipStyle() lipgloss.Style             { return activeStyles.Load().chip }
 func ImageChipStyle() lipgloss.Style        { return activeStyles.Load().imageChip }
 func ImageChipPastingStyle() lipgloss.Style { return activeStyles.Load().imageChipPasting }

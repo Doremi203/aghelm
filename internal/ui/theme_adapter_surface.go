@@ -62,12 +62,11 @@ func railEdgeCell(tone string) string {
 	return uitheme.Plain(lipgloss.NewStyle().Foreground(lipgloss.Color(tone)).Render("█"), 1)
 }
 
-// vruleColumn is the seam between two painted columns. It doubles as the
-// resize grip, taking the accent while the divider is being moved.
+// vruleColumn is the seam between two painted columns.
 func (m *Model) vruleColumn(height int) []string {
 	lines := make([]string, height)
 	for i := range lines {
-		lines[i] = m.seamCell(false)
+		lines[i] = m.seamCell()
 	}
 	return lines
 }
@@ -75,14 +74,6 @@ func (m *Model) vruleColumn(height int) []string {
 // bleedColumn finishes a pane's right edge: a half block in the pane's
 // tone on the backdrop, extending the fill half a cell past the seam.
 func (m *Model) bleedColumn(height int) []string {
-	box := m.focus.pane.FrameBox()
-	if m.focused() && box.Valid {
-		return m.tracedBleedColumn(height, box.Y-m.listChromeRows(), box.Height)
-	}
-	return m.tracedBleedColumn(height, 0, 0)
-}
-
-func (m *Model) tracedBleedColumn(height, top, rows int) []string {
 	background := uitheme.PanelHex()
 	cell := uitheme.Paint(lipgloss.NewStyle().Foreground(uitheme.ColorBg()).Render("▐"), 1, background)
 	if m.prefs.glyphMode.Effective() == presentation.GlyphModeBasic {
@@ -93,55 +84,11 @@ func (m *Model) tracedBleedColumn(height, top, rows int) []string {
 	for i := range lines {
 		lines[i] = cell
 	}
-	if rows > 0 {
-		edge := uitheme.Paint(uitheme.FocusEdgeStyle().Render("│"), 1, background)
-		corner := uitheme.Paint(uitheme.FocusEdgeStyle().Render(m.chrome().TopLeftGlyph), 1, background)
-		if top-1 >= 0 && top-1 < len(lines) {
-			lines[top-1] = corner
-		}
-		for row := top; row < top+rows; row++ {
-			if row >= 0 && row < len(lines) {
-				lines[row] = edge
-			}
-		}
-	}
 	return lines
 }
 
-// focusBottomRule closes the focused pane's hairline along the frame rule
-// under the body: the corner cell is the bleed column the left edge runs
-// down, so the two meet exactly.
-func (m *Model) focusBottomRule(paneWidth, width int) string {
-	tail := width - paneWidth - 1
-	if tail < 1 || paneWidth < 2 {
-		return m.boundedRuleRow(paneWidth, width, "▄")
-	}
-	if m.prefs.glyphMode.Effective() == presentation.GlyphModeBasic {
-		return uitheme.Paint(uitheme.Hrule(paneWidth), paneWidth, uitheme.BackdropHex()) +
-			uitheme.Paint(uitheme.FocusEdgeStyle().Render(m.chrome().BottomLeftGlyph+strings.Repeat("─", tail)), tail+1, uitheme.BackdropHex())
-	}
-	first := uitheme.Plain(lipgloss.NewStyle().Foreground(lipgloss.Color(uitheme.PanelHex())).Render("▀"), 1)
-	interior := lipgloss.NewStyle().Foreground(uitheme.ColorBg()).Render(strings.Repeat("▄", paneWidth-1))
-	corner := uitheme.FocusEdgeStyle().Render("╰")
-	return first + uitheme.Paint(interior, paneWidth-1, uitheme.PanelHex()) + uitheme.Paint(corner, 1, uitheme.PanelHex()) +
-		uitheme.Paint(uitheme.FocusEdgeStyle().Render(strings.Repeat("─", tail)), tail, uitheme.BackdropHex())
-}
-
-// seamCell is one row of the vertical seam. The column is the pane's own
-// fill, so only the pane's rules cross it: a content rule carried across
-// reads as the content's separator running into the sessions list.
-func (m *Model) seamCell(railRule bool) string {
-	// While the divider is being moved the seam becomes the grip.
-	if m.layout.split.Dragging || m.layout.split.ResizeMode {
-		color := uitheme.ColorAccent()
-		if m.layout.split.Dragging {
-			color = uitheme.ColorAccent2()
-		}
-		return uitheme.Paint(lipgloss.NewStyle().Foreground(color).Render(m.chrome().ResizeGlyph), 1, uitheme.PanelHex())
-	}
-	if railRule {
-		return uitheme.Paint(uitheme.Hrule(1), 1, uitheme.PanelHex())
-	}
+// seamCell is one row of the vertical seam, in the pane's own fill.
+func (m *Model) seamCell() string {
 	return uitheme.Paint("", 1, uitheme.PanelHex())
 }
 

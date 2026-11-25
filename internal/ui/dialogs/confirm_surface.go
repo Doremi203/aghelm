@@ -52,8 +52,6 @@ func (s *ConfirmSurface) View(surface.Host, string) string {
 
 func (s *ConfirmSurface) Footer() [][2]string { return ConfirmHints(s.prompt.Answer()) }
 
-func (s *ConfirmSurface) Owner() surface.Owner { return surface.Manager }
-
 // Dismissible: a stray click or ctrl+c is the cancel, there is no draft.
 func (s *ConfirmSurface) Dismissible() bool { return true }
 

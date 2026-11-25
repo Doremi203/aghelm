@@ -57,16 +57,3 @@ func Temperatures(r Readings) []string {
 	}
 	return parts
 }
-
-// MeterWidth is the gauge column that fits a foot of width, kept between a
-// readable floor and a ceiling that leaves the label and reading their room.
-func MeterWidth(width int) int {
-	barWidth := width - 22
-	if barWidth < 4 {
-		barWidth = 4
-	}
-	if barWidth > 10 {
-		barWidth = 10
-	}
-	return barWidth
-}

@@ -123,18 +123,18 @@ func TestBannerShimmerReArms(t *testing.T) {
 
 func TestStartingSessionGlyphMovesOnTheStartupTick(t *testing.T) {
 	for _, tool := range []string{"agent", "shell"} {
-		m := previewModel(status.Starting, blankCapture)
-		selected := railSelectedSession(m)
-		setRailSessionTool(m, selected.ID, tool)
+		session := store.Session{ID: "boot", Name: "boot", Status: status.Starting}
+		m := &Model{layout: layoutState{width: 120, height: 40}, workspace: workspace{sessions: []store.Session{session}}, rail: railModelFromRows([]treeRow{{sess: session}}, 0)}
+		setRailSessionTool(m, session.ID, tool)
 		m.services.cfg.Tools = map[string]config.Tool{"shell": {Shell: true}}
-		first := ansi.Strip(m.sessionGlyph(railSelectedSession(m)))
+		first := m.railFrame()
 		m.Update(uistartup.TickMsg{})
-		second := ansi.Strip(m.sessionGlyph(railSelectedSession(m)))
+		second := m.railFrame()
 		if first == second {
-			t.Fatalf("starting %s glyph stayed on %q", tool, first)
+			t.Fatalf("starting %s glyph stayed put:\n%s", tool, first)
 		}
-		if second == m.glyphs().ShellGlyph {
-			t.Fatal("starting shell used the resting shell glyph")
+		if strings.Contains(second, m.glyphs().ShellGlyph) {
+			t.Fatalf("starting shell used the resting shell glyph:\n%s", second)
 		}
 	}
 }

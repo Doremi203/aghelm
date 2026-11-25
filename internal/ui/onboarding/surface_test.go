@@ -28,7 +28,7 @@ func TestSurfaceKeepsConfirmedChoicesInInputOrder(t *testing.T) {
 			saved = append(saved, out.Choices)
 		}
 	}
-	if len(saved) != 2 || saved[0].FullLayout || !saved[1].FullLayout {
+	if len(saved) != 2 || saved[0].Comfortable || !saved[1].Comfortable {
 		t.Fatalf("confirmed choices out of order: %+v", saved)
 	}
 	if len(s.TakeOutcomes()) != 0 {

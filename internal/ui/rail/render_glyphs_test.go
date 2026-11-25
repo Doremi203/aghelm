@@ -164,3 +164,19 @@ func TestNavigationRailOverflowPreservesTargets(t *testing.T) {
 		}
 	}
 }
+
+// A shell at rest wears the caret, but a dead or errored one wears its
+// status glyph so it does not read as resting.
+func TestDeadShellKeepsItsStatusGlyph(t *testing.T) {
+	glyphs := presentation.GlyphsFor("")
+	shell := Session{IsShell: true, Status: "idle"}
+	if glyph := ansi.Strip(palette{}.sessionGlyph(glyphs, shell, 0)); glyph != glyphs.ShellGlyph {
+		t.Fatalf("a resting shell wears the caret, got %q", glyph)
+	}
+	for _, gone := range []string{"dead", "errored"} {
+		shell.Status = gone
+		if glyph := ansi.Strip(palette{}.sessionGlyph(glyphs, shell, 0)); glyph != glyphs.StatusGlyph(gone) {
+			t.Fatalf("a %s shell should wear its own glyph, got %q", gone, glyph)
+		}
+	}
+}

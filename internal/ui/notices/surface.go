@@ -92,8 +92,6 @@ func (s *Surface) View(surface.Host, string) string {
 // Footer is empty: the card names its keys on its bottom edge.
 func (s *Surface) Footer() [][2]string { return nil }
 
-func (s *Surface) Owner() surface.Owner { return surface.Manager }
-
 func (s *Surface) Dismissible() bool { return true }
 
 // Leave has nothing to undo: the list and the dismissed set live on the root.

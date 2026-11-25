@@ -9,7 +9,6 @@ import (
 	"github.com/Doremi203/aghelm/internal/store"
 	"github.com/Doremi203/aghelm/internal/tmux"
 	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
-	focusruntime "github.com/Doremi203/aghelm/internal/ui/focus/runtime"
 	uireview "github.com/Doremi203/aghelm/internal/ui/review"
 	uireviewsource "github.com/Doremi203/aghelm/internal/ui/review/source"
 	uilifecycle "github.com/Doremi203/aghelm/internal/ui/session/lifecycle"
@@ -480,23 +479,6 @@ func TestReviewPreferencesFinishBehindPickerWithoutLeavingLoadingStuck(t *testin
 	}
 	if m.review.PickerSourceCurrent(m.pickerOf(t).Source()) {
 		t.Fatal("old picker survived review preparation")
-	}
-}
-
-func TestReviewFocusReturnKeepsItsCapturedSession(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	a := store.Session{ID: "return-a", Name: "A", Tool: "claude"}
-	b := store.Session{ID: "return-b", Name: "B", Tool: "claude"}
-	m.workspace.sessions = []store.Session{a, b}
-	m.rebuildRows()
-	m.selectSessionRow(t, b.Name)
-	m.review.Open(uireviewsource.Target(a), git.ScopeUncommitted, "")
-	m.base = baseReview
-	m.reviewNav.Set(uireviewsource.Return{Kind: uireviewsource.ReturnFocus, SessionID: a.ID})
-	m.closeDiff()
-	if m.effects.Main.Active == nil || m.effects.Main.Active.Request.(focusruntime.ProbeRequest).SessionID != a.ID {
-		t.Fatal("review returned into a different session")
 	}
 }
 

@@ -4,12 +4,12 @@
               │                    Tell your agent to manage sessions and terminals in aghelm.           │
               │   up / k           move the cursor up                                                    │
               │   down / j         move the cursor down                                                  │
-              │   click            focus from a row or the preview in the split, select otherwise        │
-              │   double click     fold or unfold a group, focus a session full screen                   │
+              │   click            select the row                                                        │
+              │   double click     fold or unfold a group, attach to a session                           │
               │   […]              the row's actions, or right click                                     │
               │   drag =           move the row, into another group too, or click it for up/down         │
               │   click a key      in a footer or a card's foot, run it as if typed                      │
-              │   right            step in: focus the session, open the group                            │
+              │   right            step in: open the group                                               │
               │   left             step out: close the group                                             │
               │   shift+up / K     reorder the row up among its siblings                                 │
               │   shift+down / J   reorder the row down among its siblings                               │
@@ -22,7 +22,7 @@
               │   t                archived view                                                         │
               │   e                hide / show empty groups                                              │
               │   F                fold / unfold every group (active view)                               │
-              │   ctrl+]           resize split: left/right, h/l, drag; enter sets, esc cancels          │
+              │   s                settings (also in the root row menu)                                  │
               │   v more below…                                                                          │
               │                                                                                          │
               ├──────────────────────────────────────────────────────────────────────────────────────────┤

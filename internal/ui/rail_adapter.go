@@ -10,7 +10,6 @@ import (
 	"github.com/Doremi203/aghelm/internal/launch"
 	"github.com/Doremi203/aghelm/internal/status"
 	"github.com/Doremi203/aghelm/internal/store"
-	"github.com/Doremi203/aghelm/internal/sysstat"
 	uidialogs "github.com/Doremi203/aghelm/internal/ui/dialogs"
 	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
 	uiframe "github.com/Doremi203/aghelm/internal/ui/frame"
@@ -81,7 +80,7 @@ func (m *Model) railSnapshot() uirail.Snapshot {
 			PanePrompt:     m.workspace.panePrompts[session.ID],
 			Queued:         m.workspace.queuedMessages[session.ID],
 			IsShell:        m.isShell(session.Tool),
-			Elsewhere:      m.elsewhereNote(session) != "",
+			Elsewhere:      m.elsewhere(session),
 			AfterTurn:      session.AfterTurn,
 			AfterTurnGlyph: m.afterTurnGlyph(session.AfterTurn),
 		})
@@ -116,8 +115,6 @@ func (m *Model) selectedRow() (treeRow, bool) {
 	return treeRow{group: session.Group, sess: session}, true
 }
 
-func (m *Model) selectedGroup() (string, bool) { return m.rail.SelectedGroup() }
-
 func (m *Model) focusSession(id string) bool { return m.rail.FocusSession(id) }
 
 func (m *Model) sessionByID(id string) (store.Session, bool) {
@@ -147,17 +144,6 @@ func (m *Model) listedAgents() []store.Session {
 		if session, ok := m.sessionByID(id); ok {
 			agents = append(agents, session)
 		}
-	}
-	return agents
-}
-
-// railAgents copies the identity, group and status a group rollup reads
-// from each listed agent's current record.
-func (m *Model) railAgents() []uirail.Session {
-	listed := m.listedAgents()
-	agents := make([]uirail.Session, len(listed))
-	for i, session := range listed {
-		agents[i] = uirail.Session{ID: session.ID, Group: session.Group, Status: session.Status}
 	}
 	return agents
 }
@@ -194,10 +180,6 @@ func promptPreview(prompt string) string {
 	return ansi.Truncate(strings.Join(words, " "), placeholderPromptWidth, "…")
 }
 
-func (m *Model) sessionGlyph(session store.Session) string {
-	return uirail.SessionGlyph(m.railTheme(), m.prefs.glyphMode, uirail.Session{Status: session.Status, IsShell: m.isShell(session.Tool)}, m.startup.LoadPhase)
-}
-
 func (m *Model) prepareRailFrame(width, height int) {
 	footText := m.railFootLines(width)
 	foot := make([]uirail.Line, len(footText))
@@ -230,8 +212,6 @@ func (m *Model) prepareRailFrame(width, height int) {
 		ListKeys:        m.services.listKeys,
 		ComfortableRows: m.prefs.comfortableRows,
 		MouseDisabled:   m.prefs.mouseDisabled,
-		Focused:         m.focused(),
-		EnterFocuses:    m.enterFocuses(),
 		StartupPhase:    m.startup.LoadPhase,
 		CursorMarker:    uiframe.CursorMarker,
 		Rename:          rename,
@@ -251,13 +231,9 @@ func (m *Model) railLines(width, height int) []contentLine {
 
 func (m *Model) railLegendContext() uirail.LegendContext {
 	return uirail.LegendContext{
-		GlyphMode:      m.prefs.glyphMode,
-		ListKeys:       m.services.listKeys,
-		EnterFocuses:   m.enterFocuses(),
-		MouseDisabled:  m.prefs.mouseDisabled,
-		ArrowStep:      m.prefs.arrowStep,
-		StepInAttaches: m.prefs.arrowAttach,
-		FullLayout:     m.prefs.fullLayout,
+		GlyphMode:     m.prefs.glyphMode,
+		ListKeys:      m.services.listKeys,
+		MouseDisabled: m.prefs.mouseDisabled,
 	}
 }
 
@@ -364,20 +340,6 @@ func (m *Model) applyRailDecision(decision uirail.Decision) (tea.Model, tea.Cmd)
 			aim, _ := m.rail.Selected()
 			q.Aim = quickAim(aim)
 		}
-		m.workspace.preview = ""
-		m.workspace.proc = sysstat.ProcStat{}
-		m.workspace.procFor = ""
-		_, selectedSession := m.selected()
-		if decision.SelectionEffect == uirail.SelectionEffectFilter || selectedSession {
-			m.focus.pane.MovePreview()
-		}
-		if decision.SelectionEffect == uirail.SelectionEffectFilter && m.poller != nil {
-			m.syncPollInput()
-		}
-		if selectedSession {
-			commands = append(commands, m.schedulePreview())
-		}
-		commands = append(commands, m.syncRemotePreview())
 	}
 	dependent := false
 	for _, mutation := range decision.Mutations {
@@ -465,8 +427,6 @@ func (m *Model) runRailIntent(intent uirail.Intent) (tea.Model, tea.Cmd) {
 	switch intent.Kind {
 	case uirail.Quit:
 		return m.requestQuit()
-	case uirail.Focus:
-		return m.focusSelected()
 	case uirail.Attach:
 		return m.attachSelected()
 	case uirail.NewSession:
@@ -501,8 +461,6 @@ func (m *Model) runRailIntent(intent uirail.Intent) (tea.Model, tea.Cmd) {
 		return m.cancelEndSelected()
 	case uirail.OpenSettings:
 		return m, m.openSettings()
-	case uirail.Resize:
-		return m.enterResizeMode()
 	case uirail.NewTerminal:
 		return m.terminalKey()
 	case uirail.OpenEditor:

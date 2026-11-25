@@ -283,7 +283,7 @@ func buildModel(t *testing.T) *harness {
 	return h
 }
 func (h *harness) refreshCmd() func() any {
-	return func() any { h.poller.SetInput(h.showArchived, ""); return testPollMessage(h.poller.Step()) }
+	return func() any { h.poller.SetInput(h.showArchived); return testPollMessage(h.poller.Step()) }
 }
 func (h *harness) applyCmd(t *testing.T, cmd func() any) {
 	t.Helper()

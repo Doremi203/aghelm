@@ -2,7 +2,6 @@ package ui
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -1209,44 +1208,41 @@ func TestQuickUpStepsOffTheRowWhenAChipIsInTheWay(t *testing.T) {
 
 func TestQuickPromptKeepsItsFirstRowAsItWrapsAndShrinks(t *testing.T) {
 	t.Parallel()
-	for _, full := range []bool{false, true} {
-		m := buildModel(t)
-		// Every key renders the whole screen; a narrow one wraps the bar
-		// in fewer keys and paints each frame for less.
-		m.layout.width = 60
-		seedTwoGroups(t, m)
-		setRailCursor(m, 1)
-		m.prefs.fullLayout = full
-		m.openQuickMode()
-		_ = m.View()
-		firstRowShown := func() bool {
-			return strings.Contains(ansi.Strip(m.View()), "❯ first")
+	m := buildModel(t)
+	// Every key renders the whole screen; a narrow one wraps the bar
+	// in fewer keys and paints each frame for less.
+	m.layout.width = 60
+	seedTwoGroups(t, m)
+	setRailCursor(m, 1)
+	m.openQuickMode()
+	_ = m.View()
+	firstRowShown := func() bool {
+		return strings.Contains(ansi.Strip(m.View()), "❯ first")
+	}
+	for _, r := range "first " + strings.Repeat("word ", 200) {
+		m = applyMsg(t, m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+		_, rows := m.quick().DisplayRows()
+		if m.quick().Input.Length() > len("first") && rows <= m.quick().MaxRows && !firstRowShown() {
+			t.Fatalf("typing to %d rows scrolled the first row away", rows)
 		}
-		for _, r := range "first " + strings.Repeat("word ", 200) {
-			m = applyMsg(t, m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
-			_, rows := m.quick().DisplayRows()
-			if m.quick().Input.Length() > len("first") && rows <= m.quick().MaxRows && !firstRowShown() {
-				t.Fatalf("full layout %v: typing to %d rows scrolled the first row away", full, rows)
-			}
-			// A few rows past the bar is overflow enough; each key past
-			// it renders the whole bar again and checks nothing.
-			if rows > m.quick().MaxRows+2 {
-				break
-			}
+		// A few rows past the bar is overflow enough; each key past
+		// it renders the whole bar again and checks nothing.
+		if rows > m.quick().MaxRows+2 {
+			break
 		}
-		if _, rows := m.quick().DisplayRows(); rows <= m.quick().MaxRows {
-			t.Fatalf("full layout %v: the prompt should overflow the bar, got %d rows", full, rows)
+	}
+	if _, rows := m.quick().DisplayRows(); rows <= m.quick().MaxRows {
+		t.Fatalf("the prompt should overflow the bar, got %d rows", rows)
+	}
+	for {
+		_, rows := m.quick().DisplayRows()
+		if rows <= m.quick().MaxRows && !firstRowShown() {
+			t.Fatalf("deleting back to %d rows left the first row scrolled away", rows)
 		}
-		for {
-			_, rows := m.quick().DisplayRows()
-			if rows <= m.quick().MaxRows && !firstRowShown() {
-				t.Fatalf("full layout %v: deleting back to %d rows left the first row scrolled away", full, rows)
-			}
-			if rows == 1 {
-				break
-			}
-			m = applyMsg(t, m, tea.KeyMsg{Type: tea.KeyBackspace})
+		if rows == 1 {
+			break
 		}
+		m = applyMsg(t, m, tea.KeyMsg{Type: tea.KeyBackspace})
 	}
 }
 
@@ -1268,38 +1264,35 @@ func TestQuickPromptModeLeadsTheFooterAndNamesTheOpenBar(t *testing.T) {
 	}
 	m.services.listKeys = keybind.DefaultList()
 
-	for _, full := range []bool{false, true} {
-		m.prefs.fullLayout = full
-		m.openQuickMode()
-		m.quick().Input.SetValue("hello")
-		frame := preparedView(m)
-		if !strings.Contains(ansi.Strip(m.viewFooter()), quickModeTitle) {
-			t.Fatalf("full layout %v: the open bar's footer should be titled %q:\n%s", full, quickModeTitle, ansi.Strip(m.viewFooter()))
-		}
-		footer := m.viewFooter()
-		frameRows := strings.Split(ansi.Strip(frame), "\n")
-		footerRows := strings.Split(ansi.Strip(footer), "\n")
-		bottom := frameRows[len(frameRows)-len(footerRows):]
-		for i := range bottom {
-			bottom[i] = strings.TrimRight(bottom[i], " ")
-			footerRows[i] = strings.TrimRight(footerRows[i], " ")
-		}
-		if !slices.Equal(bottom, footerRows) || !strings.Contains(ansi.Strip(footer), "❯ hello") {
-			t.Fatalf("full layout %v: the prompt should sit in the footer:\n%s", full, ansi.Strip(frame))
-		}
-		rows := strings.Split(footer, "\n")
-		keysHeight := lipgloss.Height(paintLegend([]legendSection{{Title: quickModeTitle, Pairs: m.quick().Legend(m.quickBarHost(), m.prefs.glyphMode)}}, m.layout.width-1, m.prefs.glyphMode).Text)
-		for i, line := range rows {
-			tone := uitheme.QuickModeHex()
-			if i > 0 && i < len(rows)-keysHeight {
-				tone = uitheme.BlockHex()
-			}
-			if !strings.HasPrefix(line, uitheme.BgSeq(tone)) || !strings.HasPrefix(ansi.Strip(line), m.chrome().QuickEdgeGlyph) || ansi.StringWidth(line) != m.layout.width {
-				t.Fatalf("full layout %v: every bar row should open on the accent edge over the band, across the width: %q", full, line)
-			}
-		}
-		m.closeQuick()
+	m.openQuickMode()
+	m.quick().Input.SetValue("hello")
+	frame := preparedView(m)
+	if !strings.Contains(ansi.Strip(m.viewFooter()), quickModeTitle) {
+		t.Fatalf("the open bar's footer should be titled %q:\n%s", quickModeTitle, ansi.Strip(m.viewFooter()))
 	}
+	footer = m.viewFooter()
+	frameRows := strings.Split(ansi.Strip(frame), "\n")
+	footerRows := strings.Split(ansi.Strip(footer), "\n")
+	bottom := frameRows[len(frameRows)-len(footerRows):]
+	for i := range bottom {
+		bottom[i] = strings.TrimRight(bottom[i], " ")
+		footerRows[i] = strings.TrimRight(footerRows[i], " ")
+	}
+	if !slices.Equal(bottom, footerRows) || !strings.Contains(ansi.Strip(footer), "❯ hello") {
+		t.Fatalf("the prompt should sit in the footer:\n%s", ansi.Strip(frame))
+	}
+	rows := strings.Split(footer, "\n")
+	keysHeight := lipgloss.Height(paintLegend([]legendSection{{Title: quickModeTitle, Pairs: m.quick().Legend(m.quickBarHost(), m.prefs.glyphMode)}}, m.layout.width-1, m.prefs.glyphMode).Text)
+	for i, line := range rows {
+		tone := uitheme.QuickModeHex()
+		if i > 0 && i < len(rows)-keysHeight {
+			tone = uitheme.BlockHex()
+		}
+		if !strings.HasPrefix(line, uitheme.BgSeq(tone)) || !strings.HasPrefix(ansi.Strip(line), m.chrome().QuickEdgeGlyph) || ansi.StringWidth(line) != m.layout.width {
+			t.Fatalf("every bar row should open on the accent edge over the band, across the width: %q", line)
+		}
+	}
+	m.closeQuick()
 }
 
 func TestQuickPromptTypesWordsNamedLikeKeys(t *testing.T) {
@@ -1633,52 +1626,49 @@ func TestStaleQuickCompletionIsDropped(t *testing.T) {
 
 func TestQuickFooterKeepsTheCaretRowOnScreen(t *testing.T) {
 	t.Parallel()
-	for _, full := range []bool{false, true} {
-		m := buildModel(t)
-		seedTwoGroups(t, m)
-		setRailCursor(m, 1)
-		m.prefs.fullLayout = full
-		m.layout.width = 56
-		m.layout.height = 12
-		m.openQuickMode()
+	m := buildModel(t)
+	seedTwoGroups(t, m)
+	setRailCursor(m, 1)
+	m.layout.width = 56
+	m.layout.height = 12
+	m.openQuickMode()
 
-		painted := func() string {
-			frame := preparedView(m)
-			if rows := len(strings.Split(frame, "\n")); rows > m.layout.height {
-				t.Fatalf("full layout %v: the frame painted %d rows into a %d row terminal", full, rows, m.layout.height)
-			}
-			return ansi.Strip(frame)
+	painted := func() string {
+		frame := preparedView(m)
+		if rows := len(strings.Split(frame, "\n")); rows > m.layout.height {
+			t.Fatalf("the frame painted %d rows into a %d row terminal", rows, m.layout.height)
 		}
+		return ansi.Strip(frame)
+	}
+	painted()
+	m = applyMsg(t, m, composer.PasteTextMsg{
+		Target: composer.Quick,
+		Gen:    m.quick().Gen,
+		Inner: tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(
+			"FIRSTROWMARK " + strings.Repeat("filler word ", 20) + "LASTROWMARK")},
+	})
+	painted()
+
+	for i := 0; i < 40 && !m.quick().CaretOnFirstRow(); i++ {
+		_, _ = m.handleQuickKey(tea.KeyMsg{Type: tea.KeyUp})
 		painted()
-		m = applyMsg(t, m, composer.PasteTextMsg{
-			Target: composer.Quick,
-			Gen:    m.quick().Gen,
-			Inner: tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(
-				"FIRSTROWMARK " + strings.Repeat("filler word ", 20) + "LASTROWMARK")},
-		})
+	}
+	if !m.quick().CaretOnFirstRow() {
+		t.Fatal("up never reached the prompt's first row")
+	}
+	if !strings.Contains(painted(), "FIRSTROWMARK") {
+		t.Fatalf("the frame clipped the prompt's first row")
+	}
+
+	for i := 0; i < 40 && !m.quick().CaretOnLastRow(); i++ {
+		_, _ = m.handleQuickKey(tea.KeyMsg{Type: tea.KeyDown})
 		painted()
-
-		for i := 0; i < 40 && !m.quick().CaretOnFirstRow(); i++ {
-			_, _ = m.handleQuickKey(tea.KeyMsg{Type: tea.KeyUp})
-			painted()
-		}
-		if !m.quick().CaretOnFirstRow() {
-			t.Fatal("up never reached the prompt's first row")
-		}
-		if !strings.Contains(painted(), "FIRSTROWMARK") {
-			t.Fatalf("full layout %v: the frame clipped the prompt's first row", full)
-		}
-
-		for i := 0; i < 40 && !m.quick().CaretOnLastRow(); i++ {
-			_, _ = m.handleQuickKey(tea.KeyMsg{Type: tea.KeyDown})
-			painted()
-		}
-		if !m.quick().CaretOnLastRow() {
-			t.Fatal("down never reached the prompt's last row")
-		}
-		if !strings.Contains(painted(), "LASTROWMARK") {
-			t.Fatalf("full layout %v: the frame clipped the prompt's last row", full)
-		}
+	}
+	if !m.quick().CaretOnLastRow() {
+		t.Fatal("down never reached the prompt's last row")
+	}
+	if !strings.Contains(painted(), "LASTROWMARK") {
+		t.Fatalf("the frame clipped the prompt's last row")
 	}
 }
 
@@ -1696,102 +1686,49 @@ func TestQuickBarMeasuresRowsAtTheWidthItJustSet(t *testing.T) {
 
 func TestQuickFooterFillsEveryBandCell(t *testing.T) {
 	useTrueColor(t)
-	for _, full := range []bool{false, true} {
-		for _, width := range []int{56, 120, 180} {
-			m := buildModel(t)
-			seedTwoGroups(t, m)
-			setRailCursor(m, 1)
-			m.prefs.fullLayout = full
-			m.layout.width = width
-			answered(m, claudeLike, claudeAnswer)
-			m.openQuickMode()
-			m.quick().Input.SetValue("hello 界 " + strings.Repeat("wrapping ", 12))
-			frame := preparedView(m)
-			frameRows := uitheme.SplitLines(frame)
-			if len(frameRows) != m.layout.height || strings.TrimSpace(strings.TrimPrefix(ansi.Strip(frameRows[len(frameRows)-1]), m.chrome().QuickEdgeGlyph)) == "" {
-				t.Fatalf("full %v width %d footer must end on the last terminal row", full, width)
+	for _, width := range []int{56, 120, 180} {
+		m := buildModel(t)
+		seedTwoGroups(t, m)
+		setRailCursor(m, 1)
+		m.layout.width = width
+		answered(m, claudeLike, claudeAnswer)
+		m.openQuickMode()
+		m.quick().Input.SetValue("hello 界 " + strings.Repeat("wrapping ", 12))
+		frame := preparedView(m)
+		frameRows := uitheme.SplitLines(frame)
+		if len(frameRows) != m.layout.height || strings.TrimSpace(strings.TrimPrefix(ansi.Strip(frameRows[len(frameRows)-1]), m.chrome().QuickEdgeGlyph)) == "" {
+			t.Fatalf("width %d footer must end on the last terminal row", width)
+		}
+		backgrounds, _ := cellColors(frame, m.layout.width, m.layout.height)
+		footerHeight := lipgloss.Height(m.viewFooter())
+		keysHeight := lipgloss.Height(paintLegend([]legendSection{{Title: quickModeTitle, Pairs: m.quick().Legend(m.quickBarHost(), m.prefs.glyphMode)}}, m.layout.width-1, m.prefs.glyphMode).Text)
+		if !strings.Contains(ansi.Strip(frameRows[m.layout.height-footerHeight]), "new") {
+			t.Fatalf("width %d footer must begin with the target", width)
+		}
+		if m.quick().OriginY != m.layout.height-footerHeight {
+			t.Fatalf("target hit row = %d, want %d", m.quick().OriginY, m.layout.height-footerHeight)
+		}
+		for y := m.layout.height - footerHeight; y < m.layout.height; y++ {
+			if !strings.HasPrefix(ansi.Strip(frameRows[y]), m.chrome().QuickEdgeGlyph) {
+				t.Fatalf("footer row %d must carry the accent edge", y)
 			}
-			backgrounds, _ := cellColors(frame, m.layout.width, m.layout.height)
-			footerHeight := lipgloss.Height(m.viewFooter())
-			keysHeight := lipgloss.Height(paintLegend([]legendSection{{Title: quickModeTitle, Pairs: m.quick().Legend(m.quickBarHost(), m.prefs.glyphMode)}}, m.layout.width-1, m.prefs.glyphMode).Text)
-			if !strings.Contains(ansi.Strip(frameRows[m.layout.height-footerHeight]), "new") {
-				t.Fatalf("full %v width %d footer must begin with the target", full, width)
+			if cells := ansi.StringWidth(frameRows[y]); cells != m.layout.width {
+				t.Fatalf("band row %d width = %d, want %d", y, cells, m.layout.width)
 			}
-			if m.quick().OriginY != m.layout.height-footerHeight {
-				t.Fatalf("target hit row = %d, want %d", m.quick().OriginY, m.layout.height-footerHeight)
-			}
-			for y := m.layout.height - footerHeight; y < m.layout.height; y++ {
-				if !strings.HasPrefix(ansi.Strip(frameRows[y]), m.chrome().QuickEdgeGlyph) {
-					t.Fatalf("footer row %d must carry the accent edge", y)
+			for x := 0; x < m.layout.width; x++ {
+				if y == m.layout.height-keysHeight && x >= quickGutter && x < quickGutter+ansi.StringWidth(uitheme.LegendBadgeStyle().Render(quickModeTitle)) {
+					continue
 				}
-				if cells := ansi.StringWidth(frameRows[y]); cells != m.layout.width {
-					t.Fatalf("band row %d width = %d, want %d", y, cells, m.layout.width)
+				want := uitheme.QuickModeHex()
+				if y > m.layout.height-footerHeight && y < m.layout.height-keysHeight {
+					want = uitheme.BlockHex()
 				}
-				for x := 0; x < m.layout.width; x++ {
-					if y == m.layout.height-keysHeight && x >= quickGutter && x < quickGutter+ansi.StringWidth(uitheme.LegendBadgeStyle().Render(quickModeTitle)) {
-						continue
-					}
-					want := uitheme.QuickModeHex()
-					if y > m.layout.height-footerHeight && y < m.layout.height-keysHeight {
-						want = uitheme.BlockHex()
-					}
-					if !sameColor(backgrounds[y][x], hexColor(want)) {
-						t.Fatalf("full %v width %d row %d col %d background = %v, want %s", full, width, y, x, backgrounds[y][x], want)
-					}
+				if !sameColor(backgrounds[y][x], hexColor(want)) {
+					t.Fatalf("width %d row %d col %d background = %v, want %s", width, y, x, backgrounds[y][x], want)
 				}
 			}
 		}
 	}
-}
-
-// Resizing a pane for prompt growth makes agents redraw their transcripts.
-func TestQuickBarKeepsPaneHeight(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	createSession(t, m, "sizer", t.TempDir(), "")
-	m.applyCmd(t, m.refreshCmd())
-	sess := railSelectedSession(m)
-	pinned := m.previewPaneHeight()
-
-	rows := make([]string, pinned+10)
-	for i := range rows {
-		rows[i] = fmt.Sprintf("line%03d", i+1)
-	}
-	m.workspace.preview = strings.Join(rows, "\n") + "\n"
-	listed := paintedPreview(m)
-
-	m.openQuickMode()
-	m.quick().Input.SetValue(strings.Repeat("filler word ", 40))
-	if got := m.previewPaneHeight(); got != pinned {
-		t.Fatalf("box height with the quick bar open = %d, want %d", got, pinned)
-	}
-	painted := paintedPreview(m)
-	// The bar's rows come off the top of the view; the pane's live end stays.
-	if oldest := rows[len(rows)-pinned]; !strings.Contains(listed, oldest) || strings.Contains(painted, oldest) {
-		t.Fatalf("the quick bar should have cropped %s off the top:\n%s", oldest, painted)
-	}
-	if newest := rows[len(rows)-1]; !strings.Contains(painted, newest) {
-		t.Fatalf("the quick bar hid the pane's live end (%s):\n%s", newest, painted)
-	}
-	m.applyCmd(t, m.refreshCmd())
-	if got := windowHeight(t, sess.ID); got != pinned {
-		t.Fatalf("pane height with the quick bar open = %d, want %d", got, pinned)
-	}
-
-	m.closeQuick()
-	m.applyCmd(t, m.refreshCmd())
-	if got := windowHeight(t, sess.ID); got != pinned {
-		t.Fatalf("pane height after closing the quick bar = %d, want %d", got, pinned)
-	}
-}
-
-func paintedPreview(m *Model) string {
-	_, rightWidth := m.splitWidths()
-	var painted strings.Builder
-	for _, row := range m.contentLines(rightWidth, m.listBodyHeight()) {
-		painted.WriteString(ansi.Strip(row.Text) + "\n")
-	}
-	return painted.String()
 }
 
 // A prompt the bar just cleared ignores an Enter that lands right after,

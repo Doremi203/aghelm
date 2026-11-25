@@ -1,10 +1,10 @@
 package frame
 
 import (
-	"os"
 	"strings"
 	"testing"
-	"time"
+
+	"github.com/charmbracelet/x/ansi"
 )
 
 func TestRowColumnsRightAlignsMeta(t *testing.T) {
@@ -28,22 +28,6 @@ func TestDisplayGroupNamesTheRoot(t *testing.T) {
 	}
 }
 
-func TestRelTimeStepsInFivesUnderAMinute(t *testing.T) {
-	now := time.Now()
-	if got := RelTime(now.Add(-3 * time.Second)); got != "0s" {
-		t.Fatalf("three seconds ago = %q, want 0s", got)
-	}
-	if got := RelSince(now.Add(-90 * time.Second)); got != "1m ago" {
-		t.Fatalf("ninety seconds ago = %q", got)
-	}
-	if got := RelTime(now.Add(-3 * time.Hour)); got != "3h" {
-		t.Fatalf("three hours ago = %q", got)
-	}
-	if got := RelTime(now.Add(-49 * time.Hour)); got != "2d" {
-		t.Fatalf("two days ago = %q", got)
-	}
-}
-
 func TestHumanAndDiskBytesPickTheirBase(t *testing.T) {
 	for _, tc := range []struct {
 		value uint64
@@ -62,19 +46,6 @@ func TestHumanAndDiskBytesPickTheirBase(t *testing.T) {
 	}
 	if got := HumanBytes(1 << 20); got != "1.0MB" {
 		t.Errorf("HumanBytes(1MiB) = %q, want 1.0MB", got)
-	}
-}
-
-func TestShortHomeKeepsTheDistinguishingTail(t *testing.T) {
-	sep := string(os.PathSeparator)
-	if got := ShortHome("/home/ana"+sep+"work"+sep+"api", "/home/ana"); got != "~"+sep+"work"+sep+"api" {
-		t.Fatalf("shortened path = %q", got)
-	}
-	if got := ShortHome("/home/ana", "/home/ana"); got != "~" {
-		t.Fatalf("home itself = %q", got)
-	}
-	if got := ShortHome("/srv"+sep+"api", "/home/ana"); got != "/srv"+sep+"api" {
-		t.Fatalf("path outside home = %q", got)
 	}
 }
 
@@ -100,5 +71,24 @@ func TestScrollWindowKeepsTheCursorVisible(t *testing.T) {
 				t.Fatalf("cursor %d outside window [%d,%d)", tc.cursor, start, end)
 			}
 		})
+	}
+}
+
+// Nothing fitting whole means the plainest left keeps whatever readable room
+// is left for it.
+func TestFitColumnsTrimsThePlainestLeft(t *testing.T) {
+	got := ansi.Strip(FitColumns([]string{"a very long name", "name"}, []string{"working · 3m"}, 20))
+	if ansi.StringWidth(got) != 20 {
+		t.Fatalf("fitted row is %d wide, want the column's 20: %q", ansi.StringWidth(got), got)
+	}
+	if !strings.Contains(got, "working") {
+		t.Fatalf("the reading was dropped instead of the name trimmed: %q", got)
+	}
+}
+
+func TestFitColumnsKeepsTheRichestPairThatFits(t *testing.T) {
+	got := ansi.Strip(FitColumns([]string{"rich name", "name"}, []string{"state", ""}, 24))
+	if !strings.Contains(got, "rich name") || !strings.Contains(got, "state") {
+		t.Fatalf("fit = %q, want both the rich name and the reading", got)
 	}
 }

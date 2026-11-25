@@ -23,7 +23,6 @@ import (
 	"github.com/Doremi203/aghelm/internal/hooks"
 	"github.com/Doremi203/aghelm/internal/sessioncmd"
 	"github.com/Doremi203/aghelm/internal/tmux"
-	uifocus "github.com/Doremi203/aghelm/internal/ui/focus"
 	uiterminal "github.com/Doremi203/aghelm/internal/ui/terminal"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -370,29 +369,25 @@ func TestStartupClaimsMouse(t *testing.T) {
 	}
 }
 
-type extendedKeyRecorder struct {
-	got     []uifocus.ExtendedKeyMsg
+type schemeRecorder struct {
 	schemes []uiterminal.SchemeMsg
 }
 
-func (r *extendedKeyRecorder) Init() tea.Cmd { return nil }
+func (r *schemeRecorder) Init() tea.Cmd { return nil }
 
-func (r *extendedKeyRecorder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case uifocus.ExtendedKeyMsg:
-		r.got = append(r.got, msg)
-		return r, tea.Quit
-	case uiterminal.SchemeMsg:
+func (r *schemeRecorder) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if msg, ok := msg.(uiterminal.SchemeMsg); ok {
 		r.schemes = append(r.schemes, msg)
+		return r, tea.Quit
 	}
 	return r, nil
 }
 
-func (r *extendedKeyRecorder) View() string { return "" }
+func (r *schemeRecorder) View() string { return "" }
 
-// Bubble Tea hands Shift+Enter over as a sequence it cannot read, so the
-// program's filter is what turns it into a key focus mode forwards.
-func TestStartupFilterReadsShiftEnter(t *testing.T) {
+// Bubble Tea hands a color scheme report over as a sequence it cannot read,
+// so the program starts with the filter that turns it into a message.
+func TestStartupInstallsProgramFilter(t *testing.T) {
 	file, err := parser.ParseFile(token.NewFileSet(), "main.go", nil, 0)
 	if err != nil {
 		t.Fatalf("parse main.go: %v", err)
@@ -422,35 +417,17 @@ func TestStartupFilterReadsShiftEnter(t *testing.T) {
 	if !wired {
 		t.Fatal("the program starts without programFilter")
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	recorder := &extendedKeyRecorder{}
-	program := tea.NewProgram(recorder,
-		tea.WithContext(ctx),
-		tea.WithInput(strings.NewReader("\x1b[13;2u")),
-		tea.WithOutput(io.Discard),
-		tea.WithoutRenderer(),
-		tea.WithoutSignalHandler(),
-		tea.WithFilter(programFilter),
-	)
-	if _, err := program.Run(); err != nil {
-		t.Fatalf("Run: %v, got %v", err, recorder.got)
-	}
-	if len(recorder.got) != 1 || recorder.got[0].Name != "S-Enter" {
-		t.Fatalf("program read %v, want S-Enter", recorder.got)
-	}
 }
 
-// The filter the program starts with reads scheme reports as well as the
-// keys, so composing the two never drops one.
+// The filter the program starts with turns a scheme report into the
+// message the theme follows.
 func TestStartupFilterReadsSchemeReports(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	recorder := &extendedKeyRecorder{}
+	recorder := &schemeRecorder{}
 	program := tea.NewProgram(recorder,
 		tea.WithContext(ctx),
-		tea.WithInput(strings.NewReader("\x1b[?997;2n\x1b[13;2u")),
+		tea.WithInput(strings.NewReader("\x1b[?997;2n")),
 		tea.WithOutput(io.Discard),
 		tea.WithoutRenderer(),
 		tea.WithoutSignalHandler(),
@@ -461,9 +438,6 @@ func TestStartupFilterReadsSchemeReports(t *testing.T) {
 	}
 	if len(recorder.schemes) != 1 || !recorder.schemes[0].Light {
 		t.Fatalf("program read schemes %v, want one light report", recorder.schemes)
-	}
-	if len(recorder.got) != 1 || recorder.got[0].Name != "S-Enter" {
-		t.Fatalf("program read %v, want S-Enter", recorder.got)
 	}
 }
 

@@ -4,7 +4,6 @@ type ReturnKind uint8
 
 const (
 	ReturnList ReturnKind = iota
-	ReturnFocus
 	ReturnAttach
 )
 

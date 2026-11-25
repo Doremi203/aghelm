@@ -88,7 +88,7 @@ func (r renderer) menuGlyph(action ActionKind) string {
 	binding := ""
 	switch action {
 	case Attach:
-		binding = keybind.Attach
+		binding = keybind.Open
 	case NewSession:
 		binding = keybind.NewSession
 	case NewGroup:

@@ -3,7 +3,6 @@ package ui
 import (
 	"github.com/Doremi203/aghelm/internal/config"
 	"github.com/Doremi203/aghelm/internal/keybind"
-	"github.com/Doremi203/aghelm/internal/sessioncmd"
 	"github.com/Doremi203/aghelm/internal/store"
 	"github.com/Doremi203/aghelm/internal/systheme"
 	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
@@ -236,7 +235,6 @@ func (m *Model) reconcileSettingsPrefs(restored []uisettings.Readback) string {
 func (m *Model) applySettingsPrefs(d *uisettings.State) {
 	m.prefs.glyphMode = d.GlyphMode
 	m.services.editor = d.Editor.Line()
-	m.mirrorArrowStep(d.ArrowStep)
 	for _, key := range uisettings.FlagKeys() {
 		m.mirrorFlag(key, d.Flag(key))
 	}
@@ -316,14 +314,6 @@ func (m *Model) storedTerminalBackground() bool {
 	return on
 }
 
-// enterFocuses reports which key opens a session where. Enter focuses the
-// preview and A attaches full screen by default; a stored "attach" choice
-// swaps the pair. Cached on the model because the footer reads it every
-// frame.
-func (m *Model) enterFocuses() bool {
-	return m.prefs.focusOnEnter
-}
-
 // mirrorPreference copies one stored setting into the running manager; a
 // key the frame never reads stays in the cache alone.
 func (m *Model) mirrorPreference(key, value string) {
@@ -335,34 +325,14 @@ func (m *Model) mirrorPreference(key, value string) {
 		m.services.editor = mirrored.Editor
 	case key == uisettings.GlyphModeSetting:
 		m.prefs.glyphMode = mirrored.GlyphMode
-	case key == uisettings.ArrowStepSetting:
-		m.mirrorArrowStep(mirrored.ArrowStep)
 	}
-}
-
-func (m *Model) mirrorArrowStep(step string) {
-	m.prefs.arrowStep = step != uisettings.ArrowStepOff
-	m.prefs.arrowAttach = step == uisettings.ArrowStepAttach
-}
-
-// rebindSessions installs the in-session bindings again from the stored
-// settings, since the ←→ attach value is what binds ← there.
-func (s effectServices) rebindSessions() error {
-	if err := sessioncmd.ApplyBindingSettings(s.store, s.driver); err != nil {
-		return err
-	}
-	return s.driver.EnsureBindings()
 }
 
 // mirrorFlag is the one place a two-way row meets its preferences field.
 func (m *Model) mirrorFlag(key string, on bool) {
 	switch key {
-	case uisettings.FocusKeySetting:
-		m.prefs.focusOnEnter = on
 	case uisettings.ListDensitySetting:
 		m.prefs.comfortableRows = on
-	case uisettings.SessionLayoutSetting:
-		m.prefs.fullLayout = on
 	case uisettings.HideHeaderSetting:
 		m.prefs.hideHeader = on
 	case uisettings.HideStatsSetting:
@@ -442,8 +412,6 @@ func (m *Model) handleSavedPromptsLoaded(msg uipersist.SavedMsg) {
 		if q, ok := m.quickFor(int(msg.Gen)); ok {
 			q.LoadSaved(spawnSaved(msg.Rows), msg.Err)
 		}
-	case uipersist.SavedForFocus:
-		m.loadFocusSaved(msg)
 	}
 }
 

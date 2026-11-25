@@ -37,7 +37,7 @@ func (m *Model) connectionIntent(intent uirail.Intent) (tea.Cmd, bool) {
 		return nil, false
 	}
 	switch intent.Kind {
-	case uirail.Quit, uirail.OpenSettings, uirail.Resize, uirail.OpenMessages, uirail.OpenHelp, uirail.Prompt, uirail.NewSession:
+	case uirail.Quit, uirail.OpenSettings, uirail.OpenMessages, uirail.OpenHelp, uirail.Prompt, uirail.NewSession:
 		return nil, false
 	}
 	row, ok := m.ssh.Row(intent.Target)

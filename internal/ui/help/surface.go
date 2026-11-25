@@ -99,8 +99,6 @@ func (s *Surface) View(h surface.Host, _ string) string {
 // Footer is empty: the card names its own keys on its bottom edge.
 func (s *Surface) Footer() [][2]string { return nil }
 
-func (s *Surface) Owner() surface.Owner { return surface.Manager }
-
 func (s *Surface) Dismissible() bool { return true }
 
 // Leave has nothing to undo. The screen underneath stays, so Review's

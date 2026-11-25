@@ -16,8 +16,6 @@ import (
 	uilink "github.com/Doremi203/aghelm/internal/ui/connections/link"
 	uiapply "github.com/Doremi203/aghelm/internal/ui/dialogs/apply"
 	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
-	focusruntime "github.com/Doremi203/aghelm/internal/ui/focus/runtime"
-	focuswatch "github.com/Doremi203/aghelm/internal/ui/focus/watch"
 	uigeometrypanes "github.com/Doremi203/aghelm/internal/ui/geometry/panes"
 	uiinstall "github.com/Doremi203/aghelm/internal/ui/launchhint/install"
 	uinotices "github.com/Doremi203/aghelm/internal/ui/notices"
@@ -35,14 +33,12 @@ import (
 type effectServices struct {
 	engine             *status.Engine
 	hooks              *hooks.Manager
-	pasteInput         func(*tmux.Driver, string, string) error
 	saveKeys           func(keybind.Table) error
 	lifecycle          *sessioncmd.Lifecycle
 	cfg                config.Config
 	store              *store.Store
 	driver             *tmux.Driver
 	runner             *execution.Runner
-	watch              *focuswatch.Watcher
 	gitDrv             *git.Driver
 	quickSessionExists func(*tmux.Driver, string) (bool, error)
 	quickSendText      func(*tmux.Driver, string, string) (tmux.SendResult, error)
@@ -54,7 +50,6 @@ type effectServices struct {
 func (m *Model) bindEffect(request uieffects.Request) func() (uieffects.Result, error) {
 	capture := m.captureServices
 	binders := []func(uieffects.Request) (func() (uieffects.Result, error), bool){
-		uieffects.Binder(func() focusruntime.Services { return capture().focusRuntime() }),
 		uieffects.Binder(func() uigeometrypanes.Services { return capture().geometry() }),
 		uieffects.Binder(func() uiinstall.Services { return capture().install() }),
 		uieffects.Binder(func() uilink.Services { return capture().link() }),
@@ -65,7 +60,7 @@ func (m *Model) bindEffect(request uieffects.Request) func() (uieffects.Result, 
 		}),
 		uieffects.Binder(func() uipersist.Services {
 			services := capture()
-			return uipersist.Services{Writer: uipersist.StoreWriter{Store: services.store}, Keys: services.keySaver(), Presets: services.store, Rebind: services.rebindSessions}
+			return uipersist.Services{Writer: uipersist.StoreWriter{Store: services.store}, Keys: services.keySaver(), Presets: services.store}
 		}),
 		uieffects.Binder[uinotices.Services](m.noticesServices),
 		uieffects.Binder(func() onboardingruntime.Services { return onboardingruntime.Services{} }),
@@ -108,21 +103,13 @@ func (m *Model) applyEffect(job *uieffects.Job, result uieffects.Result, err err
 		return m.ledger.install.Settled(installRoot{m}, request, as[uiinstall.SettleResult](result), err)
 	case uirailpersist.Request:
 		return m.applyRailEffect(as[uirailpersist.Result](result), request, job.Chain, err)
-	case focusruntime.ProbeRequest:
-		return m.applyFocusEffect(request, err)
-	case focusruntime.AckRequest:
+	case uilifecycle.AckRequest:
 		m.applyAckEffect(err)
 		return nil
-	case focusruntime.DetachRequest:
-		return m.applyDetachEffect(request, as[focusruntime.Detach](result), err)
-	case focusruntime.InputRequest:
-		m.applyInputEffect(as[focusruntime.Result](result), err)
-		return nil
+	case uilifecycle.DetachRequest:
+		return m.applyDetachEffect(request, as[uilifecycle.Detach](result), err)
 	case uigeometrypanes.ResizeRequest:
 		m.applyGeometryEffect(as[uigeometrypanes.Result](result), err)
-		return nil
-	case uigeometrypanes.SplitSaveRequest:
-		m.layout.panes.ApplySplit(paneSizing{m}, job.ID, err)
 		return nil
 	case uilink.SaveRequest:
 		return m.applyConnectionSave(request, as[[]store.Connection](result), err)
@@ -185,10 +172,9 @@ func (m *Model) captureServices() effectServices {
 		tool.Rules = append([]config.Rule(nil), tool.Rules...)
 		cfg.Tools[name] = tool
 	}
-	services := effectServices{cfg: cfg, store: m.services.store, driver: m.services.tmux, watch: m.focus.runtime.Watch, gitDrv: m.services.gitDrv, remote: m.ssh.Client}
+	services := effectServices{cfg: cfg, store: m.services.store, driver: m.services.tmux, gitDrv: m.services.gitDrv, remote: m.ssh.Client}
 	services.engine = m.services.engine
 	services.hooks = m.services.hooks
-	services.pasteInput = pasteFocused
 	services.quickSessionExists = m.services.quickSessionExists
 	if services.quickSessionExists == nil {
 		services.quickSessionExists = func(driver *tmux.Driver, id string) (bool, error) { return driver.SessionExists(id) }
@@ -218,18 +204,6 @@ func (s effectServices) reflow(ids []string, work func()) error {
 		return nil
 	}
 	return s.runner.ReflowSessions(ids, work)
-}
-
-// focusRuntime is the store, tmux server, watcher, engine and paste transport
-// the focus effects run against.
-func (s effectServices) focusRuntime() focusruntime.Services {
-	return focusruntime.Services{
-		Store:  s.store,
-		Driver: s.driver,
-		Engine: s.engine,
-		Watch:  s.watch,
-		Paste:  s.pasteInput,
-	}
 }
 
 // geometry is the store, tmux server and poller reflower the pane resize runs

@@ -1,18 +1,9 @@
-// Package panes is the split's geometry runtime: it sizes every live
-// session's tmux window to the preview box, remembers the size it last
-// pinned, publishes that box for the launch paths that run without a
-// manager, and persists the divider's ratio. The root holds the gesture
-// itself, because mouse.go drives the same divider the surface does.
+// Package panes is the sessions' geometry runtime: it sizes every live
+// session's tmux window to the body box, remembers the size it last pinned,
+// and publishes that box for the launch paths that run without a manager.
 package panes
 
-import (
-	"errors"
-	"fmt"
-	"strconv"
-
-	"github.com/Doremi203/aghelm/internal/tmux"
-	uigeometry "github.com/Doremi203/aghelm/internal/ui/geometry"
-)
+import "github.com/Doremi203/aghelm/internal/tmux"
 
 type PaneResize struct {
 	ID   string
@@ -36,12 +27,10 @@ type Session struct {
 	Archived  bool
 }
 
-// Box is where sessions are pinned: the preview panel's box and the session
-// open full screen, whose size PinFullFocus owns instead.
+// Box is where sessions are pinned: the whole terminal body.
 type Box struct {
-	Width       int
-	Height      int
-	FullFocusID string
+	Width  int
+	Height int
 }
 
 // Result is what a resize landed: the panes tmux accepted and the box the
@@ -52,8 +41,8 @@ type Result struct {
 }
 
 // Panes is what this feature remembers between passes: the box each pane was
-// last pinned to, the pane processes behind those sizes, the box last
-// published, and the ratio save that owns its failure.
+// last pinned to, the pane processes behind those sizes, and the box last
+// published.
 type Panes struct {
 	// LastSizes is the box each pane was last pinned to; [0 0] marks a pin
 	// still owed to a session whose window this run just created.
@@ -64,16 +53,9 @@ type Panes struct {
 	// Published is the box last written for the launch paths that run
 	// without a manager.
 	Published [2]int
-	// SaveID is the newest accepted ratio save. SaveError remembers only
-	// this adapter's visible failure, so a later success can clear it
-	// without erasing another feature's status.
-	SaveID    uint64
-	SaveError string
 }
 
 type Store interface {
-	Setting(key string) (string, error)
-	SetSetting(key, value string) error
 	SetPaneSize(width, height int) error
 }
 
@@ -88,66 +70,12 @@ type Reflower interface {
 }
 
 // Root is the root as this runtime reaches it: what a shrink costs a tool,
-// the effect lane a pin rides, and the ratio save it starts.
+// and the effect lane a pin rides.
 type Root interface {
 	// FitsHeight reports whether the tool repaints its own screen, so a
 	// shorter box cannot cost it scrollback.
 	FitsHeight(tool string) bool
 	Queue(request Resize)
-	// SaveSplitRatio captures value for the effect lane and returns the job
-	// it took; that job owns the failure when the write does not land.
-	SaveSplitRatio(value string) uint64
-	ReportErr(text string)
-	ClearErr()
-	ErrorIs(text string) bool
-}
-
-// Load restores the sessions/sidebar ratio, or the default when nothing
-// usable is stored.
-func Load(st Store) float64 {
-	raw, err := st.Setting(uigeometry.SplitRatioSetting)
-	if err != nil {
-		return uigeometry.DefaultSplitRatio
-	}
-	return uigeometry.ParseRatio(raw)
-}
-
-// RatioText is a ratio as the store keeps it, fixed to four places.
-func RatioText(ratio float64) string { return strconv.FormatFloat(ratio, 'f', 4, 64) }
-
-// ErrNoStore is the failure a ratio save reports when the manager was built
-// without a settings store.
-var ErrNoStore = errors.New("save split ratio: store is unavailable")
-
-func SaveRatio(st Store, value string) error {
-	if err := st.SetSetting(uigeometry.SplitRatioSetting, value); err != nil {
-		return fmt.Errorf("save split ratio: %w", err)
-	}
-	return nil
-}
-
-// Persist queues ratio for the store and remembers the job that owns its
-// failure.
-func (p *Panes) Persist(root Root, ratio float64) {
-	p.SaveID = root.SaveSplitRatio(RatioText(ratio))
-}
-
-// ApplySplit applies a finished ratio save. Only the newest accepted save
-// owns the status bar, and only the text this adapter put there is cleared,
-// so a later success cannot erase another feature's failure.
-func (p *Panes) ApplySplit(root Root, jobID uint64, err error) {
-	if jobID != p.SaveID {
-		return
-	}
-	if err == nil {
-		if p.SaveError != "" && root.ErrorIs(p.SaveError) {
-			root.ClearErr()
-		}
-		p.SaveError = ""
-		return
-	}
-	p.SaveError = err.Error()
-	root.ReportErr(p.SaveError)
 }
 
 // Apply records what a resize landed, so the next pass diffs against it.
@@ -181,7 +109,7 @@ func (p *Panes) QueueAll(root Root, box Box, sessions []Session, panes map[strin
 	p.Seed(panes)
 	var targets []PaneResize
 	for _, sess := range sessions {
-		if sess.Archived || sess.ID == box.FullFocusID {
+		if sess.Archived {
 			continue
 		}
 		// A dead row has no window to size. Its resize would fail every
@@ -211,24 +139,6 @@ func (p *Panes) QueueAll(root Root, box Box, sessions []Session, panes map[strin
 	root.Queue(Resize{Targets: targets})
 }
 
-// PinFullFocus sizes a session opened full screen to the whole terminal body,
-// the reflow an attach performs, so the capture fills the full width frame
-// 1:1. Returning to the list leaves the pane this size: shrinking it back
-// would cost a Codex agent its scrollback (#369), and the view already crops
-// a taller pane from its bottom.
-func (p *Panes) PinFullFocus(root Root, id string, width, height int) {
-	if width <= 0 || height <= 0 {
-		return
-	}
-	if p.LastSizes == nil {
-		p.LastSizes = map[string][2]int{}
-	}
-	if last, ok := p.LastSizes[id]; ok && last[0] == width && last[1] >= height {
-		return
-	}
-	root.Queue(Resize{Targets: []PaneResize{{ID: id, Size: [2]int{width, height}}}})
-}
-
 // MarkFresh queues one exact size pin for a session whose window this run
 // just created. Its launch size came from pre-selection geometry, and with
 // nothing in its scrollback yet the one re-pin is free, unlike the panes
@@ -241,7 +151,7 @@ func (p *Panes) MarkFresh(id string) {
 }
 
 // Publish records the box for the launch paths that run without a manager:
-// the CLI and the MCP server open a pane with nothing to ask for the preview
+// the CLI and the MCP server open a pane with nothing to ask for the body
 // geometry, and tmux gives an unsized detached session 80x24.
 func (p *Panes) Publish(root Root, width, height int) {
 	if width <= 0 || height <= 0 || p.Published == [2]int{width, height} {
@@ -279,7 +189,7 @@ func (p *Panes) MarkReplacedFresh(panes map[string]tmux.Pane) {
 // this run has not sized yet, so a pane adopted from a previous run is not
 // shrunk (and its Codex scrollback cleared) just to match a box it already
 // exceeds. A split window is taken every pass instead: the agent opened those
-// panes out of its own window, taking room from the pane the preview draws,
+// panes out of its own window, taking room from the agent's own pane,
 // and no manager action precedes that for the cache to follow. Drift the
 // manager did not cause otherwise stays, so a window someone resized from
 // another client is left where they put it.

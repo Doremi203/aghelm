@@ -12,11 +12,8 @@ import (
 	"github.com/Doremi203/aghelm/internal/status"
 	"github.com/Doremi203/aghelm/internal/store"
 	uidialogs "github.com/Doremi203/aghelm/internal/ui/dialogs"
-	uifocus "github.com/Doremi203/aghelm/internal/ui/focus"
 	uiframe "github.com/Doremi203/aghelm/internal/ui/frame"
-	uigeometry "github.com/Doremi203/aghelm/internal/ui/geometry"
 	"github.com/Doremi203/aghelm/internal/ui/presentation"
-	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
 	uistartup "github.com/Doremi203/aghelm/internal/ui/startup"
 	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	"github.com/charmbracelet/lipgloss"
@@ -42,7 +39,7 @@ func (m *Model) prepareFrame() {
 }
 
 func (m *Model) renderFrame() string {
-	m.layout.keyHits, m.layout.card, m.layout.previewLinks = nil, cardRect{}, uifocus.PaneLinks{}
+	m.layout.keyHits, m.layout.card = nil, cardRect{}
 	if m.layout.width == 0 {
 		return m.syncCursorAnchor("loading...")
 	}
@@ -153,21 +150,18 @@ func (m *Model) headerAgents() string {
 		uitheme.SubtleStyle().Render(" · ") + uitheme.ValueStyle().Render(uiframe.HumanBytes(m.workspace.agents.rss))
 }
 
-// elsewhereNote marks a session this manager does not speak for: its pane
+// elsewhere reports a session this manager does not speak for: its pane
 // runs on a tmux server this one does not talk to, or no server has claimed
 // it and the store belongs to another manager. Its status is the last one
 // that manager wrote, and nothing here refreshes or drives it.
-func (m *Model) elsewhereNote(sess store.Session) string {
+func (m *Model) elsewhere(sess store.Session) bool {
 	if m.workspace.tmuxSocket == "" {
-		return ""
+		return false
 	}
-	if sess.TmuxSocket == "" && !m.workspace.leadingManager {
-		return " · elsewhere"
+	if sess.TmuxSocket == "" {
+		return !m.workspace.leadingManager
 	}
-	if sess.TmuxSocket == "" || sess.TmuxSocket == m.workspace.tmuxSocket {
-		return ""
-	}
-	return " · elsewhere"
+	return sess.TmuxSocket != m.workspace.tmuxSocket
 }
 
 // viewStatusCounts is the fleet-at-a-glance strip: a tinted dot and count
@@ -270,24 +264,17 @@ func (m *Model) viewFooter() string { return m.footer().Text }
 
 // footer is the app's legend: a tier of keys for whatever the cursor is on,
 // then a quieter tier for the keys that always apply. A transient mode (quick
-// prompt, rename, resize) owns the legend alone while it is up. The layout
+// prompt, rename) owns the legend alone while it is up. The layout
 // rules live in the package; this routes a mode to the tier it paints.
 func (m *Model) footer() legend {
-	footer := m.footerOf()
 	switch {
 	case m.rail.Reordering():
 		return m.transientFooter(legendOf(m.rail.ReorderLegend(m.prefs.glyphMode)))
 	case m.quick() != nil:
 		return m.quickFooter(m.quick())
 	}
-	if s, ok := surfaceOf[*uigeometry.Surface](m); ok {
-		return m.transientFooter(legendSection{Title: "Resize", Pairs: s.FooterFor(presentation.NavigationLabel(m.prefs.glyphMode, "←→"), strings.TrimPrefix(m.resizeGlyph()+" / release", " / "))})
-	}
 	if s, ok := surfaceOf[*uidialogs.RenameSurface](m); ok {
 		return m.transientFooter(legendSection{Title: "Rename", Pairs: s.Footer()})
-	}
-	if m.focused() {
-		return footer.Transient(footer.Focused(m.focusFooter()))
 	}
 	return m.listLegend()
 }
@@ -299,8 +286,6 @@ func (m *Model) footerOf() uiframe.Footer {
 		List:        m.listTiers(),
 		Measurement: m.layout.footer.Measure(m.legendReference(), m.layout.width, max(uiframe.MaxRows, (m.layout.height-m.listChromeRows()-1)/2), m.prefs.glyphMode),
 		Width:       m.layout.width,
-		FullLayout:  m.prefs.fullLayout,
-		ArrowStep:   m.prefs.arrowStep,
 	}
 }
 
@@ -308,33 +293,6 @@ func (m *Model) footerOf() uiframe.Footer {
 // always apply.
 func (m *Model) listTiers() []legendSection {
 	return []legendSection{m.rowLegend(), m.viewLegend()}
-}
-
-// focusFooter is the keys the manager keeps while the agent has the rest.
-func (m *Model) focusFooter() uiframe.Focus {
-	focus := uiframe.Focus{
-		Keys: uiframe.FocusKeys{
-			Detach:      m.services.keys.Binding(keybind.Detach).Label(),
-			Resize:      m.services.keys.Binding(keybind.Resize).Label(),
-			Review:      m.services.keys.Binding(keybind.Review).Label(),
-			Editor:      m.services.keys.Binding(keybind.Editor).Label(),
-			SavedPrompt: m.services.keys.Binding(keybind.SavedPrompt).Label(),
-		},
-		Mouse: m.focus.pane.Pane().Mouse,
-	}
-	if sess, selected := m.selected(); selected {
-		focus.PagesScrollback = m.focus.pane.PagesScrollback(sess.ID)
-	}
-	// A bare surface keeps its own keys and never names the saved prompts key
-	// the pane below answers.
-	if top, ok := m.top(); ok {
-		if _, bare := top.(*uifocus.Surface); bare {
-			focus.Bare = true
-		} else {
-			focus.Surface = top.Footer()
-		}
-	}
-	return focus
 }
 
 func (m *Model) listFooter() string { return m.listLegend().Text }
@@ -402,60 +360,6 @@ const (
 )
 
 func (m *Model) viewListFrame() string {
-	if m.fullFocus() {
-		m.layout.displayedRail = uirail.Frame{}
-		return m.viewFullFocusFrame()
-	}
-	if m.fullRows() {
-		return m.viewFullListFrame()
-	}
-	leftWidth, rightWidth := m.splitWidths()
-	footer := m.footer()
-	bodyHeight := m.listBodyHeight()
-	contentWidth := rightWidth - 1
-
-	frame := []string{}
-	for _, line := range m.viewHeaderRows() {
-		frame = append(frame, uitheme.Paint(line, m.layout.width, uitheme.BackdropHex()))
-	}
-	bleedWidth := contentWidth - 1
-	railWidth := leftWidth - 1
-	m.prepareRailFrame(railWidth, bodyHeight)
-	railRows := m.layout.displayedRail.Lines
-	contentRows := m.contentLines(bleedWidth, bodyHeight)
-	seam := make([]string, bodyHeight)
-	edge := make([]string, bodyHeight)
-	for i := range seam {
-		seam[i] = m.seamCell(i < len(railRows) && railRows[i].Rule)
-		tone := uitheme.PanelHex()
-		if i < len(railRows) && railRows[i].Tone != "" {
-			tone = railRows[i].Tone
-		}
-		edge[i] = railEdgeCell(tone)
-	}
-	frame = append(frame, m.railTopRow(leftWidth+1, m.layout.width))
-	frame = append(frame, uitheme.JoinColumns(
-		edge,
-		paintContent(railRows, railWidth, bodyHeight, uitheme.PanelHex()),
-		seam,
-		m.bleedColumn(bodyHeight),
-		paintContent(contentRows, bleedWidth, bodyHeight, uitheme.BackdropHex()),
-	)...)
-	bottom := m.boundedRuleRow(leftWidth+1, m.layout.width, "▄")
-	if m.focused() && m.focus.pane.FrameBox().Valid {
-		bottom = m.focusBottomRule(leftWidth+1, m.layout.width)
-	}
-	frame = append(frame, bottom)
-	m.placeListFooter(footer, len(frame))
-	for _, line := range uitheme.SplitLines(footer.Text) {
-		frame = append(frame, uitheme.Paint(line, m.layout.width, uitheme.BackdropHex()))
-	}
-	return m.overlayTopRight(strings.Join(frame, "\n"), m.statusToast(), m.listChromeRows()+1)
-}
-
-func (m *Model) fullRows() bool { return m.prefs.fullLayout && !m.focused() }
-
-func (m *Model) viewFullListFrame() string {
 	footer := m.footer()
 	bodyHeight := m.listBodyHeight()
 	railWidth := m.layout.width - 1
@@ -494,39 +398,21 @@ func (m *Model) placeListFooter(footer legend, y int) {
 }
 
 // syncCursorAnchor publishes the input coordinates in a finished frame and
-// removes the private marker before Bubble Tea writes the frame. Focus mode
-// uses its recorded pane box as a fallback because its caret is painted over
-// captured terminal output rather than by a Bubbles input widget.
+// removes the private marker before Bubble Tea writes the frame.
 func (m *Model) syncCursorAnchor(frame string) string {
-	if m.focus.imeCursor == nil {
-		return uiframe.StripCursorMarker(frame)
-	}
-	if m.agentOwnsKeyboard() {
-		col, row, ok := m.focusCursorAnchor()
-		m.focus.imeCursor.Set(col, row, ok)
+	if m.layout.imeCursor == nil {
 		return uiframe.StripCursorMarker(frame)
 	}
 	frame, col, row, ok := uiframe.CursorMarkerPosition(frame)
-	m.focus.imeCursor.Set(col, row, ok)
+	m.layout.imeCursor.Set(col, row, ok)
 	return frame
-}
-
-func (m *Model) focusCursorAnchor() (col, row int, ok bool) {
-	if !m.focused() {
-		return 0, 0, false
-	}
-	sess, selected := m.selected()
-	if !selected {
-		return 0, 0, false
-	}
-	return m.focus.pane.CursorAnchor(sess.ID)
 }
 
 // CursorOutput keeps native TTY detection and terminal sizing while placing
 // the host cursor at the active input caret after each rendered frame.
 func (m *Model) CursorOutput(output *os.File) io.Writer {
-	if m.focus.imeCursor == nil {
-		m.focus.imeCursor = &uiframe.CursorAnchor{}
+	if m.layout.imeCursor == nil {
+		m.layout.imeCursor = &uiframe.CursorAnchor{}
 	}
-	return uiframe.NewCursorTTYOutput(output, m.focus.imeCursor)
+	return uiframe.NewCursorTTYOutput(output, m.layout.imeCursor)
 }

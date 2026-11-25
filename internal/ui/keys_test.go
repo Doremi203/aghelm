@@ -13,9 +13,7 @@ import (
 
 	"github.com/Doremi203/aghelm/internal/remote"
 	uidialogs "github.com/Doremi203/aghelm/internal/ui/dialogs"
-	uifocus "github.com/Doremi203/aghelm/internal/ui/focus"
 	uiinstall "github.com/Doremi203/aghelm/internal/ui/launchhint/install"
-	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -29,7 +27,6 @@ func TestCtrlCOnEveryBase(t *testing.T) {
 	}{
 		"list":   {func(*Model) {}, true},
 		"review": {func(m *Model) { m.base = baseReview }, true},
-		"focus":  {func(m *Model) { m.push(newFocusSurface(m)) }, false},
 	} {
 		t.Run(name, func(t *testing.T) {
 			m := buildModel(t)
@@ -81,48 +78,6 @@ func TestCtrlCQuitsThroughEveryCardOverTheList(t *testing.T) {
 				t.Fatalf("%s: ctrl+c over the card did not quit", name)
 			}
 		})
-	}
-}
-
-// The saved prompts list over a focused session is the manager's card, not
-// the agent's pane, so ctrl+c closes it the way esc does. It neither quits
-// the manager nor reaches the agent from behind the list.
-func TestCtrlCClosesTheSavedListOverFocus(t *testing.T) {
-	m := buildModel(t)
-	createSession(t, m, "saved-ctrlc", t.TempDir(), "")
-	m.selectSessionRow(t, "saved-ctrlc")
-	updated, _ := m.handleKey(tea.KeyMsg{Type: tea.KeyEnter})
-	*m = *updated.(*Model)
-	m.drainEffects(t)
-	if !m.focused() {
-		t.Fatalf("enter did not focus, screen = %v", m.screenID())
-	}
-	m.push(uifocus.OpenSaved(focusSavedRoot{m}, 0, m.spawnStyles()))
-	m.Update(tea.KeyMsg{Type: tea.KeyCtrlC})
-	if m.effects.Quitting || !m.focused() || m.savedListOpen() {
-		t.Fatalf("quitting=%t screen = %v list open=%t", m.effects.Quitting, m.screenID(), m.savedListOpen())
-	}
-	if m.effects.Input.Active != nil || len(m.effects.Input.Pending) > 0 {
-		t.Fatal("ctrl+c reached the agent from behind the list")
-	}
-}
-
-// A drain already under way leaves on a second ctrl+c from any surface,
-// a focused session included: by then the agent has nothing to cancel.
-func TestCtrlCAbandonsADrainFromFocus(t *testing.T) {
-	m := buildModel(t)
-	m.queueRail([]uirail.Mutation{{Kind: uirail.SaveCollapsed, Collapsed: []string{"a"}}}, 0, false)
-	m.requestQuit()
-	if !m.effects.Quitting || m.effects.Main.Active == nil {
-		t.Fatal("quit did not begin draining")
-	}
-	m.push(newFocusSurface(m))
-	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyCtrlC})
-	if cmd == nil {
-		t.Fatal("ctrl+c during a drain was discarded")
-	}
-	if _, ok := cmd().(tea.QuitMsg); !ok {
-		t.Fatal("ctrl+c during a drain did not exit")
 	}
 }
 

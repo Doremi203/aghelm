@@ -61,7 +61,7 @@ func TestRenderFrameOwnsTheExactRowHits(t *testing.T) {
 		if !line.HitOK {
 			continue
 		}
-		got, ok := frame.RowAt(2, y, 40, true)
+		got, ok := frame.RowAt(y)
 		if !ok || got != line.Hit {
 			t.Fatalf("hit at line %d = %+v, %v; painted %+v", y, got, ok, line.Hit)
 		}
@@ -87,7 +87,7 @@ func TestMouseConsumesDisplayedFrameWithoutRederivingRows(t *testing.T) {
 		t.Fatal("test setup: session two was not painted")
 	}
 	model.Reconcile(rail.Snapshot{Sessions: []rail.Session{{ID: "two", Name: "two", Status: "idle", CreatedAt: time.Now()}}})
-	decision := model.Mouse(tea.MouseMsg{X: 2, Y: line, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft}, frame, rail.MouseContext{FullWidth: true, FullLayout: true, Now: time.Now()})
+	decision := model.Mouse(tea.MouseMsg{X: 2, Y: line, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft}, frame, rail.MouseContext{Now: time.Now()})
 	if decision.Selection.SessionID != "two" {
 		t.Fatalf("selection = %+v; want the row the displayed frame named", decision.Selection)
 	}

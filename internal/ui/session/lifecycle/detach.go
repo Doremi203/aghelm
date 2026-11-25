@@ -1,30 +1,47 @@
-package runtime
+package lifecycle
 
 import (
 	"github.com/Doremi203/aghelm/internal/tmux"
+	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type ProbeHost interface {
-	ReportErr(text string)
-	// Grounded reports whether a probe asked with generation still owns the
-	// foreground: not a quit, and no newer press since.
-	Grounded(generation uint64) bool
-	ListClear() bool
-	Enter(sessionID string) tea.Cmd
+// AckRequest clears the unread mark a finished session left.
+type AckRequest struct{ SessionID string }
+
+func (AckRequest) EffectName() string { return "acknowledge" }
+
+func (r AckRequest) Run(s Services) (uieffects.Result, error) {
+	return nil, s.Store.Acknowledge(r.SessionID)
 }
 
-// ApplyProbe enters focus once the dead-pane probe has run, while the
-// selection and the foreground it was asked for still hold.
-func ApplyProbe(h ProbeHost, request ProbeRequest, err error) tea.Cmd {
+// DetachRequest reads and clears the request a session wrote before it
+// detached.
+type DetachRequest struct{ SessionID string }
+
+func (DetachRequest) EffectName() string { return "attach" }
+
+func (r DetachRequest) Run(s Services) (uieffects.Result, error) {
+	return Detached(s.Driver, r.SessionID)
+}
+
+type Detach struct {
+	// Request is the marker the session wrote, empty when it wrote none.
+	Request string
+	// ClearErr is a failed clear, which leaves the marker for the next read.
+	ClearErr error
+}
+
+// Detached reads and clears the request a session left before it detached.
+func Detached(driver *tmux.Driver, sessionID string) (Detach, error) {
+	marker, err := driver.PendingRequest(sessionID)
 	if err != nil {
-		h.ReportErr(err.Error())
-		return nil
+		return Detach{}, err
 	}
-	if !h.Grounded(request.Generation) || !h.ListClear() {
-		return nil
+	if marker == "" {
+		return Detach{}, nil
 	}
-	return h.Enter(request.SessionID)
+	return Detach{Request: marker, ClearErr: driver.ClearRequest(sessionID)}, nil
 }
 
 type DetachHost interface {
@@ -35,7 +52,9 @@ type DetachHost interface {
 	Quitting() bool
 	TakenSinceDetach() bool
 	Name(sessionID string) string
-	Focused(sessionID string) bool
+	// Select moves the list's cursor to the session, false when it has no
+	// row left.
+	Select(sessionID string) bool
 	Review(sessionID string) tea.Cmd
 	Editor(sessionID string) tea.Cmd
 }
@@ -65,7 +84,7 @@ func ApplyDetach(h DetachHost, request DetachRequest, result Detach, err error) 
 		h.Refresh()
 		return nil
 	}
-	if !h.Focused(request.SessionID) {
+	if !h.Select(request.SessionID) {
 		h.ReportErr("the session that asked for it has left the list")
 		h.Refresh()
 		return nil
@@ -78,29 +97,4 @@ func ApplyDetach(h DetachHost, request DetachRequest, result Detach, err error) 
 	}
 	h.Refresh()
 	return nil
-}
-
-type InputHost interface {
-	ReportErr(text string)
-	Landed(sessionID string)
-	Hold(candidate Candidate)
-	Recorded(sessionID, prompt string)
-}
-
-// ApplyInput lands one queued write: the echo it asks for, the composer draft
-// an enter captured, and the prompt a receipt recorded.
-func ApplyInput(h InputHost, result Result, err error) {
-	if err != nil {
-		h.ReportErr(err.Error())
-		return
-	}
-	if result.InputID != "" {
-		h.Landed(result.InputID)
-	}
-	if result.Candidate != nil {
-		h.Hold(*result.Candidate)
-	}
-	if result.PromptID != "" {
-		h.Recorded(result.PromptID, result.Prompt)
-	}
 }

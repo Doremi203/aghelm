@@ -1,9 +1,6 @@
 package ui
 
 import (
-	"github.com/Doremi203/aghelm/internal/keybind"
-	"github.com/Doremi203/aghelm/internal/store"
-	focusruntime "github.com/Doremi203/aghelm/internal/ui/focus/runtime"
 	uisurface "github.com/Doremi203/aghelm/internal/ui/surface"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -25,16 +22,15 @@ const (
 )
 
 // screenID names where the user is, for a completion that must land on the
-// screen it was asked from: the base, whether a session is focused, and
-// how many surfaces are up, so a card opened since the request keeps it.
+// screen it was asked from: the base and how many surfaces are up, so a
+// card opened since the request keeps it.
 type screenID struct {
-	base    baseScreen
-	focused bool
-	depth   int
+	base  baseScreen
+	depth int
 }
 
 func (m *Model) screenID() screenID {
-	return screenID{base: m.base, focused: m.focused(), depth: len(m.surfaces)}
+	return screenID{base: m.base, depth: len(m.surfaces)}
 }
 
 // mouseTaker is the optional capability of a surface that is not a card:
@@ -42,13 +38,6 @@ func (m *Model) screenID() screenID {
 // backdrop around it.
 type mouseTaker interface {
 	Mouse(h uisurface.Host, msg tea.MouseMsg) tea.Cmd
-}
-
-func (m *Model) keys() keybind.Table { return m.services.keys }
-
-func (m *Model) pasteFocused(sess store.Session, text string) tea.Cmd {
-	m.dispatchInput(focusruntime.Request{Kind: focusruntime.Paste, Session: sess, Text: text, Echo: true})
-	return m.nextEffectCmd()
 }
 
 func (m *Model) push(s uisurface.Surface) { m.surfaces = append(m.surfaces, s) }
@@ -90,26 +79,6 @@ func surfaceOf[S uisurface.Surface](m *Model) (S, bool) {
 	var none S
 	return none, false
 }
-
-// inputOwner is who reads plain keys now: the top surface decides, and with
-// none open the base mode does. Focus hands them to the agent.
-func (m *Model) inputOwner() uisurface.Owner {
-	if top, ok := m.top(); ok {
-		return top.Owner()
-	}
-	return m.baseOwner()
-}
-
-// baseOwner is who reads plain keys under the cards: the agent while a
-// session is focused, else the manager.
-func (m *Model) baseOwner() uisurface.Owner {
-	if m.focused() {
-		return uisurface.Agent
-	}
-	return uisurface.Manager
-}
-
-func (m *Model) agentOwnsKeyboard() bool { return m.inputOwner() == uisurface.Agent }
 
 func (m *Model) surfaceKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 	for i := len(m.surfaces) - 1; i >= 0; i-- {

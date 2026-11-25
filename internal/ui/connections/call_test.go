@@ -19,7 +19,7 @@ func TestSessionCallAnswersEveryRemoteAction(t *testing.T) {
 		kind uirail.ActionKind
 		want Call
 	}{
-		{"attach", row, uirail.Focus, Call{Op: OpAttach, Answered: true}},
+		{"attach", row, uirail.Attach, Call{Op: OpAttach, Answered: true}},
 		{"kill asks with the RAM consequence", row, uirail.Kill,
 			Call{Op: OpKill, Answered: true, Action: uidialogs.ConfirmKill, Verb: "kill", Consequence: " frees its RAM there, v revives it."}},
 		{"a dead kill drops the consequence", Row{Kind: SessionRow, Host: "box", Name: "api", Status: "dead"}, uirail.Kill,
@@ -40,7 +40,7 @@ func TestSessionCallAnswersEveryRemoteAction(t *testing.T) {
 		{"restore an unarchived row is a no-op", row, uirail.Restore, Call{Answered: true}},
 		{"a dead attach names the revive key", Row{Kind: SessionRow, Host: "box", Name: "api", Status: "dead"}, uirail.Attach,
 			Call{Answered: true, Refusal: "api is dead on box - press v to revive it"}},
-		{"a terminal says how to close it", Row{Kind: SessionRow, Host: "box", Name: "sh", Status: "dead", Terminal: true}, uirail.Focus,
+		{"a terminal says how to close it", Row{Kind: SessionRow, Host: "box", Name: "sh", Status: "dead", Terminal: true}, uirail.Attach,
 			Call{Answered: true, Refusal: "terminal sh has exited on box - x closes it"}},
 		{"a terminal is not archived", Row{Kind: SessionRow, Host: "box", Name: "sh", Terminal: true}, uirail.Archive,
 			Call{Answered: true, Refusal: "a terminal on box is not archived or revived - x closes it"}},

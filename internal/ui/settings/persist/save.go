@@ -35,8 +35,6 @@ type SaveResult struct {
 	Restored       []uisettings.Readback
 	RestoredHidden string
 	HiddenErr      error
-	// RebindErr is a failure to install the stored ←→ value on tmux.
-	RebindErr error
 }
 
 // RunSave writes the captured values in the order the dialog listed them.
@@ -101,13 +99,5 @@ func (s *State) ApplySave(root Root, request SaveRequest, result SaveResult, err
 			committed = append(committed, uisettings.Readback{Key: value.Key, Value: value.Value})
 		}
 		root.MirrorPrefs(committed)
-	}
-	if result.RebindErr != nil {
-		note := "the ←→ value is saved, but tmux did not take its keys: " + result.RebindErr.Error()
-		if err != nil {
-			root.Caveat(note)
-		} else {
-			root.ReportErr(note)
-		}
 	}
 }

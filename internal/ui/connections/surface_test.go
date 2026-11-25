@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	remote "github.com/Doremi203/aghelm/internal/remote/value"
-	"github.com/Doremi203/aghelm/internal/ui/surface"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -65,8 +64,8 @@ func TestSurfaceSavesAValidatedConnection(t *testing.T) {
 	if !root.saved || root.gen != 3 || root.next != (remote.Connection{Name: "box", Destination: "me@box"}) {
 		t.Fatalf("saved = %t gen = %d next = %+v, want the validated connection on the card's gen", root.saved, root.gen, root.next)
 	}
-	if s.Owner() != surface.Manager || s.Dismissible() {
-		t.Fatal("a card holding fields is a manager-owned card a stray click keeps")
+	if s.Dismissible() {
+		t.Fatal("a card holding fields is a card a stray click keeps")
 	}
 }
 

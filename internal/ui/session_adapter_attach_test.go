@@ -1175,8 +1175,8 @@ func TestReviewDoesNotOpenTheFileTheCursorLeft(t *testing.T) {
 
 // The return policy is decided on captured values, with no model.
 func TestEditorReturnPolicy(t *testing.T) {
-	focus := screenID{focused: true, depth: 1}
-	target := editorReturnTarget{sessionID: "s1", foregroundGen: 4, screen: focus}
+	here := screenID{base: baseReview}
+	target := editorReturnTarget{sessionID: "s1", foregroundGen: 4, screen: here}
 	cases := []struct {
 		name     string
 		target   editorReturnTarget
@@ -1185,11 +1185,11 @@ func TestEditorReturnPolicy(t *testing.T) {
 		quitting bool
 		want     bool
 	}{
-		{"unchanged", target, 4, focus, false, true},
-		{"no session", editorReturnTarget{foregroundGen: 4, screen: focus}, 4, focus, false, false},
-		{"user moved on", target, 5, focus, false, false},
+		{"unchanged", target, 4, here, false, true},
+		{"no session", editorReturnTarget{foregroundGen: 4, screen: here}, 4, here, false, false},
+		{"user moved on", target, 5, here, false, false},
 		{"screen changed", target, 4, screenID{}, false, false},
-		{"quitting", target, 4, focus, true, false},
+		{"quitting", target, 4, here, true, false},
 	}
 	for _, tc := range cases {
 		if got := tc.target.resumes(tc.gen, tc.current, tc.quitting); got != tc.want {
@@ -1219,7 +1219,7 @@ func TestAStaleRefreshKeepsASessionLaunchedAfterItWasListed(t *testing.T) {
 	m.drainEffects(t)
 	*m = *updated.(*Model)
 
-	if uilifecycle.SessionGone(m.workspace.sessions, launched[0].ID) {
+	if sessionGone(m.workspace.sessions, launched[0].ID) {
 		t.Fatalf("the stale poll took the launched session off screen, leaving %v", m.sessionRows())
 	}
 }
@@ -1240,7 +1240,7 @@ func TestAStaleRefreshKeepsALaunchListedWhileTmuxWasStartingIt(t *testing.T) {
 	m.drainEffects(t)
 	*m = *updated.(*Model)
 
-	if uilifecycle.SessionGone(m.workspace.sessions, launched.ID) {
+	if sessionGone(m.workspace.sessions, launched.ID) {
 		t.Fatalf("the stale poll took the launched session off screen, leaving %v", m.sessionRows())
 	}
 }
@@ -1291,7 +1291,7 @@ func TestAStaleRefreshDoesNotBringBackASessionJustDeleted(t *testing.T) {
 	m.drainEffects(t)
 	*m = *updated.(*Model)
 
-	if !uilifecycle.SessionGone(m.workspace.sessions, sess.ID) {
+	if !sessionGone(m.workspace.sessions, sess.ID) {
 		t.Fatalf("a deleted session came back on a stale poll: %v", m.sessionRows())
 	}
 }

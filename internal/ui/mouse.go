@@ -3,22 +3,19 @@ package ui
 import (
 	"time"
 
-	uigeometry "github.com/Doremi203/aghelm/internal/ui/geometry"
 	"github.com/Doremi203/aghelm/internal/ui/presentation"
 	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 // syncMouseCapture hands the mouse to the terminal for anyone who turned
-// the mouse-mode setting off and wants native click-drag selection back,
-// except in focus mode: that pane's own mouse forwarding predates the
-// setting and stays on regardless, the way it always has.
+// the mouse-mode setting off and wants native click-drag selection back.
 //
 // An open row menu asks for every motion, pressed or not, so hovering an
-// entry can light it up, and so does focus, so hovering a link shows the hand.
+// entry can light it up.
 func (m *Model) syncMouseCapture() tea.Cmd {
-	release := m.prefs.mouseDisabled && !m.focused()
-	hover := !release && (m.focused() || m.base == baseList && m.rail.MenuOpen())
+	release := m.prefs.mouseDisabled
+	hover := !release && m.base == baseList && m.rail.MenuOpen()
 	if release == m.mouse.released && hover == m.mouse.hover {
 		return nil
 	}
@@ -40,14 +37,11 @@ func (m *Model) handleMouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 	if msg.Action == tea.MouseActionPress {
 		m.gens.foreground++
 	}
-	if m.focused() {
-		m.focus.pane.TrackPointer(msg.X, msg.Y)
-	}
 	return m.routeMouse(msg)
 }
 
 // routeMouse hands an event to the surface it belongs to: a card floating
-// over the frame, the focused pane, Review, or the list. A painted key runs
+// over the frame, Review, or the list. A painted key runs
 // as if typed wherever it shows. A rename typed into its row holds the
 // list still.
 //
@@ -218,35 +212,6 @@ func (m *Model) wheelCard(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// focusMouse runs the mouse on a focused session. A press on a rail row
-// leaves focus for that row, and a left press on the rail's blank leaves;
-// everything else is the pane's.
-func (m *Model) focusMouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
-	if m.pressOnDivider(msg) {
-		return m.beginDividerDrag()
-	}
-	railPress := msg.Action == tea.MouseActionPress &&
-		(msg.Button == tea.MouseButtonLeft || msg.Button == tea.MouseButtonRight)
-	if !railPress {
-		return m.handleFocusMouse(msg)
-	}
-	ctx := m.railMouseContext()
-	if hit, ok := m.rail.Hit(m.layout.displayedRail, msg, ctx); ok {
-		focused, _ := m.rail.Selected()
-		left := m.leaveFocus()
-		decision := m.rail.Mouse(msg, m.layout.displayedRail, ctx)
-		if hit == focused {
-			m.rail.CancelClickFocus()
-		}
-		model, command := m.applyRailDecision(decision)
-		return model, tea.Batch(left, command)
-	}
-	if msg.Button == tea.MouseButtonLeft && m.onRailColumn(msg.X, msg.Y) {
-		return m, m.leaveFocus()
-	}
-	return m.handleFocusMouse(msg)
-}
-
 func (m *Model) reviewMouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 	if tea.MouseEvent(msg).IsWheel() {
 		m.review.Wheel(presentation.WheelStep(msg), m.diffCodeHeight())
@@ -261,15 +226,11 @@ func (m *Model) reviewMouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 func (m *Model) railMouseContext() uirail.MouseContext {
 	return uirail.MouseContext{
 		BodyOriginY: m.listChromeRows(),
-		DividerX:    m.dividerX(),
-		FullWidth:   m.fullRows(),
-		FullLayout:  m.prefs.fullLayout,
 		Now:         time.Now(),
 	}
 }
 
-// listMouse runs the mouse on the list screen: the rail, the split's
-// divider, the preview beside the rail, and the quick bar.
+// listMouse runs the mouse on the list screen: the rail and the quick bar.
 func (m *Model) listMouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 	ctx := m.railMouseContext()
 	if m.rail.Reordering() || m.rail.MenuOpen() {
@@ -278,44 +239,15 @@ func (m *Model) listMouse(msg tea.MouseMsg) (tea.Model, tea.Cmd) {
 	if tea.MouseEvent(msg).IsWheel() {
 		return m.listWheel(msg, ctx)
 	}
-	split := &m.layout.split
-	switch msg.Action {
-	case tea.MouseActionPress:
+	if msg.Action == tea.MouseActionPress {
 		return m.listPress(msg, ctx)
-	case tea.MouseActionMotion:
-		if split.Dragging {
-			split.Moved = true
-			m.setSplitFromX(msg.X)
-			return m, nil
-		}
-	case tea.MouseActionRelease:
-		if split.Dragging {
-			if !split.Moved {
-				m.endDrag()
-				return m, nil
-			}
-			m.setSplitFromX(msg.X)
-			return m.exitResizeMode(true)
-		}
 	}
 	return m.applyRailDecision(m.rail.Mouse(msg, m.layout.displayedRail, ctx))
 }
 
-// wheelSettleGap is the pause between two wheel notches that ends a
-// trackpad flick. A flick keeps sending notches after the fingers lift and
-// slows down at the end. In iTerm2 debug logs its last gaps run about 180
-// to 220ms, so this covers that tail with some margin. Ending on a gap
-// rather than after a fixed time covers a flick of any length without
-// eating the next deliberate scroll.
-const wheelSettleGap = 300 * time.Millisecond
-
 // listWheel scrolls the rail, or the list open over the quick bar's
-// prompt, which owns the wheel the way it owns ↑↓. A resize keeps both
-// still, and so does a flick that was still arriving when focus left.
+// prompt, which owns the wheel the way it owns ↑↓.
 func (m *Model) listWheel(msg tea.MouseMsg, ctx uirail.MouseContext) (tea.Model, tea.Cmd) {
-	if m.layout.split.ResizeMode || m.layout.split.Dragging || m.swallowsFlick(ctx.Now) {
-		return m, nil
-	}
 	if !m.quickPicking() {
 		return m.applyRailDecision(m.rail.Mouse(msg, m.layout.displayedRail, ctx))
 	}
@@ -325,88 +257,12 @@ func (m *Model) listWheel(msg tea.MouseMsg, ctx uirail.MouseContext) (tea.Model,
 	return m, nil
 }
 
-// swallowsFlick reports whether a wheel notch at now still belongs to the
-// flick that was arriving when focus left, and makes it the notch the next
-// gap is measured from.
-func (m *Model) swallowsFlick(now time.Time) bool {
-	last := m.mouse.flickAt
-	if last.IsZero() {
-		return false
-	}
-	if now.Sub(last) > wheelSettleGap {
-		m.mouse.flickAt = time.Time{}
-		return false
-	}
-	m.mouse.flickAt = now
-	return true
-}
-
 func (m *Model) listPress(msg tea.MouseMsg, ctx uirail.MouseContext) (tea.Model, tea.Cmd) {
 	if msg.Button != tea.MouseButtonLeft && msg.Button != tea.MouseButtonRight {
-		return m, nil
-	}
-	split := &m.layout.split
-	if split.Dragging && !split.ResizeMode {
-		m.exitResizeMode(split.Moved)
-	}
-	if m.pressOnDivider(msg) {
-		return m.beginDividerDrag()
-	}
-	if split.ResizeMode {
 		return m, nil
 	}
 	if hit, ok := m.quickHitAt(msg.X, msg.Y); ok {
 		return m, m.handleQuickClick(hit)
 	}
-	if msg.Button == tea.MouseButtonLeft && m.onContentColumn(msg.X, msg.Y) {
-		if url := m.layout.previewLinks.ShownAt(msg.X, msg.Y); url != "" {
-			return m, openLinkCmd(url)
-		}
-		return m.focusFromPreview()
-	}
 	return m.applyRailDecision(m.rail.Mouse(msg, m.layout.displayedRail, ctx))
-}
-
-// pressOnDivider reports a left press on the split's divider.
-func (m *Model) pressOnDivider(msg tea.MouseMsg) bool {
-	if !isLeftPress(msg) || m.prefs.fullLayout || m.rail.Searching() {
-		return false
-	}
-	y0, y1 := m.bodyYRange()
-	return msg.Y >= y0 && msg.Y < y1 && uigeometry.OnDivider(msg.X, m.dividerX())
-}
-
-// beginDividerDrag starts a drag of the divider, from the list or from a
-// focused session, whose pane the resize surface then stacks over.
-func (m *Model) beginDividerDrag() (tea.Model, tea.Cmd) {
-	split := &m.layout.split
-	split.Dragging, split.Moved = true, false
-	if !split.ResizeMode {
-		split.RatioBefore = split.Ratio
-		m.push(newResizeSurface(m))
-	}
-	return m, nil
-}
-
-// onRailColumn and onContentColumn place a point in the split's body on
-// either side of the divider, which belongs to neither.
-func (m *Model) onRailColumn(x, y int) bool {
-	y0, y1 := m.bodyYRange()
-	return !m.prefs.fullLayout && x < m.dividerX() && y >= y0 && y < y1
-}
-
-func (m *Model) onContentColumn(x, y int) bool {
-	y0, y1 := m.bodyYRange()
-	return !m.prefs.fullLayout && x > m.dividerX()+uigeometry.SplitHitSlop && y >= y0 && y < y1
-}
-
-// focusFromPreview focuses the session under the cursor from a press on the
-// preview beside it. The press only focuses: it never reaches the agent.
-// A group, an archived session, the search field and the quick bar keep it.
-func (m *Model) focusFromPreview() (tea.Model, tea.Cmd) {
-	row, ok := m.selectedRow()
-	if !ok || row.isGroup || row.sess.Archived || m.rail.Busy() || m.quick() != nil {
-		return m, nil
-	}
-	return m.focusSelected()
 }

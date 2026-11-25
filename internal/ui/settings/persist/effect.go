@@ -1,37 +1,26 @@
 package persist
 
 import (
-	"slices"
-
 	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
 	uisettings "github.com/Doremi203/aghelm/internal/ui/settings"
 )
 
 // Services is what the Settings effect lane captures for one job: the writer
 // a save writes and reads back through, the key saver a key save writes
-// through, the preset catalog a prompt change reads back, and the rebind
-// of the in-session tmux keys a stored ←→ value asks for.
+// through, and the preset catalog a prompt change reads back.
 type Services struct {
 	Writer  Writer
 	Keys    KeySaver
 	Presets Presets
-	Rebind  func() error
 }
 
 func (r SaveRequest) EffectName() string { return "settings save" }
 
 func (r SaveRequest) EffectCopy() uieffects.Request { return r.Clone() }
 
-// Run writes the captured values in the order the dialog listed them. A
-// committed ←→ value rebinds the sessions' keys in the same job. A rebind
-// that fails is reported on its own, since the value is stored either way.
+// Run writes the captured values in the order the dialog listed them.
 func (r SaveRequest) Run(s Services) (uieffects.Result, error) {
-	result, err := RunSave(r.Clone(), s.Writer)
-	committed := r.Values[:min(result.Committed, len(r.Values))]
-	if slices.ContainsFunc(committed, func(value uisettings.Value) bool { return value.Key == uisettings.ArrowStepSetting }) {
-		result.RebindErr = s.Rebind()
-	}
-	return result, err
+	return RunSave(r.Clone(), s.Writer)
 }
 
 func (r KeysRequest) EffectName() string { return "key binding save" }

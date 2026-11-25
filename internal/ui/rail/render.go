@@ -420,12 +420,6 @@ func (r renderer) sessionGlyph(session Session) string {
 	return r.palette.sessionGlyph(r.glyphs(), session, r.ctx.StartupPhase)
 }
 
-// SessionGlyph is the status mark a session's row wears, for root views
-// that name the same session outside the rail.
-func SessionGlyph(theme Theme, mode presentation.GlyphMode, session Session, startupPhase int) string {
-	return newPalette(theme).sessionGlyph(presentation.GlyphsFor(mode), session, startupPhase)
-}
-
 func (p palette) sessionGlyph(g presentation.GlyphSet, session Session, startupPhase int) string {
 	if session.Status == "starting" {
 		return lipgloss.NewStyle().Foreground(p.statusColor(session.Status)).
@@ -448,10 +442,6 @@ func (r renderer) renderSession(row treeRow, selected bool, width int, pad, guid
 	}
 	lead := pad + guides + r.sessionGlyph(session) + " "
 	handle := r.rowHandle(row, selected)
-	focus := ""
-	if selected && r.ctx.Focused {
-		focus = " " + r.palette.focusBadge.Render(" FOCUS ")
-	}
 	badges := ""
 	if session.Queued > 0 {
 		badges = " " + r.palette.inbox(r.glyphs(), session.Queued)
@@ -461,15 +451,11 @@ func (r renderer) renderSession(row treeRow, selected bool, width int, pad, guid
 	}
 	// A connection's rows carry whatever its host sent.
 	name := presentation.EscapeControlsInline(sessionName(session))
-	room := width - railGutter - ansi.StringWidth(lead+handle+focus+badges)
-	if room <= 0 {
-		room += ansi.StringWidth(focus)
-		focus = ""
-	}
+	room := width - railGutter - ansi.StringWidth(lead+handle+badges)
 	if ansi.StringWidth(name) > room {
 		name = ansi.Truncate(name, max(room, 0), "…")
 	}
-	head := lead + handle + r.palette.highlight(name, r.model.search, nameStyle) + focus + badges
+	head := lead + handle + r.palette.highlight(name, r.model.search, nameStyle) + badges
 	metaStyle := r.palette.subtle
 	if selected {
 		metaStyle = r.palette.muted

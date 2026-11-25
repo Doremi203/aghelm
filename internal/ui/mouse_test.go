@@ -4,13 +4,8 @@ import (
 	"fmt"
 	"go/ast"
 	"os"
-	"os/exec"
 	"path"
-	"path/filepath"
 	"reflect"
-	"runtime"
-	"slices"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -22,17 +17,10 @@ import (
 	"github.com/Doremi203/aghelm/internal/keybind"
 	"github.com/Doremi203/aghelm/internal/remote"
 	"github.com/Doremi203/aghelm/internal/store"
-	"github.com/Doremi203/aghelm/internal/testfixture"
-	"github.com/Doremi203/aghelm/internal/tmux"
 	uidialogs "github.com/Doremi203/aghelm/internal/ui/dialogs"
-	uifocus "github.com/Doremi203/aghelm/internal/ui/focus"
-	focusruntime "github.com/Doremi203/aghelm/internal/ui/focus/runtime"
-	uigeometry "github.com/Doremi203/aghelm/internal/ui/geometry"
-	uigeometrypanes "github.com/Doremi203/aghelm/internal/ui/geometry/panes"
 	uihelp "github.com/Doremi203/aghelm/internal/ui/help"
 	uiinstall "github.com/Doremi203/aghelm/internal/ui/launchhint/install"
 	"github.com/Doremi203/aghelm/internal/ui/presentation"
-	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
 	uireview "github.com/Doremi203/aghelm/internal/ui/review"
 	uisettings "github.com/Doremi203/aghelm/internal/ui/settings"
 	uisurface "github.com/Doremi203/aghelm/internal/ui/surface"
@@ -64,238 +52,6 @@ func TestSyncMouseCaptureRespectsMouseDisabled(t *testing.T) {
 	}
 	if !m.mouse.released {
 		t.Fatal("mouseReleased should follow the setting in list mode")
-	}
-	m.push(newFocusSurface(m))
-	if cmd := m.syncMouseCapture(); cmd == nil {
-		t.Fatal("entering focus mode should re-capture regardless of the setting")
-	}
-	if m.mouse.released {
-		t.Fatal("focus mode must keep the mouse captured even with the setting off")
-	}
-}
-
-// A focused pane asks for every motion, so the mouse hovering a link
-// reaches it with no button held.
-func TestSyncMouseCaptureAsksFocusForEveryMotion(t *testing.T) {
-	m := &Model{}
-	m.push(newFocusSurface(m))
-	cmd := m.syncMouseCapture()
-	if cmd == nil || cmd() != tea.EnableMouseAllMotion() {
-		t.Fatal("focus did not ask for every motion")
-	}
-	m.clearSurfaces()
-	if cmd := m.syncMouseCapture(); cmd == nil || m.mouse.hover {
-		t.Fatal("leaving focus kept every motion on")
-	}
-}
-
-func TestDragReleasePersistsAndExits(t *testing.T) {
-	st, err := store.Open(filepath.Join(t.TempDir(), "state.db"))
-	if err != nil {
-		t.Fatalf("store: %v", err)
-	}
-	t.Cleanup(func() { st.Close() })
-
-	m := &Model{
-		layout: layoutState{
-			width:  100,
-			height: 40,
-			split:  uigeometry.Gesture{Ratio: uigeometry.DefaultSplitRatio},
-		},
-		services: services{listKeys: keybind.DefaultList(),
-			store: st},
-	}
-	updated, _ := m.enterResizeMode()
-	m = updated.(*Model)
-	m.drainEffects(t)
-
-	div := m.dividerX()
-	// Body starts at the header's height; any y inside the body range works.
-	updated, _ = m.handleMouse(tea.MouseMsg{
-		X: div, Y: 5, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
-	})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.layout.split.Dragging {
-		t.Fatal("press on divider should start drag")
-	}
-
-	updated, _ = m.handleMouse(tea.MouseMsg{
-		X: 50, Y: 5, Action: tea.MouseActionMotion, Button: tea.MouseButtonLeft,
-	})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if left, _ := m.splitWidths(); left != 50 {
-		t.Fatalf("motion should set left=50, got %d", left)
-	}
-
-	updated, cmd := m.handleMouse(tea.MouseMsg{
-		X: 50, Y: 5, Action: tea.MouseActionRelease, Button: tea.MouseButtonLeft,
-	})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if m.layout.split.Dragging || m.layout.split.ResizeMode {
-		t.Fatal("release should end drag and exit resize mode")
-	}
-	if cmd != nil {
-		t.Fatal("release should not toggle mouse reporting")
-	}
-
-	raw, err := st.Setting(uigeometry.SplitRatioSetting)
-	if err != nil {
-		t.Fatalf("read setting: %v", err)
-	}
-	got, err := strconv.ParseFloat(raw, 64)
-	if err != nil {
-		t.Fatalf("parse setting %q: %v", raw, err)
-	}
-	if got != 0.5 {
-		t.Fatalf("persisted ratio = %v want 0.5", got)
-	}
-}
-
-// Motion updates the live ratio only; tmux resize happens once on release.
-func TestDragResizesTmuxOnlyOnRelease(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	createSession(t, m, "split-drag", t.TempDir(), "")
-	id := m.sessionRows()[0].ID
-	m.layout.split.Ratio = uigeometry.DefaultSplitRatio
-	m.applyCmd(t, m.refreshCmd())
-	m.drainEffects(t)
-	before := windowWidth(t, id)
-	if before != m.previewPaneWidth() {
-		t.Fatalf("setup width = %d want %d", before, m.previewPaneWidth())
-	}
-
-	// Drift the session away so a real resize is observable.
-	if _, err := tmuxCmd(t, "resize-window", "-t", "am_"+id, "-x", "100", "-y", "30").CombinedOutput(); err != nil {
-		t.Fatalf("resize-window: %v", err)
-	}
-	if w := windowWidth(t, id); w != 100 {
-		t.Fatalf("drifted width = %d want 100", w)
-	}
-
-	updated, _ := m.enterResizeMode()
-	m = updated.(*Model)
-	m.drainEffects(t)
-	div := m.dividerX()
-	y0, _ := m.bodyYRange()
-	updated, _ = m.handleMouse(tea.MouseMsg{
-		X: div, Y: y0, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
-	})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	updated, _ = m.handleMouse(tea.MouseMsg{
-		X: 50, Y: y0, Action: tea.MouseActionMotion, Button: tea.MouseButtonLeft,
-	})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if w := windowWidth(t, id); w != 100 {
-		t.Fatalf("motion must not resize tmux, width = %d want 100", w)
-	}
-
-	updated, _ = m.handleMouse(tea.MouseMsg{
-		X: 50, Y: y0, Action: tea.MouseActionRelease, Button: tea.MouseButtonLeft,
-	})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	// After exit, grip is gone; measure the committed preview width.
-	wantPreview := m.previewPaneWidth()
-	if wantPreview == 100 {
-		t.Fatal("test setup: preview width should differ from drifted 100")
-	}
-	if w := windowWidth(t, id); w != wantPreview {
-		t.Fatalf("release should resize once to preview width, got %d want %d", w, wantPreview)
-	}
-}
-
-func TestPressOutsideBodyDoesNotDrag(t *testing.T) {
-	m := &Model{
-		layout: layoutState{
-			width:  100,
-			height: 40,
-			split:  uigeometry.Gesture{Ratio: 0.34, ResizeMode: true},
-		},
-		services: services{listKeys: keybind.DefaultList()},
-	}
-	div := m.dividerX()
-	updated, _ := m.handleMouse(tea.MouseMsg{
-		X: div, Y: 0, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
-	})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if m.layout.split.Dragging {
-		t.Fatal("press on header row must not start drag")
-	}
-	y0, y1 := m.bodyYRange()
-	if y0 != m.listChromeRows() {
-		t.Fatalf("body start = %d want %d", y0, m.listChromeRows())
-	}
-	updated, _ = m.handleMouse(tea.MouseMsg{
-		X: div, Y: y1, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
-	})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if m.layout.split.Dragging {
-		t.Fatal("press on exclusive body end must not start drag")
-	}
-}
-
-func TestDragCancelRestoresRatio(t *testing.T) {
-	m := &Model{
-		layout: layoutState{
-			width:  100,
-			height: 40,
-			split:  uigeometry.Gesture{Ratio: 0.34},
-		},
-		services: services{listKeys: keybind.DefaultList()},
-	}
-	updated, _ := m.enterResizeMode()
-	m = updated.(*Model)
-	m.drainEffects(t)
-	div := m.dividerX()
-	updated, _ = m.handleMouse(tea.MouseMsg{
-		X: div, Y: 5, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
-	})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	updated, _ = m.handleMouse(tea.MouseMsg{
-		X: 55, Y: 5, Action: tea.MouseActionMotion, Button: tea.MouseButtonLeft,
-	})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if left, _ := m.splitWidths(); left != 55 {
-		t.Fatalf("pre-cancel left = %d want 55", left)
-	}
-
-	updated, _ = m.exitResizeMode(false)
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if m.layout.split.ResizeMode || m.layout.split.Dragging {
-		t.Fatal("cancel should clear resize state")
-	}
-	if left, _ := m.splitWidths(); left != 34 {
-		t.Fatalf("cancel should restore left=34, got %d", left)
-	}
-}
-
-func TestPressOffDividerDoesNotDrag(t *testing.T) {
-	m := &Model{
-		layout: layoutState{
-			width:  100,
-			height: 40,
-			split:  uigeometry.Gesture{Ratio: 0.34, ResizeMode: true},
-		},
-		services: services{listKeys: keybind.DefaultList()},
-	}
-	updated, _ := m.handleMouse(tea.MouseMsg{
-		X: 5, Y: 5, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
-	})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if m.layout.split.Dragging {
-		t.Fatal("press far from divider should not start drag")
 	}
 }
 
@@ -344,8 +100,8 @@ func TestClickSelectsRow(t *testing.T) {
 	m.selectSessionRow(t, "beta")
 
 	line := paintedRailLines(t, m, "alpha")[0]
-	y0, _ := m.bodyYRange()
-	updated, cmd := m.handleMouse(tea.MouseMsg{
+	y0 := m.listChromeRows()
+	updated, _ := m.handleMouse(tea.MouseMsg{
 		X: 2, Y: y0 + line, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
 	})
 	m = updated.(*Model)
@@ -354,120 +110,22 @@ func TestClickSelectsRow(t *testing.T) {
 	if !ok || sess.Name != "alpha" {
 		t.Fatalf("click should select alpha, got %q ok=%v", sess.Name, ok)
 	}
-	if cmd == nil {
-		t.Fatal("selecting a different row should schedule a preview")
-	}
 	if !m.onList() {
 		t.Fatalf("first click should select, not focus, screen = %v", m.screenID())
 	}
 }
 
-func TestClickOnAnotherRowFromFocusFocusesIt(t *testing.T) {
+// Double click attaches. The pointer names the row, not the cursor: a
+// wheel notch, a j or the poll can walk the cursor away between the two
+// presses.
+func TestDoubleClickAttachesTheRowUnderThePointer(t *testing.T) {
 	t.Parallel()
 	m := buildModel(t)
 	createSession(t, m, "alpha", t.TempDir(), "")
 	createSession(t, m, "beta", t.TempDir(), "")
-	m.selectSessionRow(t, "alpha")
-	updated, _ := m.focusSelected()
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.focused() {
-		t.Fatalf("test setup: focus alpha, screen = %v, err = %q", m.screenID(), m.errBar.text)
-	}
-
-	line := paintedRailLines(t, m, "beta")[0]
-	y0, _ := m.bodyYRange()
-	at := tea.MouseMsg{X: 2, Y: y0 + line, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft}
-	updated, _ = m.handleMouse(at)
-	m.drainEffects(t)
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.onList() {
-		t.Fatalf("the press should leave focus, screen = %v", m.screenID())
-	}
-	at.Action = tea.MouseActionRelease
-	updated, _ = m.handleMouse(at)
-	m.drainEffects(t)
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if sess, ok := m.selected(); !m.focused() || !ok || sess.Name != "beta" {
-		t.Fatalf("the release should focus beta, screen = %v got %q", m.screenID(), sess.Name)
-	}
-}
-
-func TestClickOnFocusedSessionRowLeavesFocus(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	createSession(t, m, "alpha", t.TempDir(), "")
-	m.selectSessionRow(t, "alpha")
-	updated, _ := m.focusSelected()
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.focused() {
-		t.Fatalf("test setup: focus alpha, screen = %v, err = %q", m.screenID(), m.errBar.text)
-	}
 
 	line := paintedRailLines(t, m, "alpha")[0]
-	y0, _ := m.bodyYRange()
-	at := tea.MouseMsg{X: 2, Y: y0 + line, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft}
-	updated, _ = m.handleMouse(at)
-	m.drainEffects(t)
-	m = updated.(*Model)
-	m.drainEffects(t)
-	at.Action = tea.MouseActionRelease
-	updated, _ = m.handleMouse(at)
-	m.drainEffects(t)
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.onList() {
-		t.Fatalf("click on the focused row should leave focus, screen = %v", m.screenID())
-	}
-	if sess, ok := m.selected(); !ok || sess.Name != "alpha" {
-		t.Fatalf("selection should stay on alpha, got %q ok=%v", sess.Name, ok)
-	}
-}
-
-func TestClickInFocusedPaneStaysFocused(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	createSession(t, m, "alpha", t.TempDir(), "")
-	m.selectSessionRow(t, "alpha")
-	waitForPreview(t, m)
-	updated, _ := m.focusSelected()
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.focused() {
-		t.Fatalf("test setup: focus alpha, screen = %v, err = %q", m.screenID(), m.errBar.text)
-	}
-	// Empty cat panes have no rendered hit box; give this click test visible content.
-	m.workspace.preview = "focused pane"
-	preparedView(m)
-	box := m.focus.pane.FrameBox()
-	if !box.Valid {
-		t.Fatal("test setup: focused pane has no box")
-	}
-	updated, _ = m.handleMouse(tea.MouseMsg{
-		X: box.X, Y: box.Y, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
-	})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.focused() {
-		t.Fatalf("click in the pane should stay focused, screen = %v", m.screenID())
-	}
-}
-
-// Double click is the full layout's focus gesture. The pointer names the
-// row, not the cursor: a wheel notch, a j or the poll can walk the cursor
-// away between the two presses.
-func TestDoubleClickFocusesTheRowUnderThePointer(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	m.prefs.fullLayout = true
-	createSession(t, m, "alpha", t.TempDir(), "")
-	createSession(t, m, "beta", t.TempDir(), "")
-
-	line := paintedRailLines(t, m, "alpha")[0]
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	press := tea.MouseMsg{X: 2, Y: y0 + line, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft}
 	updated, _ := m.handleMouse(press)
 	m.drainEffects(t)
@@ -476,14 +134,9 @@ func TestDoubleClickFocusesTheRowUnderThePointer(t *testing.T) {
 	m.selectSessionRow(t, "beta")
 
 	updated, _ = m.handleMouse(press)
-	m.drainEffects(t)
 	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.focused() {
-		t.Fatalf("double click should focus, screen = %v, err = %q", m.screenID(), m.errBar.text)
-	}
-	if sess, ok := m.selected(); !ok || sess.Name != "alpha" {
-		t.Fatalf("double click should focus the row it landed on, got %q ok=%v", sess.Name, ok)
+	if got := attachQueued(t, m); got != "alpha" {
+		t.Fatalf("double click should attach the row it landed on, got %q, err = %q", got, m.errBar.text)
 	}
 }
 
@@ -492,7 +145,6 @@ func TestDoubleClickFocusesTheRowUnderThePointer(t *testing.T) {
 func TestDoubleClickPairsAcrossARebuild(t *testing.T) {
 	t.Parallel()
 	m := buildModel(t)
-	m.prefs.fullLayout = true
 	dir := t.TempDir()
 	for _, group := range []string{"aaa", "zzz"} {
 		if err := m.services.store.CreateGroup(group, dir); err != nil {
@@ -503,7 +155,7 @@ func TestDoubleClickPairsAcrossARebuild(t *testing.T) {
 	createSession(t, m, "filler", dir, "aaa")
 	createSession(t, m, "target", dir, "zzz")
 
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	line := paintedRailLines(t, m, "target")[0]
 	updated, _ := m.handleMouse(tea.MouseMsg{
 		X: 2, Y: y0 + line, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
@@ -526,96 +178,20 @@ func TestDoubleClickPairsAcrossARebuild(t *testing.T) {
 		X: 2, Y: y0 + line, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
 	})
 	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.focused() {
-		t.Fatalf("the pair should survive a rebuild, screen = %v, err = %q", m.screenID(), m.errBar.text)
-	}
-	if sess, ok := m.selected(); !ok || sess.Name != "target" {
-		t.Fatalf("should focus target, got %q ok=%v", sess.Name, ok)
+	if got := attachQueued(t, m); got != "target" {
+		t.Fatalf("the pair should survive a rebuild and attach target, got %q, err = %q", got, m.errBar.text)
 	}
 }
 
-// A session that has painted nothing yet leaves no pane box, and its
-// column is still its own: clicking it must not eject the user.
-func TestClickInTheFocusedColumnStaysFocused(t *testing.T) {
+func TestDoubleClickAttachesTheRowJustSelected(t *testing.T) {
 	t.Parallel()
 	m := buildModel(t)
-	createSession(t, m, "alpha", t.TempDir(), "")
-	m.selectSessionRow(t, "alpha")
-	updated, _ := m.focusSelected()
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.focused() {
-		t.Fatalf("test setup: focus alpha, screen = %v, err = %q", m.screenID(), m.errBar.text)
-	}
-
-	for _, tc := range []struct {
-		name    string
-		preview string
-	}{
-		{"nothing captured yet", ""},
-		{"a capture shorter than the column", "one line"},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			m.workspace.preview = tc.preview
-			preparedView(m)
-			y0, _ := m.bodyYRange()
-			updated, _ := m.handleMouse(tea.MouseMsg{
-				X: m.focusPaneOriginX(), Y: y0, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
-			})
-			m = updated.(*Model)
-			m.drainEffects(t)
-			if !m.focused() {
-				t.Fatalf("a click in the session's own column must not leave focus, screen = %v", m.screenID())
-			}
-		})
-	}
-}
-
-// Full screen focus paints no rail, so the list frame's hits must not
-// outlive it and hand a click a row nobody pointed at.
-func TestClickInFullScreenFocusStaysFocused(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	createSession(t, m, "alpha", t.TempDir(), "")
-	createSession(t, m, "beta", t.TempDir(), "")
-	m.selectSessionRow(t, "beta")
-	preparedView(m)
-
-	m.prefs.fullLayout = true
-	m.selectSessionRow(t, "alpha")
-	updated, _ := m.focusSelected()
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.focused() {
-		t.Fatalf("test setup: focus alpha, screen = %v, err = %q", m.screenID(), m.errBar.text)
-	}
-	preparedView(m)
-
-	y0, _ := m.bodyYRange()
-	updated, _ = m.handleMouse(tea.MouseMsg{
-		X: 2, Y: y0, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
-	})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.focused() {
-		t.Fatalf("a click with no list on screen must not leave focus, screen = %v", m.screenID())
-	}
-	if sess, ok := m.selected(); !ok || sess.Name != "alpha" {
-		t.Fatalf("selection should stay on alpha, got %q ok=%v", sess.Name, ok)
-	}
-}
-
-func TestDoubleClickFocusesTheRowJustSelected(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	m.prefs.fullLayout = true
 	createSession(t, m, "alpha", t.TempDir(), "")
 	createSession(t, m, "beta", t.TempDir(), "")
 	m.selectSessionRow(t, "beta")
 
 	line := paintedRailLines(t, m, "alpha")[0]
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	press := tea.MouseMsg{X: 2, Y: y0 + line, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft}
 	updated, _ := m.handleMouse(press)
 	m.drainEffects(t)
@@ -625,47 +201,20 @@ func TestDoubleClickFocusesTheRowJustSelected(t *testing.T) {
 		t.Fatalf("first click should select, screen = %v", m.screenID())
 	}
 	updated, _ = m.handleMouse(press)
-	m.drainEffects(t)
 	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.focused() {
-		t.Fatalf("double click should focus alpha, screen = %v, err = %q", m.screenID(), m.errBar.text)
-	}
-}
-
-func TestDoubleClickFocusesWhenEnterAttaches(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	m.prefs.fullLayout = true
-	m.prefs.focusOnEnter = false
-	createSession(t, m, "alpha", t.TempDir(), "")
-	m.selectSessionRow(t, "alpha")
-
-	line := paintedRailLines(t, m, "alpha")[0]
-	y0, _ := m.bodyYRange()
-	press := tea.MouseMsg{X: 2, Y: y0 + line, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft}
-	updated, _ := m.handleMouse(press)
-	m.drainEffects(t)
-	m = updated.(*Model)
-	m.drainEffects(t)
-	updated, _ = m.handleMouse(press)
-	m.drainEffects(t)
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.focused() {
-		t.Fatalf("double click should focus even when Enter attaches, screen = %v, err = %q", m.screenID(), m.errBar.text)
+	if got := attachQueued(t, m); got != "alpha" {
+		t.Fatalf("double click should attach alpha, got %q, err = %q", got, m.errBar.text)
 	}
 }
 
 func TestSlowSecondClickDoesNotFocus(t *testing.T) {
 	t.Parallel()
 	m := buildModel(t)
-	m.prefs.fullLayout = true
 	createSession(t, m, "alpha", t.TempDir(), "")
 	m.selectSessionRow(t, "alpha")
 
 	line := paintedRailLines(t, m, "alpha")[0]
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	press := tea.MouseMsg{X: 2, Y: y0 + line, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft}
 	ctx := m.railMouseContext()
 	ctx.Now = time.Now().Add(-time.Second)
@@ -695,7 +244,7 @@ func TestClickOnSelectedGroupTogglesCollapse(t *testing.T) {
 	}
 
 	line := paintedGroupLines(t, m, "work")[0]
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	press := tea.MouseMsg{X: 2, Y: y0 + line, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft}
 	updated, _ := m.handleMouse(press)
 	m.drainEffects(t)
@@ -710,7 +259,7 @@ func TestClickOnSelectedGroupTogglesCollapse(t *testing.T) {
 	}
 
 	line = paintedGroupLines(t, m, "work")[0]
-	y0, _ = m.bodyYRange()
+	y0 = m.listChromeRows()
 	press.Y = y0 + line
 	updated, _ = m.handleMouse(press)
 	m.drainEffects(t)
@@ -726,8 +275,7 @@ func TestClickOnSelectedGroupTogglesCollapse(t *testing.T) {
 }
 
 // The rail's last painted column carries row text, so it belongs to the
-// row under it. The divider is resolved before the row is, so a hit target
-// that reached back over that column would cost every row its right edge.
+// row under it.
 func TestClickOnRailLastColumnSelectsRow(t *testing.T) {
 	t.Parallel()
 	m := buildModel(t)
@@ -736,294 +284,14 @@ func TestClickOnRailLastColumnSelectsRow(t *testing.T) {
 	m.selectSessionRow(t, "beta")
 
 	line := paintedRailLines(t, m, "alpha")[0]
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	updated, _ := m.handleMouse(tea.MouseMsg{
-		X: m.dividerX() - 1, Y: y0 + line, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
+		X: m.layout.width - 1, Y: y0 + line, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
 	})
 	m = updated.(*Model)
 	m.drainEffects(t)
-	if m.layout.split.Dragging || m.layout.split.ResizeMode {
-		t.Fatal("the rail's own last column must not grab the divider")
-	}
 	if sess, ok := m.selected(); !ok || sess.Name != "alpha" {
 		t.Fatalf("click on the rail's last column should select alpha, got %q ok=%v", sess.Name, ok)
-	}
-}
-
-// A click past the divider, in the content column, must not steal the
-// selection: the rail is what click-to-select owns.
-func TestClickInContentColumnFocusesTheSelectedSession(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	createSession(t, m, "alpha", t.TempDir(), "")
-	createSession(t, m, "beta", t.TempDir(), "")
-	m.selectSessionRow(t, "beta")
-	before := m.rail.Cursor()
-
-	preparedView(m)
-	y0, _ := m.bodyYRange()
-	updated, _ := m.handleMouse(tea.MouseMsg{
-		X: m.dividerX() + 5, Y: y0, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
-	})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if m.rail.Cursor() != before {
-		t.Fatal("a click in the content column should not move the cursor")
-	}
-	if sess, ok := m.selected(); !m.focused() || !ok || sess.Name != "beta" {
-		t.Fatalf("a click in the content column should focus beta, screen = %v", m.screenID())
-	}
-}
-
-// A press directly on the divider arms the drag on the spot: it must not
-// need the resize key pressed first. It arms dragging alone, leaving resizeMode — the
-// keyboard's own gate — off, and it moves nothing until the pointer does.
-func TestDividerPressArmsDragWithoutResizeMode(t *testing.T) {
-	m := &Model{
-		layout: layoutState{
-			width:  100,
-			height: 40,
-			split:  uigeometry.Gesture{Ratio: uigeometry.DefaultSplitRatio},
-		},
-		services: services{listKeys: keybind.DefaultList()},
-	}
-	if m.layout.split.ResizeMode {
-		t.Fatal("test setup: resize mode should start off")
-	}
-	div := m.dividerX()
-	y0, _ := m.bodyYRange()
-	updated, _ := m.handleMouse(tea.MouseMsg{
-		X: div, Y: y0, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
-	})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.layout.split.Dragging {
-		t.Fatal("a press on the divider should arm the drag on its own")
-	}
-	if m.layout.split.ResizeMode {
-		t.Fatal("a mouse drag must not take the keyboard with it")
-	}
-	if left, _ := m.splitWidths(); left != div {
-		t.Fatalf("the press alone should move nothing, left = %d want %d", left, div)
-	}
-	updated, _ = m.handleMouse(tea.MouseMsg{
-		X: 40, Y: y0, Action: tea.MouseActionMotion, Button: tea.MouseButtonLeft,
-	})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if left, _ := m.splitWidths(); left != 40 {
-		t.Fatalf("motion should set left=40, got %d", left)
-	}
-	updated, _ = m.handleMouse(tea.MouseMsg{
-		X: 40, Y: y0, Action: tea.MouseActionRelease, Button: tea.MouseButtonLeft,
-	})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if m.layout.split.Dragging || m.layout.split.ResizeMode {
-		t.Fatal("release should end the drag it started without the keyboard")
-	}
-}
-
-// A press and release on the seam with nothing in between is a click, not a
-// resize: it must not persist a ratio nobody dragged to, nor reflow every
-// live pane for a frame that never changed.
-func TestDividerClickWithoutMotionCommitsNothing(t *testing.T) {
-	st, err := store.Open(filepath.Join(t.TempDir(), "state.db"))
-	if err != nil {
-		t.Fatalf("store: %v", err)
-	}
-	t.Cleanup(func() { st.Close() })
-
-	m := &Model{
-		layout: layoutState{
-			width:  100,
-			height: 40,
-			split:  uigeometry.Gesture{Ratio: uigeometry.DefaultSplitRatio},
-		},
-		services: services{listKeys: keybind.DefaultList(),
-			store: st},
-	}
-	div := m.dividerX()
-	y0, _ := m.bodyYRange()
-	for _, action := range []tea.MouseAction{tea.MouseActionPress, tea.MouseActionRelease} {
-		updated, _ := m.handleMouse(tea.MouseMsg{
-			X: div, Y: y0, Action: action, Button: tea.MouseButtonLeft,
-		})
-		m = updated.(*Model)
-		m.drainEffects(t)
-	}
-	if m.layout.split.Dragging || m.layout.split.ResizeMode {
-		t.Fatal("the click should have ended the drag it armed")
-	}
-	if m.layout.split.Ratio != uigeometry.DefaultSplitRatio {
-		t.Fatalf("ratio = %v want it untouched at %v", m.layout.split.Ratio, uigeometry.DefaultSplitRatio)
-	}
-	if raw, err := st.Setting(uigeometry.SplitRatioSetting); err != nil || raw != "" {
-		t.Fatalf("a click with no drag persisted %q (err %v)", raw, err)
-	}
-}
-
-// A press whose release never lands — dragging out of the window — must not
-// strand the list: the keyboard stays live, and the next key ends the drag.
-func TestKeyEndsADragWhoseReleaseNeverLands(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	createSession(t, m, "alpha", t.TempDir(), "")
-	createSession(t, m, "beta", t.TempDir(), "")
-	m.selectSessionRow(t, "alpha")
-
-	y0, _ := m.bodyYRange()
-	updated, _ := m.handleMouse(tea.MouseMsg{
-		X: m.dividerX(), Y: y0, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
-	})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.layout.split.Dragging {
-		t.Fatal("test setup: the press should have armed the drag")
-	}
-	updated, _ = m.handleKey(tea.KeyMsg{Type: tea.KeyDown})
-	m.drainEffects(t)
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if m.layout.split.Dragging || m.layout.split.ResizeMode {
-		t.Fatal("a key should end a drag left open by a lost release")
-	}
-	if sess, ok := m.selected(); !ok || sess.Name != "beta" {
-		t.Fatalf("the key should have been handled normally, selection = %q ok=%v", sess.Name, ok)
-	}
-}
-
-// A row click after a lost release must not be read as the end of the drag
-// the release belongs to. The divider would follow the click column and
-// persist there, so the stale drag ends before the press is resolved.
-func TestRowClickAfterALostReleaseLeavesTheDividerAlone(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	createSession(t, m, "alpha", t.TempDir(), "")
-	createSession(t, m, "beta", t.TempDir(), "")
-	m.selectSessionRow(t, "alpha")
-	preparedView(m)
-
-	y0, _ := m.bodyYRange()
-	updated, _ := m.handleMouse(tea.MouseMsg{
-		X: m.dividerX(), Y: y0, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
-	})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	updated, _ = m.handleMouse(tea.MouseMsg{
-		X: m.dividerX() + 8, Y: y0, Action: tea.MouseActionMotion, Button: tea.MouseButtonLeft,
-	})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.layout.split.Dragging || !m.layout.split.Moved {
-		t.Fatal("test setup: the press and motion should have armed a live drag")
-	}
-	dragged := m.layout.split.Ratio
-
-	// The release never arrives. The next thing the mouse does is an
-	// ordinary click on a row, well left of the divider.
-	line := paintedRailLines(t, m, "beta")[0]
-	updated, _ = m.handleMouse(tea.MouseMsg{
-		X: 2, Y: y0 + line, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
-	})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	updated, _ = m.handleMouse(tea.MouseMsg{
-		X: 2, Y: y0 + line, Action: tea.MouseActionRelease, Button: tea.MouseButtonLeft,
-	})
-	m = updated.(*Model)
-	m.drainEffects(t)
-
-	if m.layout.split.Dragging || m.layout.split.Moved {
-		t.Fatal("the press should have ended the drag the lost release left open")
-	}
-	if m.layout.split.Ratio != dragged {
-		t.Fatalf("ratio = %v, the click moved the divider off %v", m.layout.split.Ratio, dragged)
-	}
-	if sess, ok := m.selected(); !ok || sess.Name != "beta" {
-		t.Fatalf("the click should have selected the row under it, got %q ok=%v", sess.Name, ok)
-	}
-}
-
-// A click that misses the divider while resize mode is armed from the
-// keyboard must not fall through to row selection: resize mode owns every
-// press until it exits.
-func TestPressOffDividerWhileArmedDoesNotSelectRow(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	createSession(t, m, "alpha", t.TempDir(), "")
-	createSession(t, m, "beta", t.TempDir(), "")
-	m.selectSessionRow(t, "beta")
-	before := m.rail.Cursor()
-
-	preparedView(m)
-	updated, _ := m.enterResizeMode()
-	m = updated.(*Model)
-	m.drainEffects(t)
-	y0, _ := m.bodyYRange()
-	updated, _ = m.handleMouse(tea.MouseMsg{
-		X: 2, Y: y0, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
-	})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if m.rail.Cursor() != before {
-		t.Fatal("a miss while resize mode is armed should not select a row")
-	}
-	if !m.layout.split.ResizeMode {
-		t.Fatal("resize mode should stay armed, waiting for the divider")
-	}
-}
-
-// The full screen layout has no seam or content column: the whole width
-// is rail, and the quick bar can dock below it. Both still have to line up
-// with railHits the way the split layout does.
-func TestClickSelectsRowInFullLayout(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	createSession(t, m, "alpha", t.TempDir(), "")
-	createSession(t, m, "beta", t.TempDir(), "")
-	m.selectSessionRow(t, "beta")
-	m.prefs.fullLayout = true
-
-	line := paintedRailLines(t, m, "alpha")[0]
-	y0, _ := m.bodyYRange()
-	updated, cmd := m.handleMouse(tea.MouseMsg{
-		X: m.layout.width - 2, Y: y0 + line, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
-	})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	sess, ok := m.selected()
-	if !ok || sess.Name != "alpha" {
-		t.Fatalf("click should select alpha, got %q ok=%v", sess.Name, ok)
-	}
-	if cmd == nil {
-		t.Fatal("selecting a different row should schedule a preview")
-	}
-}
-
-// splitWidths still returns a ratio-based column in full layout even though
-// no divider is painted there; a click at that phantom column must select
-// the rail row under it, not arm a drag over a seam that does not exist.
-func TestClickAtDividerXInFullLayoutSelectsRow(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	createSession(t, m, "alpha", t.TempDir(), "")
-	createSession(t, m, "beta", t.TempDir(), "")
-	m.selectSessionRow(t, "beta")
-	m.prefs.fullLayout = true
-
-	line := paintedRailLines(t, m, "alpha")[0]
-	y0, _ := m.bodyYRange()
-	updated, _ := m.handleMouse(tea.MouseMsg{
-		X: m.dividerX(), Y: y0 + line, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
-	})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if m.layout.split.ResizeMode || m.layout.split.Dragging {
-		t.Fatal("full layout has no divider to drag")
-	}
-	if sess, ok := m.selected(); !ok || sess.Name != "alpha" {
-		t.Fatalf("click at dividerX should select the row under it, got %q ok=%v", sess.Name, ok)
 	}
 }
 
@@ -1045,7 +313,7 @@ func TestClickSelectsRowAcrossComfortableLines(t *testing.T) {
 	m.selectSessionRow(t, "beta")
 	alphaLines = paintedRailLines(t, m, "alpha")
 
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	last := alphaLines[len(alphaLines)-1]
 	updated, _ := m.handleMouse(tea.MouseMsg{
 		X: 2, Y: y0 + last, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
@@ -1073,7 +341,7 @@ func TestClickOnMoreCounterSelectsTheRowItHides(t *testing.T) {
 	m.layout.height = 12
 	frame := uitheme.SplitLines(preparedView(m))
 
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	counter, target := -1, -1
 	for i, row := range railHitRows(m) {
 		if row >= 0 && strings.Contains(frame[y0+i], "more") {
@@ -1089,16 +357,13 @@ func TestClickOnMoreCounterSelectsTheRowItHides(t *testing.T) {
 		}
 	}
 
-	updated, cmd := m.handleMouse(tea.MouseMsg{
+	updated, _ := m.handleMouse(tea.MouseMsg{
 		X: 2, Y: y0 + counter, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
 	})
 	m = updated.(*Model)
 	m.drainEffects(t)
 	if m.rail.Cursor() != target {
 		t.Fatalf("clicking the counter should select row %d, cursor = %d", target, m.rail.Cursor())
-	}
-	if cmd == nil {
-		t.Fatal("selecting a different row should schedule a preview")
 	}
 }
 
@@ -1118,7 +383,7 @@ func TestMoreCounterOnlyScrolls(t *testing.T) {
 	for _, x := range []int{2, 4, m.layout.displayedRail.Width} {
 		m.selectSessionRow(t, "one")
 		frame := uitheme.SplitLines(preparedView(m))
-		y0, _ := m.bodyYRange()
+		y0 := m.listChromeRows()
 		counter := -1
 		for i, row := range railHitRows(m) {
 			if row >= 0 && strings.Contains(frame[y0+i], "more") {
@@ -1141,73 +406,6 @@ func TestMoreCounterOnlyScrolls(t *testing.T) {
 		if !m.onList() || m.rail.MenuOpen() || m.rail.Reordering() {
 			t.Fatalf("a click on the counter at x=%d should only scroll, screen = %v menu = %v lifted = %v", x, m.screenID(), m.rail.MenuOpen(), m.rail.Reordering())
 		}
-	}
-}
-
-// A trackpad flick that is still arriving when ctrl+q leaves focus must not
-// walk the list selection, down to its slow last notch; once it has
-// settled, a deliberate scroll moves the selection as before (#727).
-func TestLeavingFocusSwallowsTheFlickStillArriving(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	for _, name := range []string{"one", "two", "three", "four"} {
-		createSession(t, m, name, t.TempDir(), "")
-	}
-	m.selectSessionRow(t, "two")
-
-	updated, _ := m.handleKey(tea.KeyMsg{Type: tea.KeyEnter})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.focused() {
-		t.Fatalf("enter did not focus, screen = %v", m.screenID())
-	}
-	updated, _ = m.handleKey(tea.KeyMsg{Type: tea.KeyCtrlQ})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.onList() {
-		t.Fatalf("ctrl+q did not leave focus, screen = %v", m.screenID())
-	}
-	before := m.rail.Cursor()
-
-	wheel := tea.MouseMsg{Button: tea.MouseButtonWheelDown, Action: tea.MouseActionPress}
-	// Leaving focus stamped the clock; the notches that follow run on the mouse
-	// context's clock too, so a slow runner cannot stretch the gap past the
-	// settle gap between the stamp and the first notch.
-	if m.mouse.flickAt.IsZero() {
-		t.Fatal("leaving focus should stamp the flick clock")
-	}
-	for i := 0; i < 2; i++ {
-		updated, _ = m.listWheel(wheel, uirail.MouseContext{Now: m.mouse.flickAt.Add(10 * time.Millisecond)})
-		m = updated.(*Model)
-	}
-	if m.rail.Cursor() != before {
-		t.Fatalf("a notch right after leaving focus moved the cursor from %d to %d", before, m.rail.Cursor())
-	}
-
-	// The clock is the mouse context's, so the gaps are exact rather than
-	// a sleep the scheduler can stretch past the settle gap.
-	left := time.Unix(100, 0)
-	m.mouse.flickAt = left
-	wheelAt := func(now time.Time) {
-		updated, _ := m.listWheel(wheel, uirail.MouseContext{Now: now})
-		m = updated.(*Model)
-	}
-	for _, gap := range []time.Duration{30 * time.Millisecond, 40 * time.Millisecond, 220 * time.Millisecond} {
-		wheelAt(m.mouse.flickAt.Add(gap))
-		if m.rail.Cursor() != before {
-			t.Fatalf("a notch %v after the previous one moved the cursor from %d to %d", gap, before, m.rail.Cursor())
-		}
-	}
-	wheelAt(m.mouse.flickAt.Add(wheelSettleGap + time.Millisecond))
-	if m.rail.Cursor() != before+1 {
-		t.Fatalf("a scroll once the flick has settled should move the cursor, got %d want %d", m.rail.Cursor(), before+1)
-	}
-	if !m.mouse.flickAt.IsZero() {
-		t.Fatal("a settled flick should stop stamping notches")
-	}
-	wheelAt(left.Add(time.Hour))
-	if m.rail.Cursor() != before+2 {
-		t.Fatalf("a later scroll should move the cursor, got %d want %d", m.rail.Cursor(), before+2)
 	}
 }
 
@@ -1234,7 +432,7 @@ func TestClickOnRailChromeDoesNotSelect(t *testing.T) {
 	if line < 0 {
 		t.Fatal("test setup: the search field should paint chrome lines")
 	}
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	updated, cmd := m.handleMouse(tea.MouseMsg{
 		X: 2, Y: y0 + line, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
 	})
@@ -1258,16 +456,13 @@ func TestWheelMovesListCursor(t *testing.T) {
 		workspace: workspace{sessions: []store.Session{{ID: "fixture-b", Name: "fixture"}}},
 		rail:      railModelCount(2, 0, false),
 	}
-	updated, cmd := m.handleMouse(tea.MouseMsg{
+	updated, _ := m.handleMouse(tea.MouseMsg{
 		Button: tea.MouseButtonWheelDown, Action: tea.MouseActionPress,
 	})
 	m = updated.(*Model)
 	m.drainEffects(t)
 	if m.rail.Cursor() != 1 {
 		t.Fatalf("wheel down: cursor = %d want 1", m.rail.Cursor())
-	}
-	if cmd == nil {
-		t.Fatal("wheel down should schedule the preview settle like moveCursor")
 	}
 	updated, _ = m.handleMouse(tea.MouseMsg{
 		Button: tea.MouseButtonWheelUp, Action: tea.MouseActionPress,
@@ -1313,7 +508,7 @@ func TestClickSelectsRowWhileSearching(t *testing.T) {
 	m.rail.SetSearch(m.rail.Search(), true)
 
 	line := paintedRailLines(t, m, "alpha")[0]
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	at := tea.MouseMsg{X: 2, Y: y0 + line, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft}
 	updated, _ := m.handleMouse(at)
 	m.drainEffects(t)
@@ -1329,56 +524,17 @@ func TestClickSelectsRowWhileSearching(t *testing.T) {
 	}
 }
 
-// Entering a session ends the list's click run: the press that comes back
-// here would otherwise pair with the one that opened it and focus again.
-func TestClickLeavingFocusDoesNotRefocus(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	createSession(t, m, "alpha", t.TempDir(), "")
-	m.selectSessionRow(t, "alpha")
-
-	line := paintedRailLines(t, m, "alpha")[0]
-	y0, _ := m.bodyYRange()
-	press := tea.MouseMsg{X: 2, Y: y0 + line, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft}
-
-	updated, _ := m.handleMouse(press)
-	m.drainEffects(t)
-	m = updated.(*Model)
-	m.drainEffects(t)
-	updated, _ = m.focusSelected()
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.focused() {
-		t.Fatalf("test setup: focus alpha, screen = %v, err = %q", m.screenID(), m.errBar.text)
-	}
-	preparedView(m)
-
-	updated, _ = m.handleMouse(press)
-	m.drainEffects(t)
-	m = updated.(*Model)
-	m.drainEffects(t)
-	press.Action = tea.MouseActionRelease
-	updated, _ = m.handleMouse(press)
-	m.drainEffects(t)
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.onList() {
-		t.Fatalf("the click that leaves focus must not focus again, screen = %v", m.screenID())
-	}
-}
-
 // A press search swallows opens no run, so the first press after it closes
 // is a plain select rather than the second half of a full layout pair.
 func TestClickWhileSearchingOpensNoClickRun(t *testing.T) {
 	t.Parallel()
 	m := buildModel(t)
-	m.prefs.fullLayout = true
 	createSession(t, m, "alpha", t.TempDir(), "")
 	m.selectSessionRow(t, "alpha")
 	m.rail.SetSearch(m.rail.Search(), true)
 
 	line := paintedRailLines(t, m, "alpha")[0]
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	press := tea.MouseMsg{X: 2, Y: y0 + line, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft}
 	updated, _ := m.handleMouse(press)
 	m.drainEffects(t)
@@ -1395,60 +551,27 @@ func TestClickWhileSearchingOpensNoClickRun(t *testing.T) {
 	}
 }
 
-// Search owns Enter, so neither layout's focus gesture fires while it is
-// open: it must not steal the key the field is waiting for.
-func TestClicksDoNotFocusWhileSearching(t *testing.T) {
+// Search owns Enter, so a double click does not attach while it is open:
+// it must not steal the key the field is waiting for.
+func TestClicksDoNotAttachWhileSearching(t *testing.T) {
 	t.Parallel()
-	for _, full := range []bool{false, true} {
-		t.Run(fmt.Sprintf("full=%v", full), func(t *testing.T) {
-			m := buildModel(t)
-			m.prefs.fullLayout = full
-			createSession(t, m, "alpha", t.TempDir(), "")
-			m.selectSessionRow(t, "alpha")
-			m.rail.SetSearch(m.rail.Search(), true)
+	m := buildModel(t)
+	createSession(t, m, "alpha", t.TempDir(), "")
+	m.selectSessionRow(t, "alpha")
+	m.rail.SetSearch(m.rail.Search(), true)
 
-			line := paintedRailLines(t, m, "alpha")[0]
-			y0, _ := m.bodyYRange()
-			at := tea.MouseMsg{X: 2, Y: y0 + line, Button: tea.MouseButtonLeft}
-			for i := 0; i < 2; i++ {
-				for _, action := range []tea.MouseAction{tea.MouseActionPress, tea.MouseActionRelease} {
-					at.Action = action
-					updated, _ := m.handleMouse(at)
-					m.drainEffects(t)
-					m = updated.(*Model)
-					m.drainEffects(t)
-				}
-			}
-			if !m.onList() {
-				t.Fatalf("clicks must not focus while searching, screen = %v", m.screenID())
-			}
-		})
+	line := paintedRailLines(t, m, "alpha")[0]
+	y0 := m.listChromeRows()
+	at := tea.MouseMsg{X: 2, Y: y0 + line, Button: tea.MouseButtonLeft}
+	for i := 0; i < 2; i++ {
+		for _, action := range []tea.MouseAction{tea.MouseActionPress, tea.MouseActionRelease} {
+			at.Action = action
+			updated, _ := m.handleMouse(at)
+			m = updated.(*Model)
+		}
 	}
-}
-
-// Neither does a press on the divider arm a drag while search is open: the
-// mouse arms resize under the same conditions enterResizeMode does. The
-// quick bar leaves the rail to the mouse, so the divider drags there.
-func TestDividerPressWhileSearchingOrPrompting(t *testing.T) {
-	for name, tc := range map[string]struct {
-		m    *Model
-		drag bool
-	}{
-		"searching": {&Model{layout: layoutState{width: 100, height: 40, split: uigeometry.Gesture{Ratio: uigeometry.DefaultSplitRatio}}, services: services{listKeys: keybind.DefaultList()}, rail: railModelCount(0, 0, true)}, false},
-		"quick bar": {&Model{layout: layoutState{width: 100, height: 40, split: uigeometry.Gesture{Ratio: uigeometry.DefaultSplitRatio}}, services: services{listKeys: keybind.DefaultList()}}, true},
-	} {
-		t.Run(name, func(t *testing.T) {
-			if name == "quick bar" {
-				pushQuick(tc.m)
-			}
-			y0, _ := tc.m.bodyYRange()
-			updated, _ := tc.m.handleMouse(tea.MouseMsg{
-				X: tc.m.dividerX(), Y: y0, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft,
-			})
-			if got := updated.(*Model).layout.split.Dragging; got != tc.drag {
-				t.Fatalf("divider dragging = %v, want %v", got, tc.drag)
-			}
-		})
+	if !m.onList() || attachQueued(t, m) != "" {
+		t.Fatalf("clicks must not attach while searching, screen = %v", m.screenID())
 	}
 }
 
@@ -1482,26 +605,6 @@ func TestWheelClampsAtBothEnds(t *testing.T) {
 	m.moveCursor(-1)
 	if m.rail.Cursor() != 2 {
 		t.Fatalf("arrow up should still wrap to 2, cursor = %d", m.rail.Cursor())
-	}
-}
-
-func TestWheelSwallowedInResizeMode(t *testing.T) {
-	m := &Model{
-		layout: layoutState{
-			split:  uigeometry.Gesture{ResizeMode: true},
-			width:  80,
-			height: 24,
-		},
-		services: services{listKeys: keybind.DefaultList()},
-		rail:     railModelCount(2, 0, false),
-	}
-	updated, _ := m.handleMouse(tea.MouseMsg{
-		Button: tea.MouseButtonWheelDown, Action: tea.MouseActionPress,
-	})
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if m.rail.Cursor() != 0 {
-		t.Fatalf("resize mode should swallow wheel, cursor = %d", m.rail.Cursor())
 	}
 }
 
@@ -1639,67 +742,65 @@ func TestClickOnMessagesCardOpensNotices(t *testing.T) {
 
 func TestMessagesLegendOpensNoticesByMouseAndKey(t *testing.T) {
 	t.Parallel()
-	for _, full := range []bool{false, true} {
-		for _, width := range []int{30, 60, 120} {
-			for _, binding := range []string{"M", "alt+m"} {
-				m := buildModel(t)
-				m.layout.width, m.layout.height, m.prefs.fullLayout = width, 34, full
-				m.prefs.hideStats = true
-				m.services.listKeys = m.services.listKeys.With(keybind.Messages, bindingOf(t, binding))
-				x, y := messagesCell(t, m)
-				if _, ok := m.layout.keyHits.At(x, y); !ok {
-					t.Fatalf("full=%v width=%d binding=%s: painted messages entry misses its hit box %+v", full, width, binding, m.layout.keyHits)
+	for _, width := range []int{30, 60, 120} {
+		for _, binding := range []string{"M", "alt+m"} {
+			m := buildModel(t)
+			m.layout.width, m.layout.height = width, 34
+			m.prefs.hideStats = true
+			m.services.listKeys = m.services.listKeys.With(keybind.Messages, bindingOf(t, binding))
+			x, y := messagesCell(t, m)
+			if _, ok := m.layout.keyHits.At(x, y); !ok {
+				t.Fatalf("width=%d binding=%s: painted messages entry misses its hit box %+v", width, binding, m.layout.keyHits)
+			}
+			if m = leftClick(m, x, y); !m.noticesOpen() {
+				t.Fatalf("click on messages should open notices, screen = %v", m.screenID())
+			}
+			m.handleKey(key("esc"))
+			msg := key(binding)
+			if binding == "alt+m" {
+				msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'m'}, Alt: true}
+			}
+			// A footer too narrow for words paints the entry as its key
+			// alone, so the entry is found by the hit that presses it and
+			// read back from the cells under that hit.
+			rows := strings.Split(ansi.Strip(preparedView(m)), "\n")
+			found := false
+			var entry keyHit
+			for _, hit := range m.layout.keyHits {
+				if hit.Key.String() == msg.String() && (!found || hit.Y > entry.Y) {
+					entry, found = hit, true
 				}
-				if m = leftClick(m, x, y); !m.noticesOpen() {
-					t.Fatalf("click on messages should open notices, screen = %v", m.screenID())
-				}
-				m.handleKey(key("esc"))
-				msg := key(binding)
-				if binding == "alt+m" {
-					msg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'m'}, Alt: true}
-				}
-				// A footer too narrow for words paints the entry as its key
-				// alone, so the entry is found by the hit that presses it and
-				// read back from the cells under that hit.
-				rows := strings.Split(ansi.Strip(preparedView(m)), "\n")
-				found := false
-				var entry keyHit
-				for _, hit := range m.layout.keyHits {
-					if hit.Key.String() == msg.String() && (!found || hit.Y > entry.Y) {
-						entry, found = hit, true
-					}
-				}
-				if !found {
-					t.Fatalf("full=%v width=%d binding=%s: no hit opens messages %+v", full, width, binding, m.layout.keyHits)
-				}
-				if painted := strings.TrimSpace(ansi.Cut(rows[entry.Y], entry.X0, entry.X1)); !strings.HasPrefix(painted, m.listGlyph(keybind.Messages)) {
-					t.Fatalf("full=%v width=%d binding=%s: the messages hit covers %q, not its key %q", full, width, binding, painted, m.listGlyph(keybind.Messages))
-				}
-				x, y = entry.X0, entry.Y
-				if m = leftClick(m, x, y); !m.noticesOpen() {
-					t.Fatalf("click on messages should open notices, screen=%v", m.screenID())
-				}
-				m.handleKey(key("esc"))
-				m.handleKey(msg)
-				if !m.noticesOpen() {
-					t.Fatalf("%s should open notices, screen = %v", binding, m.screenID())
-				}
-				m.handleKey(key("esc"))
-				for _, n := range m.activeNotices() {
-					m.dismissNotice(n.ID)
-				}
-				preparedView(m)
-				if footer := ansi.Strip(m.viewFooter()); strings.Contains(footer, "unread") {
-					t.Fatalf("with nothing unread the legend must give its room back:\n%s", footer)
-				}
-				if m = leftClick(m, x, y); m.noticesOpen() {
-					t.Fatal("a click where the entry was must not open Messages")
-				}
-				m.handleKey(key("esc"))
-				m.handleKey(msg)
-				if !m.noticesOpen() {
-					t.Fatalf("%s should still open an empty Messages, screen = %v", binding, m.screenID())
-				}
+			}
+			if !found {
+				t.Fatalf("width=%d binding=%s: no hit opens messages %+v", width, binding, m.layout.keyHits)
+			}
+			if painted := strings.TrimSpace(ansi.Cut(rows[entry.Y], entry.X0, entry.X1)); !strings.HasPrefix(painted, m.listGlyph(keybind.Messages)) {
+				t.Fatalf("width=%d binding=%s: the messages hit covers %q, not its key %q", width, binding, painted, m.listGlyph(keybind.Messages))
+			}
+			x, y = entry.X0, entry.Y
+			if m = leftClick(m, x, y); !m.noticesOpen() {
+				t.Fatalf("click on messages should open notices, screen=%v", m.screenID())
+			}
+			m.handleKey(key("esc"))
+			m.handleKey(msg)
+			if !m.noticesOpen() {
+				t.Fatalf("%s should open notices, screen = %v", binding, m.screenID())
+			}
+			m.handleKey(key("esc"))
+			for _, n := range m.activeNotices() {
+				m.dismissNotice(n.ID)
+			}
+			preparedView(m)
+			if footer := ansi.Strip(m.viewFooter()); strings.Contains(footer, "unread") {
+				t.Fatalf("with nothing unread the legend must give its room back:\n%s", footer)
+			}
+			if m = leftClick(m, x, y); m.noticesOpen() {
+				t.Fatal("a click where the entry was must not open Messages")
+			}
+			m.handleKey(key("esc"))
+			m.handleKey(msg)
+			if !m.noticesOpen() {
+				t.Fatalf("%s should still open an empty Messages, screen = %v", binding, m.screenID())
 			}
 		}
 	}
@@ -1713,7 +814,6 @@ func TestMessagesLegendClickOnlyOpensFromTheList(t *testing.T) {
 	}{
 		{"search", func(m *Model) { m.rail.SetSearch(m.rail.Search(), true) }, func(m *Model) bool { return m.rail.Searching() }},
 		{"quick prompt", func(m *Model) { m.openQuickMode() }, func(m *Model) bool { return (m.quick() != nil) }},
-		{"resize", func(m *Model) { m.enterResizeMode() }, func(m *Model) bool { return m.layout.split.ResizeMode }},
 		{"messages key off", func(m *Model) { m.services.listKeys = m.services.listKeys.With(keybind.Messages, bindingOf(t)) }, func(*Model) bool { return true }},
 		{"settings", func(m *Model) { m.openSettings() }, func(m *Model) bool { return m.settingsOpen() }},
 		{"short terminal", func(m *Model) { m.layout.height = 2 }, func(*Model) bool { return true }},
@@ -1748,7 +848,6 @@ func TestClickOnFullScreenBadgeOpensNotices(t *testing.T) {
 	t.Parallel()
 	m := buildModel(t)
 	m.layout.width, m.layout.height = 120, 34
-	m.prefs.fullLayout = true
 	x, y := messagesCell(t, m)
 	if m = leftClick(m, x, y); !m.noticesOpen() {
 		t.Fatalf("click on the badge should open messages, screen = %v", m.screenID())
@@ -1771,85 +870,13 @@ func TestClickOnMessagesCardWhileSearchingKeepsTheField(t *testing.T) {
 	}
 }
 
-func TestClickOnMessagesCardWhileFocusedIsLeftToFocus(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	m.layout.width, m.layout.height = 200, 34
-	createSession(t, m, "alpha", t.TempDir(), "")
-	x, y := messagesCell(t, m)
-	m.selectSessionRow(t, "alpha")
-	updated, _ := m.focusSelected()
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.focused() {
-		t.Fatalf("test setup: focus alpha, screen = %v, err = %q", m.screenID(), m.errBar.text)
-	}
-	preparedView(m)
-	if m = leftClick(m, x, y); m.noticesOpen() {
-		t.Fatal("a click while focused must not open messages")
-	}
-}
-
-func TestSingleClickFocusesOnRelease(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	createSession(t, m, "alpha", t.TempDir(), "")
-	createSession(t, m, "beta", t.TempDir(), "")
-
-	line := paintedRailLines(t, m, "alpha")[0]
-	y0, _ := m.bodyYRange()
-	at := tea.MouseMsg{X: 2, Y: y0 + line, Button: tea.MouseButtonLeft}
-	at.Action = tea.MouseActionPress
-	updated, _ := m.handleMouse(at)
-	m.drainEffects(t)
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.onList() {
-		t.Fatalf("the press alone should only select, screen = %v", m.screenID())
-	}
-	at.Action = tea.MouseActionRelease
-	updated, _ = m.handleMouse(at)
-	m.drainEffects(t)
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.focused() {
-		t.Fatalf("release should focus, screen = %v, err = %q", m.screenID(), m.errBar.text)
-	}
-	if sess, ok := m.selected(); !ok || sess.Name != "alpha" {
-		t.Fatalf("should focus alpha, got %q ok=%v", sess.Name, ok)
-	}
-}
-
-func TestSingleClickFocusesWhenEnterAttaches(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	m.prefs.focusOnEnter = false
-	createSession(t, m, "alpha", t.TempDir(), "")
-
-	line := paintedRailLines(t, m, "alpha")[0]
-	y0, _ := m.bodyYRange()
-	at := tea.MouseMsg{X: 2, Y: y0 + line, Button: tea.MouseButtonLeft, Action: tea.MouseActionPress}
-	updated, _ := m.handleMouse(at)
-	m.drainEffects(t)
-	m = updated.(*Model)
-	m.drainEffects(t)
-	at.Action = tea.MouseActionRelease
-	updated, _ = m.handleMouse(at)
-	m.drainEffects(t)
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.focused() {
-		t.Fatalf("a click should focus even when Enter attaches, screen = %v, err = %q", m.screenID(), m.errBar.text)
-	}
-}
-
 func TestSingleClickReleasedOnAnotherRowDoesNotFocus(t *testing.T) {
 	t.Parallel()
 	m := buildModel(t)
 	createSession(t, m, "alpha", t.TempDir(), "")
 	createSession(t, m, "beta", t.TempDir(), "")
 
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	alpha := paintedRailLines(t, m, "alpha")[0]
 	beta := paintedRailLines(t, m, "beta")[0]
 	updated, _ := m.handleMouse(tea.MouseMsg{X: 2, Y: y0 + alpha, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft})
@@ -1872,11 +899,10 @@ func TestSingleClickReleasedOnAnotherRowDoesNotFocus(t *testing.T) {
 func TestSingleClickInFullLayoutOnlySelects(t *testing.T) {
 	t.Parallel()
 	m := buildModel(t)
-	m.prefs.fullLayout = true
 	createSession(t, m, "alpha", t.TempDir(), "")
 
 	line := paintedRailLines(t, m, "alpha")[0]
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	at := tea.MouseMsg{X: 2, Y: y0 + line, Button: tea.MouseButtonLeft, Action: tea.MouseActionPress}
 	updated, _ := m.handleMouse(at)
 	m.drainEffects(t)
@@ -1901,7 +927,7 @@ func TestClicksWorkWhileTheQuickBarIsOpen(t *testing.T) {
 	if m.quick() == nil {
 		t.Fatal("test setup: quick bar should open")
 	}
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	beta := y0 + paintedRailLines(t, m, "beta")[0]
 
 	updated, _ := m.handleMouse(tea.MouseMsg{X: m.layout.displayedRail.Width, Y: beta, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft})
@@ -1932,8 +958,8 @@ func TestClicksWorkWhileTheQuickBarIsOpen(t *testing.T) {
 	updated, _ = m.handleMouse(at)
 	m = updated.(*Model)
 	m.drainEffects(t)
-	if !m.focused() || (m.quick() != nil) {
-		t.Fatalf("a row click should focus and close the bar, screen = %v quick = %v", m.screenID(), (m.quick() != nil))
+	if sess, ok := m.selected(); !ok || sess.Name != "alpha" {
+		t.Fatalf("a row click should select alpha over the bar, got %q ok=%v", sess.Name, ok)
 	}
 }
 
@@ -2046,22 +1072,6 @@ func TestBackdropClickKeepsASavedPromptDraft(t *testing.T) {
 	}
 }
 
-// The saved prompts card over a focused session covers the focus footer,
-// so only the card's own keys answer a click.
-func TestSavedPromptsOverFocusHideTheFooterKeys(t *testing.T) {
-	m := focusedModel(t)
-	m.openFocusSaved()
-	preparedView(m)
-	if len(m.layout.keyHits) == 0 {
-		t.Fatal("test setup: the card paints its own keys")
-	}
-	for _, hit := range m.layout.keyHits {
-		if !m.layout.card.holds(hit.X0, hit.Y) {
-			t.Fatalf("a key at %d,%d answers outside the card %+v", hit.X0, hit.Y, m.layout.card)
-		}
-	}
-}
-
 // A rename typed into its row holds the list still under the mouse.
 func TestRenameHoldsTheListUnderTheMouse(t *testing.T) {
 	m := buildModel(t)
@@ -2126,12 +1136,6 @@ var mouseOpeners = map[string]func(t *testing.T, m *Model){
 	"connections.Surface":      func(t *testing.T, m *Model) { m.openConnectionDialog(remote.Connection{}) },
 	"quick.Surface":            func(t *testing.T, m *Model) { m.applyCmd(t, m.openQuickMode()) },
 	"spawn.Surface":            func(t *testing.T, m *Model) { m.applyCmd(t, m.openForm()) },
-	"geometry.Surface":         func(t *testing.T, m *Model) { m.enterResizeMode() },
-	"focus.Surface":            func(t *testing.T, m *Model) { m.push(newFocusSurface(m)) },
-	"focus.Saved": func(t *testing.T, m *Model) {
-		m.push(newFocusSurface(m))
-		m.push(uifocus.OpenSaved(focusSavedRoot{m}, 0, m.spawnStyles()))
-	},
 	"review.Surface": func(t *testing.T, m *Model) {
 		m.base = baseReview
 		m.push(uireview.NewSurface(reviewRoot{m}, []uireview.PickerRow{{Label: "main"}}, "branch", uireview.PickRepo, "", uireview.PickerSource{}, "", uireview.RenderContext{}, ""))
@@ -2319,140 +1323,6 @@ func TestSettingsWheelLeavesSubpanelsAlone(t *testing.T) {
 	}
 }
 
-// The guard has to be transparent while the application really is tracking
-// the mouse, and silent once it has stopped.
-func TestGuardedMouseCommandFollowsTheLiveFlag(t *testing.T) {
-	if _, err := exec.LookPath(tmux.Binary); err != nil {
-		t.Skip(tmux.Binary + " not installed")
-	}
-	command := `printf '\033[?1003h\033[?1006h'; cat`
-	if runtime.GOOS == "windows" {
-		command = testfixture.Command("mouse-tool")
-	}
-	driver, err := tmux.NewWithSocket("amguard")
-	if err != nil {
-		t.Fatalf("driver: %v", err)
-	}
-	sessID := "guard-probe"
-	ready := filepath.Join(t.TempDir(), "ready")
-	if err := driver.Create(sessID, t.TempDir(), command, map[string]string{testfixture.ReadyEnv: ready}, 80, 24); err != nil {
-		t.Fatalf("create: %v", err)
-	}
-	t.Cleanup(func() { _ = driver.Kill(sessID) })
-	waitForMouseFlag(t, driver, sessID, "1")
-	if runtime.GOOS == "windows" {
-		// The flag is up once the escape is printed, before cat has a raw
-		// console to read a report through.
-		testfixture.WaitForReady(t, ready)
-	}
-
-	_, args := tmux.GuardedMouseReport(tmux.PaneTarget(sessID), "\x1b[<64;7;3M")
-	if err := driver.SendCommand(args...); err != nil {
-		t.Fatalf("guarded send while tracking: %v", err)
-	}
-	if !paneGains(t, driver, sessID, "64;7;3M") {
-		t.Fatal("a report was dropped while the application was tracking the mouse")
-	}
-
-	stopMouseTracking(t, driver, sessID)
-
-	_, args = tmux.GuardedMouseReport(tmux.PaneTarget(sessID), "\x1b[<64;9;4M")
-	if err := driver.SendCommand(args...); err != nil {
-		t.Fatalf("guarded send after tracking stopped: %v", err)
-	}
-	if paneGains(t, driver, sessID, "64;9;4M") {
-		pane, _ := driver.CapturePane(sessID)
-		t.Fatalf("a report reached the pane after the application left mouse mode:\n%s", strings.TrimSpace(pane))
-	}
-}
-
-// A report forwarded over the control pipe must leave the replies behind it
-// on their own commands, whichever branch the guard takes: a capture that
-// receives the guard's spare block paints the focused pane blank.
-func TestGuardedMouseCommandKeepsControlRepliesAligned(t *testing.T) {
-	skipControlMode(t)
-	if _, err := exec.LookPath("tmux"); err != nil {
-		t.Skip("tmux not installed")
-	}
-	driver, err := tmux.NewWithSocket("amguard")
-	if err != nil {
-		t.Fatalf("driver: %v", err)
-	}
-	sessID := "guard-replies"
-	if err := driver.Create(sessID, t.TempDir(),
-		`printf '\033[?1003h\033[?1006h'; cat`, map[string]string{}, 80, 24); err != nil {
-		t.Fatalf("create: %v", err)
-	}
-	t.Cleanup(func() { _ = driver.Kill(sessID) })
-	control, err := driver.OpenControl(sessID)
-	if err != nil {
-		t.Fatalf("control: %v", err)
-	}
-	t.Cleanup(func() { _ = control.Close() })
-
-	expectAligned := func(state string) {
-		t.Helper()
-		command, _ := tmux.GuardedMouseReport(tmux.PaneTarget(sessID), "\x1b[<64;7;3M")
-		if err := control.SendBlocks(command, tmux.GuardedReplies); err != nil {
-			t.Fatalf("guarded send while %s: %v", state, err)
-		}
-		for _, marker := range []string{"first", "second"} {
-			reply, err := control.Command("display-message -p " + marker)
-			if err != nil || reply != marker {
-				t.Fatalf("while %s, reply = %q (%v), want %q", state, reply, err, marker)
-			}
-		}
-	}
-	waitForMouseFlag(t, driver, sessID, "1")
-	expectAligned("tracking the mouse")
-
-	stopMouseTracking(t, driver, sessID)
-	expectAligned("not tracking the mouse")
-}
-
-// cat holds the line until a newline arrives, and only what it echoes
-// reaches the pane's terminal to turn mouse reporting off.
-func stopMouseTracking(t *testing.T, driver *tmux.Driver, sessID string) {
-	t.Helper()
-	if err := driver.SendRaw("send-keys -t " + tmux.PaneTarget(sessID) +
-		" -H 1b 5b 3f 31 30 30 33 6c 1b 5b 3f 31 30 30 36 6c 0a"); err != nil {
-		t.Fatalf("disable: %v", err)
-	}
-	waitForMouseFlag(t, driver, sessID, "0")
-}
-
-func waitForMouseFlag(t *testing.T, driver *tmux.Driver, sessID, want string) {
-	t.Helper()
-	deadline := time.Now().Add(5 * time.Second)
-	for time.Now().Before(deadline) {
-		cmd := exec.Command(tmux.Binary, "-L", driver.SocketName(),
-			"display-message", "-p", "-t", tmux.PaneTarget(sessID), "#{mouse_any_flag}")
-		if runtime.GOOS == "windows" {
-			// The same PSMUX_NO_WARM tmuxCmd sets, so a poll does not
-			// start a standby server.
-			cmd.Env = append(os.Environ(), "PSMUX_NO_WARM=1")
-		}
-		out, err := cmd.Output()
-		if err == nil && strings.TrimSpace(string(out)) == want {
-			return
-		}
-		time.Sleep(25 * time.Millisecond)
-	}
-	t.Fatalf("mouse_any_flag never reached %q", want)
-}
-
-func paneGains(t *testing.T, driver *tmux.Driver, sessID, want string) bool {
-	t.Helper()
-	deadline := time.Now().Add(2 * time.Second)
-	for time.Now().Before(deadline) {
-		if pane, err := driver.CapturePane(sessID); err == nil && strings.Contains(pane, want) {
-			return true
-		}
-		time.Sleep(25 * time.Millisecond)
-	}
-	return false
-}
-
 func TestClickOnListFooterGroupKeyOpensTheCard(t *testing.T) {
 	t.Parallel()
 	m := buildModel(t)
@@ -2545,23 +1415,6 @@ func TestClickOnMessagesFootRunsItsKeys(t *testing.T) {
 	}
 }
 
-func TestClickOnFocusFootLeavesFocus(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	m.layout.width, m.layout.height = 200, 40
-	createSession(t, m, "alpha", t.TempDir(), "")
-	m.selectSessionRow(t, "alpha")
-	updated, _ := m.focusSelected()
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.focused() {
-		t.Fatalf("test setup: focus alpha, screen = %v, err = %q", m.screenID(), m.errBar.text)
-	}
-	if m = clickLabel(t, m, "mouse back"); !m.onList() {
-		t.Fatalf("the back pair in the foot should leave focus, screen = %v", m.screenID())
-	}
-}
-
 // A key runs when the button comes back up over it, so whatever it opens
 // starts after the release. A press that slides off the key runs nothing.
 func TestAKeyRunsOnTheRelease(t *testing.T) {
@@ -2602,354 +1455,5 @@ func TestARepaintedKeyDoesNotRunOnTheRelease(t *testing.T) {
 	}
 	if m = leftRelease(m, x, y); !m.onList() {
 		t.Fatalf("the release ran the repainted key, screen = %v", m.screenID())
-	}
-}
-
-func focusedModel(t *testing.T) *Model {
-	t.Helper()
-	m := buildModel(t)
-	createSession(t, m, "alpha", t.TempDir(), "")
-	m.selectSessionRow(t, "alpha")
-	updated, _ := m.focusSelected()
-	m = updated.(*Model)
-	m.drainEffects(t)
-	if !m.focused() {
-		t.Fatalf("test setup: focus alpha, screen = %v, err = %q", m.screenID(), m.errBar.text)
-	}
-	return m
-}
-
-// A press anywhere in the rail column leaves focus on the press, the blank
-// below the last row included, not only on a row.
-func TestPressOnTheRailsBlankLeavesFocus(t *testing.T) {
-	t.Parallel()
-	m := focusedModel(t)
-	preparedView(m)
-	y0, _ := m.bodyYRange()
-	blank := -1
-	for line, row := range railHitRows(m) {
-		if row < 0 && line > 0 {
-			blank = y0 + line
-			break
-		}
-	}
-	if blank < 0 {
-		t.Fatal("test setup: the rail paints no line without a row")
-	}
-	if m = leftPress(m, 2, blank); !m.onList() {
-		t.Fatalf("a press on the rail's blank should leave focus, screen = %v", m.screenID())
-	}
-	if sess, ok := m.selected(); !ok || sess.Name != "alpha" {
-		t.Fatalf("leaving should keep the cursor on alpha, got %q", sess.Name)
-	}
-}
-
-func TestPressOnTheDividerKeepsFocus(t *testing.T) {
-	t.Parallel()
-	m := focusedModel(t)
-	preparedView(m)
-	y0, _ := m.bodyYRange()
-	for _, x := range []int{m.dividerX(), m.dividerX() + uigeometry.SplitHitSlop} {
-		if m = leftPress(m, x, y0+1); !m.focused() {
-			t.Fatalf("a press on the divider at %d left focus", x)
-		}
-	}
-}
-
-func mouseMotionAt(m *Model, x, y int) *Model {
-	updated, _ := m.handleMouse(tea.MouseMsg{
-		X: x, Y: y, Action: tea.MouseActionMotion, Button: tea.MouseButtonLeft,
-	})
-	return updated.(*Model)
-}
-
-// A drag that starts on the divider while a session is focused moves the
-// split like the list's drag does: the press never reaches the agent, focus
-// survives the gesture, and letting go commits and stores the ratio.
-func TestDividerDragInFocusMovesAndPersistsTheSplit(t *testing.T) {
-	t.Parallel()
-	m := focusedModel(t)
-	m.layout.width, m.layout.height = 120, 40
-	preparedView(m)
-	y0, _ := m.bodyYRange()
-	before := m.layout.split.Ratio
-	target := m.dividerX() + 12
-
-	m = leftPress(m, m.dividerX(), y0+1)
-	if !m.layout.split.Dragging || !m.focused() {
-		t.Fatalf("press on the divider: dragging = %v, focused = %v", m.layout.split.Dragging, m.focused())
-	}
-	m = mouseMotionAt(m, target, y0+1)
-	if m.layout.split.Ratio <= before {
-		t.Fatalf("motion left the ratio at %v, was %v", m.layout.split.Ratio, before)
-	}
-	m = leftRelease(m, target, y0+1)
-	m.drainEffects(t)
-	if m.layout.split.Dragging || m.layout.split.ResizeMode {
-		t.Fatal("release should end the drag")
-	}
-	if !m.focused() {
-		t.Fatalf("the drag should leave focus where it was, screen = %v", m.screenID())
-	}
-	if left, _ := m.splitWidths(); left != target {
-		t.Fatalf("left panel = %d, want the release column %d", left, target)
-	}
-	if got := uigeometrypanes.Load(m.services.store); got != m.layout.split.Ratio {
-		t.Fatalf("stored ratio = %v, want %v", got, m.layout.split.Ratio)
-	}
-}
-
-// esc during a focused drag cancels it and restores the ratio, and keys
-// afterwards reach the agent again rather than the resize surface.
-func TestDividerDragInFocusCancelsOnEsc(t *testing.T) {
-	t.Parallel()
-	m := focusedModel(t)
-	m.layout.width, m.layout.height = 120, 40
-	preparedView(m)
-	y0, _ := m.bodyYRange()
-	before := m.layout.split.Ratio
-
-	m = leftPress(m, m.dividerX(), y0+1)
-	m = mouseMotionAt(m, m.dividerX()+12, y0+1)
-	if !m.layout.split.Dragging || m.layout.split.Ratio <= before {
-		t.Fatalf("test setup: the drag should be live and moved, dragging = %v, ratio = %v", m.layout.split.Dragging, m.layout.split.Ratio)
-	}
-	updated, _ := m.handleKey(tea.KeyMsg{Type: tea.KeyEsc})
-	m = updated.(*Model)
-	if m.layout.split.Dragging || m.layout.split.Ratio != before {
-		t.Fatalf("esc: dragging = %v, ratio = %v, want %v", m.layout.split.Dragging, m.layout.split.Ratio, before)
-	}
-	if !m.focused() {
-		t.Fatalf("esc should leave focus in place, screen = %v", m.screenID())
-	}
-	if top, ok := m.top(); ok {
-		if _, resize := top.(*uigeometry.Surface); resize {
-			t.Fatal("the resize surface should be gone")
-		}
-	}
-}
-
-// wroteToFocus reports whether the focused pane's next queued write sends
-// text, and whether that write carries want. Typed runes travel as a hex
-// send-keys command, so this reads the write itself: a pane is not asked to
-// echo it back, which psmux does not always do by the time a test looks.
-func wroteToFocus(m *Model, want string) bool {
-	job := m.effects.Input.Active
-	if job == nil {
-		return false
-	}
-	request, ok := job.Request.(focusruntime.InputRequest)
-	if !ok || request.Value.Kind != focusruntime.Keys {
-		return false
-	}
-	var hex []string
-	for i := 0; i < len(want); i++ {
-		hex = append(hex, fmt.Sprintf("%02x", want[i]))
-	}
-	return strings.Contains(request.Value.Command, "-H "+strings.Join(hex, " "))
-}
-
-// Ordinary typing reaches the agent while focused, the "|" the old split key
-// used included: the divider's gesture takes its own key and nothing else.
-func TestFocusedTypingStillReachesTheAgent(t *testing.T) {
-	t.Parallel()
-	m := focusedModel(t)
-	preparedView(m)
-	updated, _ := m.handleKey(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("|")})
-	m = updated.(*Model)
-	if m.layout.split.ResizeMode || m.layout.split.Dragging || !m.focused() {
-		t.Fatalf("resize = %v, dragging = %v, focused = %v", m.layout.split.ResizeMode, m.layout.split.Dragging, m.focused())
-	}
-	if !wroteToFocus(m, "|") {
-		t.Fatal("the old split key never reached the pane")
-	}
-}
-
-// A key typed while the button is still down ends the drag where it stands
-// and goes on to the agent instead of being swallowed.
-func TestKeyDuringAFocusedDragEndsItAndReachesTheAgent(t *testing.T) {
-	t.Parallel()
-	m := focusedModel(t)
-	m.layout.width, m.layout.height = 120, 40
-	preparedView(m)
-	y0, _ := m.bodyYRange()
-	m = leftPress(m, m.dividerX(), y0+1)
-	m = mouseMotionAt(m, m.dividerX()+6, y0+1)
-	if !m.layout.split.Dragging {
-		t.Fatal("test setup: the drag should be live")
-	}
-	updated, _ := m.handleKey(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("c|d")})
-	m = updated.(*Model)
-	if m.layout.split.Dragging || m.layout.split.ResizeMode || !m.focused() {
-		t.Fatalf("dragging = %v, resize = %v, focused = %v", m.layout.split.Dragging, m.layout.split.ResizeMode, m.focused())
-	}
-	if !wroteToFocus(m, "c|d") {
-		t.Fatal("the key typed mid-drag never reached the pane")
-	}
-}
-
-// The quit key is text to a focused agent: typed while the button is still
-// down it ends the drag and reaches the pane rather than quitting.
-func TestQuitKeyDuringAFocusedDragReachesTheAgent(t *testing.T) {
-	t.Parallel()
-	m := focusedModel(t)
-	m.layout.width, m.layout.height = 120, 40
-	preparedView(m)
-	y0, _ := m.bodyYRange()
-	m = leftPress(m, m.dividerX(), y0+1)
-	m = mouseMotionAt(m, m.dividerX()+6, y0+1)
-	if !m.layout.split.Dragging {
-		t.Fatal("test setup: the drag should be live")
-	}
-	updated, _ := m.handleKey(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
-	m = updated.(*Model)
-	if m.effects.Quitting || m.layout.split.Dragging || !m.focused() {
-		t.Fatalf("quitting = %v, dragging = %v, focused = %v", m.effects.Quitting, m.layout.split.Dragging, m.focused())
-	}
-	if !wroteToFocus(m, "q") {
-		t.Fatal("the quit key never reached the pane")
-	}
-}
-
-// A modified key such as Shift+Enter ends a focused drag the way a plain key
-// does, and reaches the agent instead of being dropped under the resize
-// surface.
-func TestModifiedKeyDuringAFocusedDragReachesTheAgent(t *testing.T) {
-	t.Parallel()
-	m := focusedModel(t)
-	m.layout.width, m.layout.height = 120, 40
-	preparedView(m)
-	y0, _ := m.bodyYRange()
-	m = leftPress(m, m.dividerX(), y0+1)
-	m = mouseMotionAt(m, m.dividerX()+6, y0+1)
-	if !m.layout.split.Dragging {
-		t.Fatal("test setup: the drag should be live")
-	}
-
-	updated, _ := m.Update(uifocus.ExtendedKeyMsg{Name: "S-Enter"})
-	m = updated.(*Model)
-	if m.layout.split.Dragging || m.layout.split.ResizeMode || !m.focused() {
-		t.Fatalf("dragging = %v, resize = %v, focused = %v", m.layout.split.Dragging, m.layout.split.ResizeMode, m.focused())
-	}
-	want, wantArgs := tmux.GuardedExtendedKey(tmux.PaneTarget(railSelectedSession(m).ID), "S-Enter")
-	request, ok := focusruntime.InputRequest{}, false
-	if job := m.effects.Input.Active; job != nil {
-		request, ok = job.Request.(focusruntime.InputRequest)
-	}
-	if !ok || request.Value.Kind != focusruntime.Keys || request.Value.Command != want ||
-		!slices.Equal(request.Value.Args, wantArgs) || request.Value.Submit {
-		t.Fatalf("Shift+Enter = %q %q, want %q %q", request.Value.Command, request.Value.Args, want, wantArgs)
-	}
-}
-
-// The armed keyboard resize keeps the keyboard: a modified key is consumed
-// there, as a plain key is, without ending the gesture or committing a ratio.
-func TestModifiedKeyLeavesAKeyboardResizeAlone(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	createSession(t, m, "keys-resize", t.TempDir(), "")
-	m.selectSessionRow(t, "keys-resize")
-	preparedView(m)
-	updated, _ := m.enterResizeMode()
-	m = updated.(*Model)
-	m.nudgeSplit(4)
-	moved := m.layout.split.Ratio
-
-	updated, _ = m.Update(uifocus.ExtendedKeyMsg{Name: "S-Enter"})
-	m = updated.(*Model)
-	if !m.layout.split.ResizeMode || m.layout.split.Dragging {
-		t.Fatalf("resize = %v, dragging = %v, want the gesture still armed", m.layout.split.ResizeMode, m.layout.split.Dragging)
-	}
-	if m.layout.split.Ratio != moved {
-		t.Fatalf("ratio = %v, want the nudged %v", m.layout.split.Ratio, moved)
-	}
-	if focusInputQueued(m) {
-		t.Fatal("a modified key during the keyboard resize reached a pane")
-	}
-}
-
-// Full screen has no divider, so a focused press in that column is the pane's.
-func TestFocusedPressOnTheDividerColumnDoesNotDragInFullScreen(t *testing.T) {
-	t.Parallel()
-	m := focusedModel(t)
-	m.prefs.fullLayout = true
-	preparedView(m)
-	y0, _ := m.bodyYRange()
-	if m = leftPress(m, m.dividerX(), y0+1); m.layout.split.Dragging {
-		t.Fatal("full screen has no divider to drag")
-	}
-}
-
-// The preview only focuses a session that focus would open: a group, an
-// archived row, the search field and the quick bar keep the press, and
-// full screen has no preview beside the list.
-func TestPreviewPressFocusesOnlyALiveSession(t *testing.T) {
-	t.Parallel()
-	for _, tc := range []struct {
-		name  string
-		setup func(*Model)
-	}{
-		{"group", func(m *Model) { m.selectGroupRow(t, "work") }},
-		{"search", func(m *Model) { m.rail.SetSearch(m.rail.Search(), true) }},
-		{"quick bar", func(m *Model) { m.openQuickMode() }},
-		{"full screen", func(m *Model) { m.prefs.fullLayout = true }},
-	} {
-		m := buildModel(t)
-		if err := m.services.store.CreateGroup("work", ""); err != nil {
-			t.Fatal(err)
-		}
-		m.applyCmd(t, m.refreshCmd())
-		createSession(t, m, "alpha", t.TempDir(), "work")
-		m.selectSessionRow(t, "alpha")
-		tc.setup(m)
-		preparedView(m)
-		y0, _ := m.bodyYRange()
-		if m = leftPress(m, m.layout.width-3, y0+1); m.focused() {
-			t.Errorf("%s: a press on the preview focused", tc.name)
-		}
-	}
-}
-
-// A press on a link whose text is its address in the preview beside the list
-// opens it instead of focusing the session. A label that hides its target
-// focuses, so the hover in focus names the target before any click.
-func TestPreviewPressOnALinkOpensIt(t *testing.T) {
-	opened := ""
-	prev := openURL
-	openURL = func(url string) error { opened = url; return nil }
-	t.Cleanup(func() { openURL = prev })
-
-	m := buildModel(t)
-	createSession(t, m, "alpha", t.TempDir(), "")
-	m.selectSessionRow(t, "alpha")
-	waitForPreview(t, m)
-	m.workspace.preview = "read https://example.com/docs now\nsee \x1b]8;;https://example.com/hidden\x1b\\the guide\x1b]8;;\x1b\\ here\n"
-	view := strings.Split(ansi.Strip(preparedView(m)), "\n")
-	cell := func(text string) (int, int) {
-		for row, line := range view {
-			if col := strings.Index(line, text); col >= 0 {
-				return ansi.StringWidth(line[:col]), row
-			}
-		}
-		t.Fatalf("test setup: the preview does not show %q:\n%s", text, strings.Join(view, "\n"))
-		return 0, 0
-	}
-
-	x, y := cell("https://example.com/docs")
-	updated, cmd := m.handleMouse(tea.MouseMsg{X: x + 2, Y: y, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft})
-	m = updated.(*Model)
-	if m.focused() || cmd == nil {
-		t.Fatalf("a press on the link focused=%v cmd=%v", m.focused(), cmd != nil)
-	}
-	cmd()
-	if opened != "https://example.com/docs" {
-		t.Fatalf("opened %q", opened)
-	}
-
-	x, y = cell("the guide")
-	m = leftPress(m, x+2, y)
-	m.drainEffects(t)
-	if !m.focused() || opened != "https://example.com/docs" {
-		t.Fatalf("a press on a hidden-target label should focus, focused=%v opened=%q", m.focused(), opened)
 	}
 }

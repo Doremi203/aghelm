@@ -103,9 +103,8 @@ func TestStatusToastSitsTopRight(t *testing.T) {
 	if !strings.Contains(rows[row], "already up to date") {
 		t.Fatalf("notice is not on row %d: %q", row, rows[row])
 	}
-	leftWidth, _ := m.splitWidths()
-	if column := strings.Index(rows[row], "already up to date"); column <= leftWidth {
-		t.Fatalf("notice starts at column %d, inside the rail (%d wide)", column, leftWidth)
+	if column := strings.Index(rows[row], "already up to date"); column <= m.layout.width/2 {
+		t.Fatalf("notice starts at column %d, not on the right of a %d wide frame", column, m.layout.width)
 	}
 }
 
@@ -176,7 +175,7 @@ func TestSearchFieldSitsInTheRail(t *testing.T) {
 	if status := ansi.Strip(m.statusLine()); strings.Contains(status, "rate") {
 		t.Fatalf("the query moved to the rail, the notice should not repeat it: %q", status)
 	}
-	leftWidth, _ := m.splitWidths()
+	railWidth := m.layout.width
 	rows := strings.Split(ansi.Strip(m.viewListFrame()), "\n")
 	found := false
 	for _, row := range rows {
@@ -185,8 +184,8 @@ func TestSearchFieldSitsInTheRail(t *testing.T) {
 			continue
 		}
 		found = true
-		if column > leftWidth {
-			t.Fatalf("search field starts at column %d, past the rail (%d wide)", column, leftWidth)
+		if column > railWidth {
+			t.Fatalf("search field starts at column %d, past the rail (%d wide)", column, railWidth)
 		}
 	}
 	if !found {

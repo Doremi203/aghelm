@@ -46,7 +46,6 @@ type Connections struct {
 	gen     uint64
 	hosts   map[string]Host
 	polling map[string]bool
-	Preview Preview
 }
 
 // SetList adopts the stored connections. A host no longer listed, or

@@ -6,10 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Doremi203/aghelm/internal/config"
 	"github.com/Doremi203/aghelm/internal/keybind"
 	"github.com/Doremi203/aghelm/internal/status"
-	"github.com/Doremi203/aghelm/internal/store"
 	"github.com/Doremi203/aghelm/internal/ui/presentation"
 	uisettings "github.com/Doremi203/aghelm/internal/ui/settings"
 	uistartup "github.com/Doremi203/aghelm/internal/ui/startup"
@@ -174,11 +172,7 @@ func TestManualThemeCycleDisablesAuto(t *testing.T) {
 	}
 }
 
-func TestGlyphModesCoverEveryBuiltinTool(t *testing.T) {
-	cfg, err := config.Default()
-	if err != nil {
-		t.Fatal(err)
-	}
+func TestGlyphModesKeepStatusMarksDistinct(t *testing.T) {
 	for _, mode := range []presentation.GlyphMode{presentation.GlyphModeBasic, presentation.GlyphModeAdvanced} {
 		t.Run(string(mode), func(t *testing.T) {
 			g := presentation.GlyphsFor(mode)
@@ -213,24 +207,6 @@ func TestGlyphModesCoverEveryBuiltinTool(t *testing.T) {
 				}
 				if mode == presentation.GlyphModeBasic && (len(mark) != 1 || mark[0] < '!' || mark[0] > '~') {
 					t.Errorf("basic mark %q must be printable ASCII", mark)
-				}
-			}
-			for toolName, tool := range cfg.Tools {
-				m := &Model{services: services{cfg: cfg}, prefs: preferences{glyphMode: mode}}
-				for _, state := range append(states, status.Dead) {
-					sess := store.Session{Tool: toolName, Status: state}
-					for phase := 0; phase < len(g.StartupFrames)*2; phase++ {
-						m.startup.LoadPhase = phase
-						want := g.StatusGlyph(state)
-						if state == status.Starting {
-							want = g.StartupFrames[phase%len(g.StartupFrames)]
-						} else if tool.Shell && state != status.Errored && state != status.Dead {
-							want = g.ShellGlyph
-						}
-						if got := ansi.Strip(m.sessionGlyph(sess)); got != want {
-							t.Errorf("%s %s phase %d: got %q, want %q", toolName, state, phase, got, want)
-						}
-					}
 				}
 			}
 		})
@@ -287,15 +263,6 @@ func TestUnknownStoredSymbolsSettingSurfacesAtStartup(t *testing.T) {
 	}
 }
 
-func TestPreviewKeepsTheAgentsOwnSymbolsInCompatibleMode(t *testing.T) {
-	const text = "◐◌◆●○✕ ⠿ ✉ ⑂ ⠋ 界é"
-	m := previewModel(status.Idle, text+"\n")
-	m.prefs.glyphMode = presentation.GlyphModeBasic
-	if got := previewText(m); !strings.Contains(got, text) {
-		t.Fatalf("preview changed the CLI's symbols: %q", got)
-	}
-}
-
 func TestPendingActionMarksMatchHelpInBothModes(t *testing.T) {
 	for _, tc := range []struct {
 		mode          presentation.GlyphMode
@@ -303,10 +270,8 @@ func TestPendingActionMarksMatchHelpInBothModes(t *testing.T) {
 	}{{presentation.GlyphModeBasic, "A", "K"}, {presentation.GlyphModeAdvanced, "↓", "■"}} {
 		m := shotModel()
 		m.prefs.glyphMode = tc.mode
-		for action, want := range map[string]string{store.AfterTurnArchive: tc.archive, store.AfterTurnKill: tc.kill} {
-			if got := ansi.Strip(m.afterTurnBadge(action)); got != want {
-				t.Fatalf("%s/%s badge=%q", tc.mode, action, got)
-			}
+		if g := m.glyphs(); g.AfterTurnArchiveGlyph != tc.archive || g.AfterTurnKillGlyph != tc.kill {
+			t.Fatalf("%s badges = %q / %q", tc.mode, g.AfterTurnArchiveGlyph, g.AfterTurnKillGlyph)
 		}
 		found := false
 		m.openHelp()

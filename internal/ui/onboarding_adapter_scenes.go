@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	"strings"
 	"time"
@@ -14,7 +13,7 @@ import (
 
 const (
 	sampleAnswer  = "yes, go ahead"
-	sampleFocus   = "also cover the logout path"
+	sampleTyped   = "also cover the logout path"
 	sampleComment = "keep the #hash on the way back"
 )
 
@@ -26,7 +25,6 @@ func (m *Model) setupScene(p uionboarding.Preview, width, height int) previewSce
 		groups:   []string{"web", "api"},
 		selected: sessionSelection(previewLogin, "web"),
 	}
-	scene.content = m.loginTranscript()
 	switch p.Step {
 	case uionboarding.Welcome:
 		welcomeScene(&scene, p)
@@ -95,17 +93,15 @@ func (m *Model) quickPromptScene(scene *previewScene, p uionboarding.Preview, wi
 		}
 		scene.sessions = append(scene.sessions, agent)
 	}
-	scene.content = m.groupSummary(2 + started)
 }
 
-// sessionsScene: answer a waiting agent from the bar, focus one and type
-// into it, and come back to the list.
+// sessionsScene: answer a waiting agent from the bar, then attach to one and
+// type into it.
 func (m *Model) sessionsScene(scene *previewScene, p uionboarding.Preview, width, height int) {
 	switch p.Scene {
 	case 0:
 		scene.selected = sessionSelection(previewDark, "web")
 		answered := p.Frame >= 22
-		scene.content = m.darkModeTranscript(answered)
 		target := lipgloss.NewStyle().Foreground(uitheme.ColorBright()).Render("dark mode")
 		typed := typedOut(sampleAnswer, p.Frame-4)
 		if answered {
@@ -114,11 +110,8 @@ func (m *Model) sessionsScene(scene *previewScene, p uionboarding.Preview, width
 		}
 		scene.foot = m.previewBar(width, "answer", target, "", typed)
 	case 1:
-		scene.focused = true
-		scene.content = append(m.loginTranscript(), contentLine{}, m.promptLine(typedOut(sampleFocus, p.Frame-4), true))
-		if p.Choices.FullLayout {
-			scene.body = m.paneBody(scene.content, width, height)
-		}
+		transcript := append(m.loginTranscript(), contentLine{}, m.promptLine(typedOut(sampleTyped, p.Frame-4), true))
+		scene.body = m.paneBody(transcript, width, height)
 	}
 }
 
@@ -145,8 +138,8 @@ func setStatus(sessions []uirail.Session, id, state, line string) {
 	}
 }
 
-// paneBody is an agent's pane over the whole window, the way focus takes
-// the body in the full layout.
+// paneBody is an agent's pane over the whole window, the way an attach
+// takes the terminal.
 func (m *Model) paneBody(lines []contentLine, width, height int) []string {
 	out := make([]string, 0, height)
 	for _, line := range m.fitTranscript(lines, width, height) {
@@ -156,15 +149,6 @@ func (m *Model) paneBody(lines []contentLine, width, height int) []string {
 		out = append(out, uitheme.Paint("", width, uitheme.BackdropHex()))
 	}
 	return out
-}
-
-func (m *Model) groupSummary(agents int) []contentLine {
-	pad := strings.Repeat(" ", setupContentGutter)
-	return []contentLine{
-		{},
-		{Text: pad + lipgloss.NewStyle().Foreground(uitheme.ColorAccent2()).Bold(true).Render("web")},
-		{Text: pad + uitheme.MutedStyle().Render(fmt.Sprintf("%d agents · %d working · 1 waiting", agents, agents-1))},
-	}
 }
 
 // The transcript lines, in the shapes an agent's pane shows them.
@@ -199,19 +183,4 @@ func (m *Model) loginTranscript() []contentLine {
 		{},
 		m.stateLine(status.Working, "Running tests…"),
 	}
-}
-
-func (m *Model) darkModeTranscript(answered bool) []contentLine {
-	lines := []contentLine{
-		{},
-		m.promptLine("add a dark mode toggle", false),
-		{},
-		m.stepLine("The toggle needs new tokens in theme.css."),
-		{},
-		m.stateLine(status.Waiting, "Allow edits to theme.css?"),
-	}
-	if answered {
-		lines = append(lines, contentLine{}, m.promptLine(sampleAnswer, false), contentLine{}, m.stateLine(status.Working, "Editing src/theme.css…"))
-	}
-	return lines
 }

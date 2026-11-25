@@ -11,13 +11,10 @@ import (
 	"testing"
 	"unicode/utf8"
 
-	"github.com/Doremi203/aghelm/internal/config"
 	"github.com/Doremi203/aghelm/internal/diff"
 	"github.com/Doremi203/aghelm/internal/git"
 	"github.com/Doremi203/aghelm/internal/keybind"
 	"github.com/Doremi203/aghelm/internal/store"
-	uidialogs "github.com/Doremi203/aghelm/internal/ui/dialogs"
-	uifocus "github.com/Doremi203/aghelm/internal/ui/focus"
 	uiframe "github.com/Doremi203/aghelm/internal/ui/frame"
 	uinotices "github.com/Doremi203/aghelm/internal/ui/notices"
 	"github.com/Doremi203/aghelm/internal/ui/presentation"
@@ -25,7 +22,6 @@ import (
 	uisettings "github.com/Doremi203/aghelm/internal/ui/settings"
 	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	"github.com/charmbracelet/bubbles/textarea"
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/muesli/termenv"
@@ -117,64 +113,14 @@ func TestFrameFitsTerminal(t *testing.T) {
 	}
 }
 
-// The pane's soft edges: the opening row is drawn in sextants and stops a
-// third of a cell under the wordmark, the closing row bleeds up by half, and
-// every body row ends with the ▐ half-block edge one column past the seam.
-// The end cells of the edge rows are the corners: the first is a foreground
-// block so the window margin cannot inherit pane tone and smear past the
-// corner, and the last is narrowed to the bleed's half width so the fill
-// closes at the corner instead of jutting right. The top row's corner is
-// also a sextant, which is what keeps its edge level with the run beside it.
-func TestPaneSoftEdges(t *testing.T) {
-	m := shotModel()
-	rows := strings.Split(preparedView(m), "\n")
-	leftWidth, _ := m.splitWidths()
-
-	top := []rune(ansi.Strip(rows[m.headerRows()]))
-	bottom := []rune(ansi.Strip(rows[m.headerRows()+1+m.listBodyHeight()]))
-	if top[0] != '🬹' || bottom[0] != '▀' {
-		t.Fatalf("edge rows should open with foreground blocks, got %q and %q",
-			string(top[0]), string(bottom[0]))
-	}
-	for col := 1; col <= leftWidth; col++ {
-		if top[col] != '🬂' {
-			t.Fatalf("top edge col %d is %q, want 🬂:\n%s", col, string(top[col]), string(top))
-		}
-		if bottom[col] != '▄' {
-			t.Fatalf("bottom edge col %d is %q, want ▄:\n%s", col, string(bottom[col]), string(bottom))
-		}
-	}
-	if top[leftWidth+1] != '🬨' || bottom[leftWidth+1] != '▟' {
-		t.Fatalf("edge rows should close on the bleed's half width, got %q and %q",
-			string(top[leftWidth+1]), string(bottom[leftWidth+1]))
-	}
-	if top[leftWidth+2] == '🬂' || bottom[leftWidth+2] == '▄' {
-		t.Fatalf("the bleed should stop after the seam's edge column")
-	}
-	for i := m.headerRows() + 1; i < m.headerRows()+1+m.listBodyHeight(); i++ {
-		row := []rune(ansi.Strip(rows[i]))
-		if cell := row[0]; cell != '█' {
-			t.Fatalf("row %d: first column is %q, want █:\n%s", i, string(cell), string(row))
-		}
-		if cell := row[leftWidth+1]; cell != '▐' && cell != '─' {
-			t.Fatalf("row %d: edge column is %q, want ▐:\n%s", i, string(cell), string(row))
-		}
-		// The seam is fill, not a drawn line: the glyphs of the old line
-		// seam appearing here mean a stale seam renderer shipped again.
-		if cell := row[leftWidth]; cell != ' ' && cell != '─' {
-			t.Fatalf("row %d: seam column is %q, want pane fill:\n%s", i, string(cell), string(row))
-		}
-	}
-}
-
 func TestViewDoesNotPublishCursorState(t *testing.T) {
 	m := &Model{}
-	m.focus.imeCursor = &uiframe.CursorAnchor{}
-	m.focus.imeCursor.Set(8, 4, true)
+	m.layout.imeCursor = &uiframe.CursorAnchor{}
+	m.layout.imeCursor.Set(8, 4, true)
 	if got := m.View(); got != "loading..." {
 		t.Fatalf("initial view = %q", got)
 	}
-	col, row, ok := m.focus.imeCursor.Get()
+	col, row, ok := m.layout.imeCursor.Get()
 	if col != 8 || row != 4 || !ok {
 		t.Fatalf("View changed published cursor to (%d, %d, %t)", col, row, ok)
 	}
@@ -526,150 +472,6 @@ func runGit(t *testing.T, dir string, args ...string) {
 	}
 }
 
-// Focused, the keyboard belongs to the agent: one tier with the keys the
-// manager keeps, and the app-wide keys — which would go to the agent, not
-// the manager — stay out.
-func TestFooterInFocusMode(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	createSession(t, m, "focused", t.TempDir(), "")
-	m.push(newFocusSurface(m))
-	footer := ansi.Strip(m.viewFooter())
-	if !strings.Contains(footer, "Focused") {
-		t.Fatalf("the tier should name the mode it describes:\n%s", footer)
-	}
-	if !strings.Contains(footer, "ctrl+q / ctrl+\\") || !strings.Contains(footer, "click the list") || !strings.Contains(footer, "mouse back") {
-		t.Fatalf("focus footer should carry the reserved keys and mouse leave:\n%s", footer)
-	}
-	listH := lipgloss.Height(m.listFooter())
-	if lipgloss.Height(m.viewFooter()) != listH {
-		t.Fatalf("focus footer must keep the list footer's height %d, got %d:\n%s", listH, lipgloss.Height(m.viewFooter()), footer)
-	}
-	if strings.Contains(footer, "navigate") || strings.Contains(footer, "View") {
-		t.Fatalf("app-wide keys go to the agent while focused, so the tier must go:\n%s", footer)
-	}
-	// Blank rows below hold the list footer's height so focusing never
-	// resizes the pane. The keys themselves may wrap inside that budget.
-	if strings.Contains(footer, "agent UI") {
-		t.Fatalf("a plain focused pane should not offer mouse pass-through:\n%s", footer)
-	}
-	// Full screen focus paints no list, so the gesture that needs one goes.
-	m.prefs.fullLayout = true
-	full := ansi.Strip(m.viewFooter())
-	if strings.Contains(full, "click the list") {
-		t.Fatalf("full screen focus has no list to click:\n%s", full)
-	}
-	if !strings.Contains(full, "mouse back") {
-		t.Fatalf("the button still leaves a full screen session:\n%s", full)
-	}
-
-	setFocusPaneFacts(m, railSelectedSession(m).ID, true, false, false, 0, paneCursor{})
-	if footer := ansi.Strip(m.viewFooter()); !strings.Contains(footer, "click / alt+drag") || !strings.Contains(footer, "agent UI") {
-		t.Fatalf("a mouse-tracking pane should advertise pass-through:\n%s", footer)
-	}
-}
-
-func TestPagingHintFitsFullFocusFooter(t *testing.T) {
-	shipped, err := config.Default()
-	if err != nil {
-		t.Fatalf("default config: %v", err)
-	}
-	m, sessID := focusedWithHistory(t, "paging-footer")
-	m.services.cfg.Tools["gemini"] = shipped.Tools["gemini"]
-	for i := range m.workspace.sessions {
-		if m.workspace.sessions[i].ID == sessID {
-			m.workspace.sessions[i].Tool = "gemini"
-		}
-	}
-	m.rebuildRows()
-	m.prefs.fullLayout = true
-	m.layout.width = 110
-	footer := ansi.Strip(m.viewFooter())
-	if !strings.Contains(footer, "pgup/pgdn scroll") {
-		t.Fatalf("full focus footer omits paging: %q", footer)
-	}
-	if got := lipgloss.Height(m.viewFooter()); got != 1 {
-		t.Fatalf("full focus footer spans %d rows, want one: %q", got, footer)
-	}
-}
-
-// The scrolled notice names PgDn only while PgDn is what walks the pane
-// back down.
-func TestScrolledStatusNamesPgDnWhileItPages(t *testing.T) {
-	m, sessID := focusedWithHistory(t, "scrolled-status")
-	updated, _ := m.handleKey(tea.KeyMsg{Type: tea.KeyPgUp})
-	m = updated.(*Model)
-	if !m.focus.pane.ScrolledBack() {
-		t.Fatal("test setup: PgUp did not scroll the pane back")
-	}
-	if got := ansi.Strip(m.statusLine()); !strings.Contains(got, "lines back · wheel down, pgdn or type to catch up") {
-		t.Fatalf("paging pane's scrolled notice = %q", got)
-	}
-	updateFocusPane(m, sessID, func(update *uifocus.PaneUpdate) { update.Mouse = true })
-	if got := ansi.Strip(m.statusLine()); !strings.Contains(got, "lines back · wheel down or type to catch up") {
-		t.Fatalf("mouse-tracking pane's scrolled notice = %q", got)
-	}
-}
-
-func TestArrowStepFooterHintsFollowSetting(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	if err := m.services.store.CreateGroup("arrow-group", ""); err != nil {
-		t.Fatalf("create group: %v", err)
-	}
-	m.applyCmd(t, m.refreshCmd())
-	createSession(t, m, "arrow-hints", t.TempDir(), "")
-	assertHint := func(context, hint string, enabled bool) {
-		t.Helper()
-		footer := ansi.Strip(m.viewFooter())
-		if got := strings.Contains(footer, hint); got != enabled {
-			t.Fatalf("arrow step enabled = %v: %s hint %q = %v:\n%s", enabled, context, hint, got, footer)
-		}
-	}
-
-	for _, enabled := range []bool{true, false} {
-		m.prefs.arrowStep = enabled
-		m.base = baseList
-		m.clearSurfaces()
-		m.selectSessionRow(t, "arrow-hints")
-		assertHint("session", "→ focus", enabled)
-		m.selectGroupRow(t, "arrow-group")
-		assertHint("group", "←/→ close / open", enabled)
-		m.push(newFocusSurface(m))
-		assertHint("focus", "← prompt start: back", enabled)
-	}
-}
-
-// Every transient tier holds the list footer's height: the footer sets the
-// preview box, and a box that moves resizes every session's pane, which
-// costs an agent drawing on the normal screen a full transcript redraw.
-func TestTransientFootersKeepListHeight(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	createSession(t, m, "sizer", t.TempDir(), "")
-	m.applyCmd(t, m.refreshCmd())
-	listed := lipgloss.Height(m.viewFooter())
-
-	for _, tier := range []struct {
-		name string
-		open func()
-	}{
-		{"resize", func() { m.enterResizeMode() }},
-		{"rename", func() {
-			m.push(uidialogs.NewRenameSurface(renameRoot{m}, uidialogs.RenameSession("s", "alpha", "claude", nil)))
-		}},
-		{"focus", func() { m.push(newFocusSurface(m)) }},
-	} {
-		tier.open()
-		if got := lipgloss.Height(m.viewFooter()); got != listed {
-			t.Errorf("%s footer = %d rows, want %d", tier.name, got, listed)
-		}
-		m.base = baseList
-		m.clearSurfaces()
-		m.clearSurfaces()
-	}
-}
-
 // With nothing under the cursor there is nothing to act on, so the footer
 // carries only the app-wide tier.
 func TestFooterWithoutASelectedRow(t *testing.T) {
@@ -785,26 +587,6 @@ func TestLegendOffersEmptyGroupsOnlyInTheActiveView(t *testing.T) {
 	}
 }
 
-// The focus footer reads the key table: a moved key shows under its new
-// name, and an action turned off has no hint to mislead with.
-func TestFooterInFocusModeNamesTheKeyTable(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	useSessionKeys(t, m, []string{"f9"}, nil, []string{"alt+e"})
-	m.push(newFocusSurface(m))
-	footer := ansi.Strip(m.viewFooter())
-	if !strings.Contains(footer, "f9 / click the list / mouse back") || !strings.Contains(footer, "alt+e editor") {
-		t.Fatalf("focus footer should name the configured keys:\n%s", footer)
-	}
-	if strings.Contains(footer, "review") || strings.Contains(footer, "ctrl+q") {
-		t.Fatalf("focus footer should drop the review hint and the old detach key:\n%s", footer)
-	}
-	rule := ansi.Strip(focusTopRule(80, m.services.keys))
-	if !strings.Contains(rule, "f9 back") || !strings.Contains(rule, "alt+e editor") || strings.Contains(rule, "review") {
-		t.Fatalf("split focus rule should follow the table:\n%s", rule)
-	}
-}
-
 func TestRowLegendDropsRestoreInActiveView(t *testing.T) {
 	t.Parallel()
 	m := buildModel(t)
@@ -905,22 +687,5 @@ func TestQuickPromptFooterKeys(t *testing.T) {
 	}
 	if !strings.Contains(footerTwo, "ctrl+t worktree") {
 		t.Errorf("missing ctrl+t worktree pair: %q", footerTwo)
-	}
-}
-
-// The focused footer names the divider key in the split, where the gesture
-// can move something, and leaves it out full screen, where its footer keeps
-// one row.
-func TestFocusedFooterNamesTheDividerOnlyInTheSplit(t *testing.T) {
-	t.Parallel()
-	m := focusedModel(t)
-	m.layout.width, m.layout.height = 120, 40
-	preparedView(m)
-	if footer := ansi.Strip(m.viewFooter()); !strings.Contains(footer, "ctrl+] resize") {
-		t.Fatalf("focused footer omits the divider: %q", footer)
-	}
-	m.prefs.fullLayout = true
-	if footer := ansi.Strip(m.viewFooter()); strings.Contains(footer, "resize") {
-		t.Fatalf("full focus footer names the divider: %q", footer)
 	}
 }

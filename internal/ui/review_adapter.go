@@ -239,13 +239,6 @@ func (m *Model) closeDiff() tea.Cmd {
 	switch ret.Kind {
 	case uireviewsource.ReturnAttach:
 		return m.reattach(ret.SessionID, gen)
-	case uireviewsource.ReturnFocus:
-		if !m.focusSession(ret.SessionID) {
-			m.reportErr("the review origin is no longer listed")
-			return nil
-		}
-		_, cmd := m.focusSelected()
-		return cmd
 	default:
 		return nil
 	}
