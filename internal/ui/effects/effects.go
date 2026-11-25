@@ -1,12 +1,11 @@
 // Package effects is the UI's ordered work queue: FIFO lanes of jobs that
 // run off the Bubble Tea update path, the lifetime that admits and drains
 // them, and the bookkeeping a quit reads. It knows no request type; the root
-// names each request, picks its lane and says which jobs may not overlap.
+// names each request and picks its lane.
 package effects
 
 import (
 	"errors"
-	"slices"
 	"sync"
 	"time"
 
@@ -138,21 +137,19 @@ func Command(id uint64, lifetime *Lifetime, work func() (Result, error)) tea.Cmd
 	}
 }
 
-// Queue runs effects on three FIFO lanes. Input forwarded to a pane has its
-// own lane so a keystroke never waits behind a spawn, fork or poll-locked
-// reflow, and calls to SSH connections have the third, so a slow host holds
-// up only its own kind of work.
+// Queue runs effects on two FIFO lanes. Calls to SSH connections have their
+// own, so a slow host holds up only its own kind of work.
 type Queue struct {
-	NextID, NextChain   uint64
-	Main, Input, Remote Lane
-	Lifetime            *Lifetime
+	NextID, NextChain uint64
+	Main, Remote      Lane
+	Lifetime          *Lifetime
 	// Quitting refuses new work while the accepted work drains.
 	Quitting  bool
 	Abandoned []string
 }
 
 // Lanes is every lane, in the order a quit drain waits on them.
-func (q *Queue) Lanes() []*Lane { return []*Lane{&q.Main, &q.Input, &q.Remote} }
+func (q *Queue) Lanes() []*Lane { return []*Lane{&q.Main, &q.Remote} }
 
 // Push queues work on lane, at the front when first is set: a follow-up
 // runs before what was queued after the job that asked for it.
@@ -169,15 +166,12 @@ func (q *Queue) Push(lane *Lane, request Request, chain uint64, first bool, work
 	}
 }
 
-// Next starts what each idle lane may run. An input reads its session and
-// then writes to it, so an input and a main-lane job that kills or
-// relaunches the same pane never overlap: conflict reports that pair, and
-// input to any other pane goes ahead. Once a quit has drained every lane,
-// Next quits.
-func (q *Queue) Next(conflict func(main, input *Job) bool) tea.Cmd {
+// Next starts what each idle lane may run. Once a quit has drained every
+// lane, Next quits.
+func (q *Queue) Next() tea.Cmd {
 	var commands []tea.Cmd
-	main, input, remote := &q.Main, &q.Input, &q.Remote
-	if main.Active == nil && len(main.Pending) > 0 && (input.Active == nil || !conflict(main.Pending[0], input.Active)) {
+	main, remote := &q.Main, &q.Remote
+	if main.Active == nil && len(main.Pending) > 0 {
 		main.Active, main.Pending = main.Pending[0], main.Pending[1:]
 		commands = append(commands, main.Active.Command)
 	}
@@ -185,18 +179,7 @@ func (q *Queue) Next(conflict func(main, input *Job) bool) tea.Cmd {
 		remote.Active, remote.Pending = remote.Pending[0], remote.Pending[1:]
 		commands = append(commands, remote.Active.Command)
 	}
-	if input.Active == nil {
-		for i, job := range input.Pending {
-			if main.Active != nil && conflict(main.Active, job) {
-				continue
-			}
-			input.Active = job
-			input.Pending = slices.Delete(input.Pending, i, i+1)
-			commands = append(commands, job.Command)
-			break
-		}
-	}
-	if main.Active == nil && input.Active == nil && remote.Active == nil && q.Quitting {
+	if main.Active == nil && remote.Active == nil && q.Quitting {
 		return tea.Quit
 	}
 	return tea.Batch(commands...)

@@ -13,10 +13,10 @@ import (
 // Keys are the bindings the guide names, as the key tables hold them now.
 // An empty one is an action turned off, and its line is left out.
 type Keys struct {
-	Prompt, Focus, Back, Review, Settings, Messages, Help string
+	Prompt, Attach, Back, Review, Settings, Messages, Help string
 	// The other ways in, named under a card's main flow: the New Session
-	// and New Group forms, and the focus and back keys besides the arrows.
-	NewSession, NewGroup, OtherFocus, OtherBack string
+	// and New Group forms.
+	NewSession, NewGroup string
 }
 
 // ViewContext is what a frame reads from the root. Height leaves out the
@@ -217,9 +217,6 @@ func (m *Model) column(ctx ViewContext, p palette, width, rows int) ([]string, [
 		for i := m.agentFirst; i < m.agentFirst+visible; i++ {
 			add(m.agentRow(p, m.agents[i], i == m.agentCursor, width), i)
 		}
-	case Layout:
-		add(radioRow(p, !m.chosen.FullLayout, "Split", "list beside a live view", width), 0)
-		add(radioRow(p, m.chosen.FullLayout, "Full screen", "the list takes it all", width), 1)
 	case Density:
 		add(radioRow(p, !m.chosen.Comfortable, "Compact", "one line per agent", width), 0)
 		add(radioRow(p, m.chosen.Comfortable, "Comfortable", "status on its own line", width), 1)
@@ -264,8 +261,6 @@ func copyFor(step Step) (string, string) {
 		return "Welcome to aghelm", "Every coding agent you run, in one list. A few quick choices and a short tour, about a minute. Everything can change later."
 	case Agents:
 		return "Which agents do you use?", "Checked ones show up when you start a session."
-	case Layout:
-		return "Pick a layout", "Keep a live view of the agent beside the list, or give the list the whole screen."
 	case Density:
 		return "How much per row?", "Compact fits more agents. Comfortable gives each one room to breathe."
 	case Theme:
@@ -374,7 +369,7 @@ func guideRows(p palette, step Step, keys Keys, active int) []string {
 	case QuickPrompt:
 		rows = []row{{key: keys.Prompt, does: "on a group"}, {key: "type", does: "the task", typed: true}, {key: "↵", does: "the agent starts there"}}
 	case Sessions:
-		rows = []row{{key: keys.Prompt, does: "answer the selected agent"}, {key: keys.Focus, does: "focus it and type right in"},
+		rows = []row{{key: keys.Prompt, does: "answer the selected agent"}, {key: keys.Attach, does: "attach and type right in"},
 			{key: keys.Back, does: "come back to the list"}}
 	case Review:
 		rows = []row{{key: keys.Review, does: "open the agent's diff"}, {key: "c", does: "comment on a line"}, {key: "C", does: "send the comments to the agent"}}
@@ -433,8 +428,6 @@ func alsoLines(p palette, step Step, keys Keys) []string {
 	switch step {
 	case QuickPrompt:
 		pairs = [][2]string{{keys.NewSession, "the full new-session form"}, {keys.NewGroup, "a new group"}}
-	case Sessions:
-		pairs = [][2]string{{keys.OtherFocus, "focuses too"}, {keys.OtherBack, "comes back from anywhere"}}
 	}
 	labels := make([]string, 0, len(pairs))
 	width := 0

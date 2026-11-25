@@ -1,10 +1,8 @@
 package ui
 
 import (
-	uigeometry "github.com/Doremi203/aghelm/internal/ui/geometry"
 	"maps"
 	"slices"
-	"time"
 
 	"github.com/Doremi203/aghelm/internal/config"
 	"github.com/Doremi203/aghelm/internal/execution"
@@ -20,13 +18,10 @@ import (
 	uicomposer "github.com/Doremi203/aghelm/internal/ui/composer"
 	uilink "github.com/Doremi203/aghelm/internal/ui/connections/link"
 	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
-	uifocus "github.com/Doremi203/aghelm/internal/ui/focus"
-	focusruntime "github.com/Doremi203/aghelm/internal/ui/focus/runtime"
 	uiframe "github.com/Doremi203/aghelm/internal/ui/frame"
 	uigeometrypanes "github.com/Doremi203/aghelm/internal/ui/geometry/panes"
 	uinotices "github.com/Doremi203/aghelm/internal/ui/notices"
 	"github.com/Doremi203/aghelm/internal/ui/presentation"
-	uicapture "github.com/Doremi203/aghelm/internal/ui/preview/capture"
 	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
 	uirailpersist "github.com/Doremi203/aghelm/internal/ui/rail/persist"
 	uireview "github.com/Doremi203/aghelm/internal/ui/review"
@@ -45,7 +40,6 @@ type Model struct {
 	services  services
 	workspace workspace
 	rail      uirail.Model
-	focus     focusState
 	prefs     preferences
 	ledger    launchLedger
 	startup   startupState
@@ -76,26 +70,17 @@ type layoutState struct {
 	frame         string
 	width         int
 	height        int
-	split         uigeometry.Gesture
 	panes         uigeometrypanes.Panes
 	displayedRail uirail.Frame
 	// card places the last card painted and its body, for clicks.
 	card cardRect
 	// keyHits are the key pairs this frame painted, for clicks.
 	keyHits keyHits
-	// previewLinks are the links of the pane preview this frame painted
-	// beside the list, for clicks.
-	previewLinks uifocus.PaneLinks
 	// reviewFilesTop is the frame row Review's file list first painted on,
 	// under the commit rail when the commit scope shows one, for clicks.
 	reviewFilesTop int
 	// keepFrame skips the next render: the message left the frame as drawn.
 	keepFrame bool
-}
-
-type focusState struct {
-	pane    uifocus.Model
-	runtime focusruntime.State
 	// imeCursor is the cell the input method opens beside, owned here
 	// because the frame writer publishes into it.
 	imeCursor *uiframe.CursorAnchor
@@ -109,11 +94,6 @@ type mouseCapture struct {
 	// pressed is what the last left press landed on, which its release
 	// clicks when it comes back up over the same one.
 	pressed clickTarget
-	// flickAt is the last wheel notch of a trackpad flick that was still
-	// arriving when focus left, or zero once it has settled. The notches
-	// belong to the session just left, so the list swallows them until the
-	// first gap wider than wheelSettleGap.
-	flickAt time.Time
 }
 
 type environment struct {
@@ -194,7 +174,7 @@ func newView(deps Dependencies, version string) (*Model, error) {
 	model := &Model{
 		effects: effectState{Queue: uieffects.Queue{Lifetime: &uieffects.Lifetime{}}},
 		poller:  &poller{runner: deps.Execution},
-		layout:  layoutState{split: uigeometry.Gesture{Ratio: uigeometrypanes.Load(st)}},
+		layout:  layoutState{imeCursor: &uiframe.CursorAnchor{}},
 		env: environment{
 			workDir: uilaunch.InitialWorkingDir(),
 			homeDir: uilaunch.InitialHomeDir(),
@@ -214,11 +194,9 @@ func newView(deps Dependencies, version string) (*Model, error) {
 			engine:      engine,
 			setSnapshot: st.SetSnapshot,
 		},
-		rail:      uirailpersist.Load(st),
-		ssh:       uilink.New(remote.New(deps.ProfileDir), connections),
-		settings:  uipersist.New(uipersist.StoreWriter{Store: st}, choiceSettingKeys(slices.Sorted(maps.Keys(cfg.Tools)))),
-		focus:     focusState{runtime: focusruntime.State{}, imeCursor: &uiframe.CursorAnchor{}},
-		workspace: workspace{capture: uicapture.New(st, driver)},
+		rail:     uirailpersist.Load(st),
+		ssh:      uilink.New(remote.New(deps.ProfileDir), connections),
+		settings: uipersist.New(uipersist.StoreWriter{Store: st}, choiceSettingKeys(slices.Sorted(maps.Keys(cfg.Tools)))),
 		startup: startupState{
 			Booting: true,
 		},
@@ -243,5 +221,5 @@ func newView(deps Dependencies, version string) (*Model, error) {
 
 func (m *Model) Init() tea.Cmd {
 	m.syncPollInput()
-	return tea.Batch(m.syncPaneTheme(), m.setupOnLaunch(), m.refreshExistingSessionUX, m.bannerTick(), m.workspace.capture.Tick(previewCaptures{m}), m.startStartupTick(), uicomposer.SweepCmd, uicomposer.SweepTick(), uistartup.CheckPaneShell)
+	return tea.Batch(m.syncPaneTheme(), m.setupOnLaunch(), m.refreshExistingSessionUX, m.bannerTick(), m.startStartupTick(), uicomposer.SweepCmd, uicomposer.SweepTick(), uistartup.CheckPaneShell)
 }

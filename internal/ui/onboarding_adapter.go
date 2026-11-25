@@ -43,7 +43,6 @@ func (m *Model) setupChoices() uionboarding.Choices {
 	flag := func(key string) bool { return uisettings.FlagOn(key, cache.Value(key)) }
 	return uionboarding.Choices{
 		Hidden:      uipersist.Tools(m.services.cfg).KnownHidden(cache.Hidden()),
-		FullLayout:  flag(uisettings.SessionLayoutSetting),
 		Comfortable: flag(uisettings.ListDensitySetting),
 		Theme:       uitheme.Palettes[uitheme.Index(cache.Value(uisettings.ThemeSetting))].Name,
 		ThemeAuto:   flag(uisettings.ThemeAutoSetting),
@@ -144,7 +143,7 @@ func (m *Model) saveSetup(choices uionboarding.Choices) tea.Cmd {
 	d.MarkBaseline()
 	d.CLIHidden = choices.Hidden
 	d.ShowTools(uipersist.Tools(m.services.cfg), m.settings.Cache.Value(uisettings.DefaultToolSetting))
-	d.FullLayout, d.ComfortableRows = choices.FullLayout, choices.Comfortable
+	d.ComfortableRows = choices.Comfortable
 	d.ThemeAuto, d.ManualTheme = choices.ThemeAuto, choices.Theme
 	setup, _ := m.setupSurface()
 	d.ShowTheme(setup.Palette(choices, uitheme.Current().Name))
@@ -171,16 +170,10 @@ func (m *Model) setupKeys() uionboarding.Keys {
 		return keybind.Keys(keys[0]).Text("", m.prefs.glyphMode.Effective() == presentation.GlyphModeAdvanced)
 	}
 	list := m.services.listKeys
-	enter, detach := first(list, keybind.Open), first(m.services.keys, keybind.Detach)
-	if !m.enterFocuses() {
-		enter = first(list, keybind.Attach)
-	}
-	keys := uionboarding.Keys{
+	return uionboarding.Keys{
 		Prompt:     first(list, keybind.Prompt),
-		Focus:      first(list, keybind.StepIn),
-		Back:       first(list, keybind.StepOut),
-		OtherFocus: enter,
-		OtherBack:  detach,
+		Attach:     first(list, keybind.Open),
+		Back:       first(m.services.keys, keybind.Detach),
 		NewSession: first(list, keybind.NewSession),
 		NewGroup:   first(list, keybind.NewGroup),
 		Review:     first(list, keybind.Review),
@@ -188,10 +181,6 @@ func (m *Model) setupKeys() uionboarding.Keys {
 		Messages:   first(list, keybind.Messages),
 		Help:       first(list, keybind.Help),
 	}
-	if !m.prefs.arrowStep || m.prefs.arrowAttach || keys.Focus == "" || keys.Back == "" {
-		keys.Focus, keys.Back, keys.OtherFocus, keys.OtherBack = enter, detach, "", ""
-	}
-	return keys
 }
 
 // setupMargin is the footer's inset when the setup's content is narrower.

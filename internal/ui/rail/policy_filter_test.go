@@ -94,8 +94,8 @@ func TestArchivedGroupFoldingPreservesActiveFolds(t *testing.T) {
 					frame := Frame{Width: 40, Lines: []Line{{Hit: target, HitOK: true}}, visible: map[string]bool{target.key(): true}}
 					msg := tea.MouseMsg{X: 12, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft}
 					now := time.Now()
-					model.Mouse(msg, frame, MouseContext{FullWidth: true, Now: now})
-					result = model.Mouse(msg, frame, MouseContext{FullWidth: true, Now: now.Add(time.Millisecond)})
+					model.Mouse(msg, frame, MouseContext{Now: now})
+					result = model.Mouse(msg, frame, MouseContext{Now: now.Add(time.Millisecond)})
 				} else {
 					keys := keybind.DefaultList()
 					kind := map[string]tea.KeyType{"enter": tea.KeyEnter, "right": tea.KeyRight, "left": tea.KeyLeft, "f6": tea.KeyF6}[input]
@@ -106,7 +106,7 @@ func TestArchivedGroupFoldingPreservesActiveFolds(t *testing.T) {
 						}
 						keys = keys.With(keybind.Open, keybind.Keys(key))
 					}
-					result = model.Key(tea.KeyMsg{Type: kind}, Frame{}, KeyContext{ListKeys: keys, ArrowStep: true})
+					result = model.Key(tea.KeyMsg{Type: kind}, Frame{}, KeyContext{ListKeys: keys})
 				}
 				if !result.Consumed || len(result.Mutations) != 0 || !slices.Equal(before, model.Collapsed()) {
 					t.Fatalf("archived input changed active folds: before=%v after=%v decision=%+v", before, model.Collapsed(), result)

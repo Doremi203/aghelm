@@ -4,10 +4,9 @@ import "testing"
 
 func TestRestoreUsesTheSameDefaultsAsOpening(t *testing.T) {
 	for name, values := range map[string]map[string]string{
-		"unset":     {DiffLayoutSetting: "", FocusKeySetting: "", ArrowStepSetting: "", NotificationsSetting: ""},
-		"enabled":   {DiffLayoutSetting: "split", FocusKeySetting: "focus", ArrowStepSetting: "on", NotificationsSetting: "on"},
-		"attaching": {DiffLayoutSetting: "split", FocusKeySetting: "focus", ArrowStepSetting: "attach", NotificationsSetting: "on"},
-		"disabled":  {DiffLayoutSetting: "unified", FocusKeySetting: "attach", ArrowStepSetting: "off", NotificationsSetting: "off"},
+		"unset":    {DiffLayoutSetting: "", NotificationsSetting: ""},
+		"enabled":  {DiffLayoutSetting: "split", NotificationsSetting: "on"},
+		"disabled": {DiffLayoutSetting: "unified", NotificationsSetting: "off"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			want := FromSnapshot(Snapshot{Values: values})
@@ -17,11 +16,9 @@ func TestRestoreUsesTheSameDefaultsAsOpening(t *testing.T) {
 				restored = append(restored, Readback{Key: key, Value: raw})
 			}
 			got.Restore(restored, "", nil, nil)
-			if got.LayoutSplit != want.LayoutSplit || got.EnterFocuses != want.EnterFocuses ||
-				got.ArrowStep != want.ArrowStep || got.Notifications != want.Notifications {
-				t.Fatalf("restored layout/focus/arrows/notifications = %v/%v/%v/%v, want %v/%v/%v/%v",
-					got.LayoutSplit, got.EnterFocuses, got.ArrowStep, got.Notifications,
-					want.LayoutSplit, want.EnterFocuses, want.ArrowStep, want.Notifications)
+			if got.LayoutSplit != want.LayoutSplit || got.Notifications != want.Notifications {
+				t.Fatalf("restored layout/notifications = %v/%v, want %v/%v",
+					got.LayoutSplit, got.Notifications, want.LayoutSplit, want.Notifications)
 			}
 		})
 	}

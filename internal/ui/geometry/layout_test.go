@@ -7,7 +7,6 @@ func testLayout() Layout {
 		Width: 100, Height: 40,
 		HeaderRows: 2,
 		FooterRows: func() int { return 1 },
-		Detail:     func(int) int { return 3 },
 	}
 }
 
@@ -25,18 +24,7 @@ func TestLayoutBodyHeight(t *testing.T) {
 	}
 }
 
-// A full screen session names itself on a line of its own, held off by a rule
-// each, so the body starts lower.
-func TestLayoutFullFocusTakesAnExtraLine(t *testing.T) {
-	l := testLayout()
-	l.FullFocus = true
-	if got := l.ChromeRows(); got != 5 {
-		t.Fatalf("ChromeRows with a full screen session = %d", got)
-	}
-}
-
-// The quick bar paints a taller footer, so the body gives way rather than the
-// preview resizing every running pane.
+// The quick bar paints a taller footer, so the resting body gives way.
 func TestLayoutQuickBarShortensTheRestingBody(t *testing.T) {
 	l := testLayout()
 	plain := l.RestingBodyHeight()
@@ -47,21 +35,10 @@ func TestLayoutQuickBarShortensTheRestingBody(t *testing.T) {
 	}
 }
 
-// The preview keeps at least three rows under the detail head, and the pane is
-// pinned to the preview's box.
-func TestLayoutPaneSizeFollowsThePreview(t *testing.T) {
+// Sessions are pinned to the whole body.
+func TestLayoutPaneSizeIsTheWholeBody(t *testing.T) {
 	l := testLayout()
-	width, height := l.PaneSize(DefaultSplitRatio)
-	if width != l.PreviewWidth(DefaultSplitRatio) || height != l.PreviewHeight(DefaultSplitRatio) {
-		t.Fatalf("PaneSize = %d,%d", width, height)
-	}
-	tiny := Layout{Width: 20, Height: 4, FooterRows: func() int { return 0 }, Detail: func(int) int { return 100 }}
-	if got := tiny.PreviewHeight(DefaultSplitRatio); got != 3 {
-		t.Fatalf("a hidden preview section gave %d rows, want the floor of 3", got)
-	}
-	full := testLayout()
-	full.FullLayout = true
-	if w, h := full.PaneSize(DefaultSplitRatio); w != 100 || h != full.RestingBodyHeight() {
-		t.Fatalf("full layout pane = %d,%d, want the whole body", w, h)
+	if w, h := l.PaneSize(); w != 100 || h != l.RestingBodyHeight() {
+		t.Fatalf("PaneSize = %d,%d, want the whole body", w, h)
 	}
 }

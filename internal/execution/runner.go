@@ -59,8 +59,6 @@ type Snapshot struct {
 	ArchivedGroups         map[string]bool
 	Snap                   sysstat.Snapshot
 	SnapOK                 bool
-	Proc                   sysstat.ProcStat
-	ProcFor, Preview       string
 	Agents                 AgentStats
 	QueuedMessages         map[string]int
 	PaneLines, PanePrompts map[string]string

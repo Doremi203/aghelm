@@ -12,7 +12,6 @@ const (
 	SavedForSettings SavedTarget = iota
 	SavedForForm
 	SavedForQuick
-	SavedForFocus
 )
 
 // SavedMsg is the saved prompts catalog as one read found it. Gen is the

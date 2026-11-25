@@ -39,10 +39,9 @@ type Change struct {
 	Launches      []Relaunch
 	// Notices are the lines a completion reports, in the order it reports
 	// them.
-	Notices  []string
-	Warning  error
-	Survivor bool
-	Refusal  *Refusal
+	Notices []string
+	Warning error
+	Refusal *Refusal
 }
 
 type Refusal struct {
@@ -60,7 +59,7 @@ type Refusal struct {
 
 func Changes(request Request, result Result, err error) Change {
 	target := request.Target
-	change := Change{Survivor: result.Survivor}
+	change := Change{}
 
 	for _, sess := range append(append([]store.Session(nil), result.Changed...), result.Archive.Sessions...) {
 		change.Statuses = append(change.Statuses, Status{ID: sess.ID, Status: sess.Status})
@@ -210,7 +209,6 @@ type AfterTurnApply struct {
 	ChangeRequest Request
 	ClearID       string
 	Done          string
-	Survivor      bool
 	Err           error
 }
 
@@ -218,9 +216,9 @@ type AfterTurnApply struct {
 // manager applies. A run that archived or killed carries a lifecycle change;
 // one that only cleared a request carries the row to clear.
 func AfterTurn(request AfterTurnRequest, result AfterTurnResult, err error) AfterTurnApply {
-	apply := AfterTurnApply{Survivor: result.Lifecycle.Survivor, Done: request.Name, Err: err}
+	apply := AfterTurnApply{Done: request.Name, Err: err}
 	if result.Target.Action != None {
-		apply.ChangeRequest = Request{Target: result.Target, Watched: request.Watched}
+		apply.ChangeRequest = Request{Target: result.Target}
 		change := Changes(apply.ChangeRequest, result.Lifecycle, err)
 		apply.Change = &change
 	}

@@ -15,19 +15,14 @@ import (
 )
 
 // previewScene is one frame of the window beside a step: the sample agents
-// and the selected row, the live view beside the rail, rows under the list
-// such as the quick bar, or a body that takes the whole window, such as a
-// focused agent in the full layout or Review.
+// and the selected row, rows under the list such as the quick bar, or a
+// body that takes the whole window, such as an attached agent or Review.
 type previewScene struct {
 	sessions []uirail.Session
 	groups   []string
 	selected uirail.Selection
-	content  []contentLine
 	foot     []string
 	body     []string
-	// focused draws the selected agent focused: its row marked and the
-	// focus edge traced around its pane, as focus mode does.
-	focused bool
 }
 
 // setupPreview draws the workspace the setup's choices give: the real rail
@@ -109,16 +104,13 @@ func (m *Model) previewHeader(sessions []uirail.Session, width int) string {
 	return uitheme.Paint(left+strings.Repeat(" ", gap)+right, width, uitheme.BackdropHex())
 }
 
-// previewBody is the list as the layout and density choices draw it, the
-// rail rendered by the rail itself.
+// previewBody is the list as the density choice draws it, the rail rendered
+// by the rail itself.
 func (m *Model) previewBody(choices uionboarding.Choices, scene previewScene, width, height int) []string {
 	rail := uirail.New(nil)
 	rail.Reconcile(uirail.Snapshot{Sessions: scene.sessions, Groups: scene.groups})
 	rail.Focus(scene.selected)
 	railWidth := width - 1
-	if !choices.FullLayout {
-		railWidth = width/2 - 1
-	}
 	frame := rail.Render(uirail.RenderContext{
 		GlyphMode:       m.prefs.glyphMode,
 		Width:           railWidth,
@@ -129,34 +121,19 @@ func (m *Model) previewBody(choices uionboarding.Choices, scene previewScene, wi
 		ListKeys:        m.services.listKeys,
 		ComfortableRows: choices.Comfortable,
 		MouseDisabled:   true,
-		Focused:         scene.focused,
-		EnterFocuses:    m.enterFocuses(),
 	}, uirail.Frame{})
 	railRows := frame.Lines
 	edge := make([]string, height)
-	seam := make([]string, height)
 	for i := range edge {
 		tone := uitheme.PanelHex()
 		if i < len(railRows) && railRows[i].Tone != "" {
 			tone = railRows[i].Tone
 		}
 		edge[i] = railEdgeCell(tone)
-		seam[i] = m.seamCell(i < len(railRows) && railRows[i].Rule)
 	}
-	if choices.FullLayout {
-		out := []string{m.railTopRow(railWidth, width)}
-		out = append(out, uitheme.JoinColumns(edge, paintContent(railRows, railWidth, height, uitheme.PanelHex()))...)
-		return append(out, m.boundedRuleRow(railWidth, width, "▄"))
-	}
-	contentWidth := width - railWidth - 3
-	bleed, bottom := m.bleedColumn(height), m.boundedRuleRow(railWidth+2, width, "▄")
-	if scene.focused {
-		bleed, bottom = m.tracedBleedColumn(height, 1, height-1), m.focusBottomRule(railWidth+2, width)
-	}
-	out := []string{m.railTopRow(railWidth+2, width)}
-	out = append(out, uitheme.JoinColumns(edge, paintContent(railRows, railWidth, height, uitheme.PanelHex()), seam,
-		bleed, paintContent(m.fitTranscript(scene.content, contentWidth, height), contentWidth, height, uitheme.BackdropHex()))...)
-	return append(out, bottom)
+	out := []string{m.railTopRow(railWidth, width)}
+	out = append(out, uitheme.JoinColumns(edge, paintContent(railRows, railWidth, height, uitheme.PanelHex()))...)
+	return append(out, m.boundedRuleRow(railWidth, width, "▄"))
 }
 
 // fitTranscript keeps the newest lines of a live view that outgrew its

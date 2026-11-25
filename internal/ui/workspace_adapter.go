@@ -3,7 +3,6 @@ package ui
 import (
 	"context"
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/Doremi203/aghelm/internal/config"
@@ -16,11 +15,8 @@ import (
 	"github.com/Doremi203/aghelm/internal/store"
 	"github.com/Doremi203/aghelm/internal/sysstat"
 	"github.com/Doremi203/aghelm/internal/tmux"
-	uicapture "github.com/Doremi203/aghelm/internal/ui/preview/capture"
-	uilifecycle "github.com/Doremi203/aghelm/internal/ui/session/lifecycle"
 	uiworkspace "github.com/Doremi203/aghelm/internal/ui/workspace"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/x/ansi"
 )
 
 type workspace struct {
@@ -41,12 +37,7 @@ type workspace struct {
 	envKeys        map[string][]string
 	archivedGroups map[string]bool
 	snap           sysstat.Snapshot
-	proc           sysstat.ProcStat
-	procFor        string
-	preview        string
-	// capture is what takes the selected pane's preview.
-	capture uicapture.State
-	agents  agentStats
+	agents         agentStats
 	// queuedMessages is replaced whole on every refresh rather than merged,
 	// so a delivered message's badge clears itself.
 	queuedMessages map[string]int
@@ -62,26 +53,15 @@ type workspace struct {
 	panes map[string]tmux.Pane
 	net   uiworkspace.Net
 	// lastListedAt is the newest listing applied; an older one still carries
-	// focus, turn ends and pane facts, but not the rows it saw.
+	// a notification's selection, turn ends and pane facts, but not the rows
+	// it saw.
 	lastListedAt time.Time
-}
-
-// computerLines is the machine block docked at the rail's foot.
-func (m *Model) computerLines(width int) []string {
-	return uiworkspace.ComputerLines(m.workspace.snap, m.workspace.net, width, m.prefs.glyphMode)
 }
 
 func (m *Model) railFootLines(width int) []string {
 	if m.prefs.hideStats {
 		return nil
 	}
-	if m.prefs.fullLayout {
-		return m.fullFootLine(width)
-	}
-	return m.computerLines(width)
-}
-
-func (m *Model) fullFootLine(width int) []string {
 	return uiworkspace.FootLine(m.workspace.snap, m.workspace.net, width, m.prefs.glyphMode)
 }
 
@@ -108,13 +88,13 @@ func pollMessage(result execution.Result) tea.Msg {
 	s := result.Snapshot
 	return refreshMsg{sessions: s.Sessions, listedAt: s.ListedAt, groups: s.Groups, groupPaths: s.GroupPaths,
 		groupWorktrees: s.GroupWorktrees, groupBases: s.GroupBases, groupEnvs: s.GroupEnvs, envProfiles: s.EnvProfiles, envKeys: s.EnvKeys, archivedGroups: s.ArchivedGroups, snap: s.Snap, snapOK: s.SnapOK,
-		proc: s.Proc, procFor: s.ProcFor, preview: s.Preview, agents: agentStats{count: s.Agents.Count, cpu: s.Agents.CPU, ram: s.Agents.RAM, rss: s.Agents.RSS},
+		agents:         agentStats{count: s.Agents.Count, cpu: s.Agents.CPU, ram: s.Agents.RAM, rss: s.Agents.RSS},
 		queuedMessages: s.QueuedMessages, paneLines: s.PaneLines, panePrompts: s.PanePrompts, panes: s.Panes,
 		tmuxSocket: s.TmuxSocket, leadingManager: s.LeadingManager, focusID: s.FocusID, turnsEnded: s.TurnsEnded, followWarning: s.FollowWarning}
 }
 
 func (p *poller) refreshOnce() tea.Msg                                { return pollMessage(p.runner.Step()) }
-func (p *poller) setInput(archived bool, selected string)             { p.runner.SetInput(archived, selected) }
+func (p *poller) setInput(archived bool)                              { p.runner.SetInput(archived) }
 func (p *poller) requestRefresh()                                     { p.runner.RequestRefresh() }
 func (p *poller) results(ctx context.Context) <-chan execution.Result { return p.runner.Run(ctx) }
 
@@ -128,7 +108,6 @@ func takeNotifyFocus() (string, bool) {
 
 const quoteHistoryLines = 300
 
-func paneBooted(pane string) bool { return strings.TrimSpace(ansi.Strip(pane)) != "" }
 func ignoreDeletedSession(err error) error {
 	if errors.Is(err, store.ErrSessionGone) {
 		return nil
@@ -160,9 +139,6 @@ type refreshMsg struct {
 	archivedGroups map[string]bool
 	snap           sysstat.Snapshot
 	snapOK         bool
-	proc           sysstat.ProcStat
-	procFor        string
-	preview        string
 	agents         agentStats
 	queuedMessages map[string]int
 	paneLines      map[string]string
@@ -192,13 +168,11 @@ type refreshMsg struct {
 // bubbletea event loop so statuses keep updating while the TUI is
 // suspended inside a tmux attach.
 func (m *Model) StartPoller(ctx context.Context, send func(tea.Msg)) <-chan struct{} {
-	m.focus.runtime.Watch = newFocusWatch(m.services.tmux, send)
 	m.syncPollInput()
 	results := m.poller.results(ctx)
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		defer m.focus.runtime.Watch.Close()
 		for result := range results {
 			send(pollMessage(result))
 		}
@@ -206,36 +180,11 @@ func (m *Model) StartPoller(ctx context.Context, send func(tea.Msg)) <-chan stru
 	return done
 }
 
+// syncPollInput keeps the loaded projection complete in both views. Rail
+// policy decides which archive state to render, while confirmation cards
+// need hidden children too and must not read SQLite on the Update path.
 func (m *Model) syncPollInput() {
-	selectedID := ""
-	focusID := ""
-	if sess, ok := m.selected(); ok {
-		selectedID = sess.ID
-		if !sess.Archived {
-			focusID = sess.ID
-		}
-	}
-	// Keep the loaded projection complete in both views. Rail policy decides
-	// which archive state to render, while confirmation cards need hidden
-	// children too and must not read SQLite on the Update path.
-	m.poller.setInput(true, selectedID)
-	// Only ever stop the watcher here. Opening a control client costs a
-	// process and a tmux attach, so holding j through twenty rows would
-	// pay that twenty times; the client is opened once the cursor settles
-	// instead. The watcher only exists once StartPoller has a send
-	// function; tests drive Update without one.
-	m.focus.runtime.Settle(focusID)
-}
-
-// watchSelection points the control client at the current selection. Call
-// it where the selection has come to rest, never on every cursor move.
-func (m *Model) watchSelection() {
-	sess, ok := m.selected()
-	if !ok || sess.Archived {
-		m.focus.runtime.ClearFocus()
-		return
-	}
-	m.focus.runtime.SetFocus(sess.ID)
+	m.poller.setInput(true)
 }
 
 // requestRefresh publishes the current UI state to the poller and asks
@@ -289,7 +238,7 @@ func (m *Model) routeRefreshMsg(msg tea.Msg) (tea.Model, tea.Cmd, bool) {
 	switch msg := msg.(type) {
 	case refreshMsg:
 		// A listing older than a committed mutation or a newer listing keeps
-		// its rows out, but still carries focus consumed from a notification,
+		// its rows out, but still carries a selection from a notification,
 		// the turns it saw end and its pane facts.
 		fenced := m.listingFenced(msg.listedAt)
 		staleListing := fenced || (!msg.listedAt.IsZero() && msg.listedAt.Before(m.workspace.lastListedAt))
@@ -304,17 +253,9 @@ func (m *Model) routeRefreshMsg(msg tea.Msg) (tea.Model, tea.Cmd, bool) {
 		if msg.followWarning != "" {
 			m.reportWarn(msg.followWarning)
 		}
-		var focusExit tea.Cmd
 		if !staleListing {
-			// The focused session can die or vanish under us; fall back to the
-			// list rather than typing into nothing.
 			sessions := m.ledger.lifecycle.DropRecentlyRemoved(m.ledger.lifecycle.KeepPendingLaunches(msg.sessions, m.workspace.sessions, msg.listedAt), msg.listedAt)
 			m.reconcileListing(&msg)
-			if m.focused() {
-				if sess, ok := m.selected(); !ok || uilifecycle.SessionGone(sessions, sess.ID) {
-					focusExit = m.leaveFocus()
-				}
-			}
 			m.workspace.sessions = sessions
 			m.workspace.groups = msg.groups
 			m.workspace.groupPaths = msg.groupPaths
@@ -351,7 +292,6 @@ func (m *Model) routeRefreshMsg(msg tea.Msg) (tea.Model, tea.Cmd, bool) {
 				m.workspace.panePrompts[id] = prompt
 			}
 		}
-		m.commitTypedPrompt()
 		if msg.snapOK {
 			m.workspace.snap = msg.snap
 			m.workspace.net.Update(msg.snap.NetSent, msg.snap.NetRecv, msg.snap.NetOK, time.Now())
@@ -363,44 +303,19 @@ func (m *Model) routeRefreshMsg(msg tea.Msg) (tea.Model, tea.Cmd, bool) {
 			m.startup.SessionsSized = true
 		}
 		m.publishPaneSize()
-		// The preview box changes height for more reasons than a terminal
-		// resize: the quick bar opening, the status line appearing, a new
-		// badge in the header. A pane shorter than the box paints a dead
-		// band under its output, so every pass grows what falls short.
-		// The call is free when nothing moved: it diffs against paneGeom.
+		// The body changes height for more reasons than a terminal resize:
+		// the quick bar opening, the status line appearing, a new badge in
+		// the header. Every pass grows what falls short; the call is free
+		// when nothing moved, since it diffs against the cached sizes.
 		if m.startup.SessionsSized && m.layout.width > 0 {
 			m.resizeSessions()
 		}
 		m.settleInstall()
 		m.rebuildRows()
 		if msg.focusID != "" {
-			focused, ok := m.selected()
-			// Moving the cursor under a focused pane would leave the
-			// keyboard pinned to the session the user was in while the
-			// list claims another. The click steps back to the list, and
-			// only once its session turns out to have a row to land on.
-			if m.focusSession(msg.focusID) && m.focused() && (!ok || focused.ID != msg.focusID) {
-				focusExit = m.leaveFocus()
-			}
+			m.focusSession(msg.focusID)
 		}
-		reviewStatuses := m.reviewStatusesCmd()
-		// A pass that ran with a stale selection (a session created this
-		// tick, or one a notification click just chose) carries the wrong
-		// preview; resync and fetch it directly.
-		if sess, ok := m.selected(); ok && sess.ID != msg.procFor {
-			m.syncPollInput()
-			gen := m.focus.pane.MovePreview()
-			return routed(m, tea.Batch(focusExit, m.previewCmd(sess, gen), m.diffRefreshCmd(), reviewStatuses, m.startStartupTick(), m.ssh.Poll()))
-		}
-		m.workspace.proc = msg.proc
-		m.workspace.procFor = msg.procFor
-		m.setPreview(msg.procFor, msg.preview)
-		// A selection that has not moved since the last pass is at rest,
-		// so this covers the startup case where no settle ever fired.
-		if m.focus.pane.ObservePoll() {
-			m.watchSelection()
-		}
-		return routed(m, tea.Batch(focusExit, m.diffRefreshCmd(), reviewStatuses, m.startStartupTick(), m.ssh.Poll()))
+		return routed(m, tea.Batch(m.diffRefreshCmd(), m.reviewStatusesCmd(), m.startStartupTick(), m.ssh.Poll()))
 	}
 	return nil, nil, false
 }

@@ -277,28 +277,29 @@ func TestArchivedRemoteMenusMatchContextualCreationKeys(t *testing.T) {
 	}
 }
 
-// → focuses a session by default and attaches when the arrow step says so.
-// The legend names the one it does.
-func TestStepInFollowsTheArrowStepValue(t *testing.T) {
+// Enter attaches a session; → only opens groups, so it leaves a session
+// alone and the legend names no arrow on its row.
+func TestEnterAttachesASessionAndTheArrowDoesNot(t *testing.T) {
 	model := New(nil)
 	model.Reconcile(Snapshot{Sessions: []Session{{ID: "agent", Name: "agent"}}})
 	selection := Selection{Kind: SessionRow, SessionID: "agent"}
 	model.Focus(selection)
-	for _, tc := range []struct {
-		attaches bool
-		kind     ActionKind
-		label    string
-	}{{false, Focus, "focus"}, {true, Attach, "attach"}} {
-		keys := KeyContext{ListKeys: keybind.DefaultList(), ArrowStep: true, StepInAttaches: tc.attaches}
-		if decision := model.Key(tea.KeyMsg{Type: tea.KeyRight}, Frame{}, keys); decision.Intent.Kind != tc.kind || decision.Intent.Target != selection {
-			t.Errorf("attaches = %v: → gave %+v, want %v on the session", tc.attaches, decision.Intent, tc.kind)
-		}
-		legend := model.RowLegend(LegendContext{
-			ListKeys: keybind.DefaultList(), EnterFocuses: true, ArrowStep: true, StepInAttaches: tc.attaches,
-			RowOK: true, Row: selection, Session: Session{ID: "agent"},
-		})
-		if !slices.Contains(legend.Pairs, [2]string{"→", tc.label}) {
-			t.Errorf("attaches = %v: the legend lacks → %s: %v", tc.attaches, tc.label, legend.Pairs)
+	keys := KeyContext{ListKeys: keybind.DefaultList()}
+	if decision := model.Key(tea.KeyMsg{Type: tea.KeyEnter}, Frame{}, keys); decision.Intent.Kind != Attach || decision.Intent.Target != selection {
+		t.Errorf("enter gave %+v, want attach on the session", decision.Intent)
+	}
+	if decision := model.Key(tea.KeyMsg{Type: tea.KeyRight}, Frame{}, keys); decision.Intent.Kind != NoAction {
+		t.Errorf("→ gave %+v, want nothing on a session", decision.Intent)
+	}
+	legend := model.RowLegend(LegendContext{
+		ListKeys: keybind.DefaultList(), RowOK: true, Row: selection, Session: Session{ID: "agent"},
+	})
+	if !slices.Contains(legend.Pairs, [2]string{"↵", "attach"}) {
+		t.Errorf("the legend lacks ↵ attach: %v", legend.Pairs)
+	}
+	for _, pair := range legend.Pairs {
+		if pair[0] == "→" {
+			t.Errorf("the legend names → on a session: %v", legend.Pairs)
 		}
 	}
 }

@@ -55,20 +55,6 @@ func OpenLink(target string, seams Seams) tea.Cmd {
 	}
 }
 
-// OpenLinkCmd opens a URL the focused pane reported, and fails into the error
-// bar rather than the clipboard: the pane's link is not what the user typed.
-func OpenLinkCmd(target string, seams Seams) tea.Cmd {
-	return func() tea.Msg {
-		if seams.Remote() {
-			return LinkPageMsg{URL: target}
-		}
-		if err := seams.Opener(target); err != nil {
-			return LinkOpenErrMsg{Err: fmt.Errorf("open link: %w", err)}
-		}
-		return nil
-	}
-}
-
 // DefaultOpenBrowser opens target in the desktop's browser, trying every
 // candidate in $BROWSER before the platform's own opener.
 func DefaultOpenBrowser(target string) error {

@@ -74,15 +74,8 @@ type Result struct {
 	Changed  []store.Session
 	Launches []Relaunch
 	Failed   []store.Session
-	Survivor bool
 	Notice   string
 	Warning  error
-}
-
-// Watcher stops watching a pane the action is about to end, so the client
-// going away reads as the plan instead of a loss.
-type Watcher interface {
-	Unwatch(id string)
 }
 
 // Services is what a lifecycle run asks of the manager.
@@ -90,9 +83,8 @@ type Services struct {
 	Lifecycle *sessioncmd.Lifecycle
 	Store     *store.Store
 	Driver    *tmux.Driver
-	Watch     Watcher
-	// Reflow holds the panes a run touches so no input job writes into a
-	// session it is about to kill or relaunch; nil runs the work directly.
+	// Reflow holds the poller off the panes a run touches, so a pass does not
+	// read a pane mid-kill or mid-relaunch; nil runs the work directly.
 	Reflow func(ids []string, work func()) error
 }
 
@@ -109,11 +101,6 @@ func Run(services Services, request Request) (Result, error) {
 	}
 	var operationErr error
 	reflowErr := reflow(services, ids, func() {
-		if services.Watch != nil && (target.Action == Archive || target.Action == Remove || target.Action == Kill || target.Action == Restart) {
-			for _, id := range ids {
-				services.Watch.Unwatch(id)
-			}
-		}
 		switch target.Action {
 		case Archive:
 			result.Archive, operationErr = services.Lifecycle.ArchiveForHuman(sessioncmd.ArchiveSelection{Sessions: target.Sessions, GroupPath: target.Path})
@@ -173,9 +160,6 @@ func Run(services Services, request Request) (Result, error) {
 			}
 		default:
 			operationErr = fmt.Errorf("unknown confirm action %q", target.Action)
-		}
-		if request.Watched != "" {
-			result.Survivor = services.Driver.Exists(request.Watched)
 		}
 	})
 	if reflowErr != nil {
@@ -313,12 +297,10 @@ func reflow(services Services, ids []string, work func()) error {
 }
 
 // Request is one queued session action: the target, the pane size a relaunch
-// draws at, the session whose watcher a quit cares about, and the notice a
-// batch revive with nothing to do reports.
+// draws at, and the notice a batch revive with nothing to do reports.
 type Request struct {
 	Target      Target
 	Pane        sessioncmd.PaneSize
-	Watched     string
 	AllowLive   bool
 	EmptyNotice string
 }
@@ -326,10 +308,9 @@ type Request struct {
 // AfterTurnRequest is the archive or kill a session asked for once its turn
 // ends, or the withdrawal of that ask.
 type AfterTurnRequest struct {
-	ID      string
-	Name    string
-	Cancel  bool
-	Watched string
+	ID     string
+	Name   string
+	Cancel bool
 }
 
 // AfterTurnResult is what an after-turn run did: the action it took, its
@@ -361,17 +342,7 @@ func RunAfterTurn(services Services, request AfterTurnRequest) (AfterTurnResult,
 	var ended sessioncmd.EndAfterTurnResult
 	var endErr error
 	reflowErr := reflow(services, ids, func() {
-		// Stop watching first, so the watcher does not report a kill it asked
-		// for as a lost client.
-		if services.Watch != nil {
-			for _, id := range ids {
-				services.Watch.Unwatch(id)
-			}
-		}
 		ended, endErr = services.Lifecycle.EndAfterTurn(request.ID)
-		if request.Watched != "" {
-			result.Lifecycle.Survivor = services.Driver.Exists(request.Watched)
-		}
 	})
 	if reflowErr != nil {
 		return result, reflowErr
@@ -399,12 +370,11 @@ type AttachRequest struct {
 	Screen        Fence
 }
 
-// Fence is the screen a request was made from: the base screen, whether a
-// session is focused, and how many surfaces are up.
+// Fence is the screen a request was made from: the base screen and how many
+// surfaces are up.
 type Fence struct {
-	Base    uint8
-	Focused bool
-	Depth   int
+	Base  uint8
+	Depth int
 }
 
 // AttachResult is what preparing an entry found: a warning that does not stop

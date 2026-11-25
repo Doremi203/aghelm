@@ -7,7 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func keyCtx() KeyContext { return KeyContext{ListKeys: keybind.DefaultList(), EnterFocuses: true} }
+func keyCtx() KeyContext { return KeyContext{ListKeys: keybind.DefaultList()} }
 
 // A list key the root acts on reaches it: dropping a consumed decision lost
 // help, settings and new session.

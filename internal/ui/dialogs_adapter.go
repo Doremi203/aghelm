@@ -12,7 +12,6 @@ import (
 	uiapply "github.com/Doremi203/aghelm/internal/ui/dialogs/apply"
 	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
 	uiframe "github.com/Doremi203/aghelm/internal/ui/frame"
-	uigeometry "github.com/Doremi203/aghelm/internal/ui/geometry"
 	uiquick "github.com/Doremi203/aghelm/internal/ui/quick"
 	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
 	uirailpersist "github.com/Doremi203/aghelm/internal/ui/rail/persist"
@@ -33,30 +32,18 @@ func (m *Model) openConfirm(target confirmTarget) {
 }
 
 // listClear is the list with no card over it: what "mode is the list" meant
-// while the cards were modes. The quick bar and a resize sit on the list
-// without covering it.
+// while the cards were modes. The quick bar sits on the list without
+// covering it.
 func (m *Model) listClear() bool {
 	if m.base != baseList {
 		return false
 	}
 	for _, s := range m.surfaces {
-		switch s.(type) {
-		case *uiquick.Surface, *uigeometry.Surface:
-		default:
+		if _, quick := s.(*uiquick.Surface); !quick {
 			return false
 		}
 	}
 	return true
-}
-
-// previewFeeds is whether the preview has a pane to feed: the bare list, a
-// rename typed in a row, or focus. Any other card hides it.
-func (m *Model) previewFeeds() bool {
-	if m.focused() {
-		return true
-	}
-	_, renaming := surfaceOf[*uidialogs.RenameSurface](m)
-	return m.listClear() || renaming
 }
 
 func (m *Model) openMove() {

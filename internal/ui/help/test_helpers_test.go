@@ -20,7 +20,6 @@ func testContext(width int) Context {
 	return Context{
 		SessionKeys: keybind.DefaultSession(),
 		ListKeys:    keybind.DefaultList(),
-		ArrowStep:   true,
 		Width:       width,
 		Glyphs: Glyphs{
 			RowMenu:          "[…]",

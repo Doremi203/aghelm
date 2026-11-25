@@ -2,9 +2,7 @@ package frame
 
 import (
 	"fmt"
-	"os"
 	"strings"
-	"time"
 
 	"github.com/charmbracelet/x/ansi"
 )
@@ -33,28 +31,6 @@ func DisplayGroup(path string) string {
 	return path
 }
 
-// RelSince is RelTime worded as a moment in the past, for columns that
-// answer "when did this last happen" rather than "how long has this run".
-func RelSince(t time.Time) string {
-	return RelTime(t) + " ago"
-}
-
-func RelTime(t time.Time) string {
-	d := time.Since(t)
-	switch {
-	case d < time.Minute:
-		// Five-second steps: a column of ages that ticks every second is
-		// motion the eye chases for no information.
-		return fmt.Sprintf("%ds", int(d.Seconds()/5)*5)
-	case d < time.Hour:
-		return fmt.Sprintf("%dm", int(d.Minutes()))
-	case d < 24*time.Hour:
-		return fmt.Sprintf("%dh", int(d.Hours()))
-	default:
-		return fmt.Sprintf("%dd", int(d.Hours()/24))
-	}
-}
-
 func DiskBytes(b uint64) string {
 	return formatBytes(b, 1000)
 }
@@ -75,22 +51,6 @@ func formatBytes(b, unit uint64) string {
 	return fmt.Sprintf("%.1f%cB", float64(b)/float64(div), "KMGTPE"[exp])
 }
 
-// ShortHome writes a path under the home directory the way a shell prompt
-// does, so a narrow slot spends its room on the part that tells the
-// directories apart rather than on the same prefix every session shares.
-func ShortHome(path, home string) string {
-	if home == "" || path == "" {
-		return path
-	}
-	if path == home {
-		return "~"
-	}
-	if strings.HasPrefix(path, home+string(os.PathSeparator)) {
-		return "~" + strings.TrimPrefix(path, home)
-	}
-	return path
-}
-
 // ScrollWindow keeps the cursor visible inside a height-limited window of
 // single-line rows, reserving one line for each overflow indicator.
 func ScrollWindow(total, cursor, height int) (int, int) {
@@ -109,4 +69,28 @@ func ScrollWindow(total, cursor, height int) (int, int) {
 		start = total - visible
 	}
 	return start, start + visible
+}
+
+// LabelWidth is the column a row's quiet label is padded to, so the values
+// beside it line up as one column.
+const LabelWidth = 7
+
+// FitColumns lays the richest pair of readings that fits: rights are tried
+// from richest to plainest, and for each, the lefts in turn. Nothing fitting
+// means the plainest left is trimmed to what the column has.
+func FitColumns(lefts, rights []string, width int) string {
+	for _, right := range rights {
+		for _, left := range lefts {
+			if ansi.StringWidth(left)+ansi.StringWidth(right)+2 <= width {
+				return RowColumns(left, right, width)
+			}
+		}
+	}
+	last := lefts[len(lefts)-1]
+	for _, right := range rights {
+		if room := width - ansi.StringWidth(right) - 2; room >= 8 {
+			return RowColumns(ansi.Truncate(last, room, "…"), right, width)
+		}
+	}
+	return RowColumns(ansi.Truncate(last, max(width, 1), "…"), "", width)
 }

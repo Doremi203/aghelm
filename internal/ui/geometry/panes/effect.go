@@ -2,9 +2,8 @@ package panes
 
 import uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
 
-// Services is what the geometry effects run against: the settings store and
-// pane box a resize writes, the tmux server it pins, and the poller's run
-// mutex.
+// Services is what the geometry effects run against: the store the pane box
+// is written to, the tmux server a resize pins, and the poller's run mutex.
 type Services struct {
 	Store    Store
 	Driver   Driver
@@ -24,17 +23,4 @@ func (r ResizeRequest) EffectCopy() uieffects.Request {
 
 func (r ResizeRequest) Run(s Services) (uieffects.Result, error) {
 	return Run(s.Store, s.Driver, s.Reflower, r.Resize)
-}
-
-// SplitSaveRequest persists a committed divider ratio; the job that failed
-// owns the status bar through its id.
-type SplitSaveRequest struct{ Value string }
-
-func (SplitSaveRequest) EffectName() string { return "split ratio save" }
-
-func (r SplitSaveRequest) Run(s Services) (uieffects.Result, error) {
-	if s.Store == nil {
-		return nil, ErrNoStore
-	}
-	return nil, SaveRatio(s.Store, r.Value)
 }

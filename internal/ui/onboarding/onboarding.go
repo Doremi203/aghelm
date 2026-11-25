@@ -18,7 +18,6 @@ type Step uint8
 const (
 	Welcome Step = iota
 	Agents
-	Layout
 	Density
 	Theme
 	QuickPrompt
@@ -30,12 +29,12 @@ const (
 )
 
 // Steps is the walk, in order.
-var Steps = []Step{Welcome, Agents, Layout, Density, Theme, QuickPrompt, Sessions, Review, Orchestrate, Places, Import}
+var Steps = []Step{Welcome, Agents, Density, Theme, QuickPrompt, Sessions, Review, Orchestrate, Places, Import}
 
 // choosing reports a step that sets a preference. The others teach.
 func (s Step) choosing() bool {
 	switch s {
-	case Agents, Layout, Density, Theme:
+	case Agents, Density, Theme:
 		return true
 	}
 	return false
@@ -45,7 +44,6 @@ func (s Step) choosing() bool {
 // Settings keys they are saved under.
 type Choices struct {
 	Hidden      map[string]bool
-	FullLayout  bool
 	Comfortable bool
 	Theme       string
 	ThemeAuto   bool
@@ -219,8 +217,6 @@ func (m *Model) Click(col, line int) Outcome {
 	case Agents:
 		m.agentCursor = row
 		m.toggle()
-	case Layout:
-		m.chosen.FullLayout = row == 1
 	case Density:
 		m.chosen.Comfortable = row == 1
 	case Theme:
@@ -289,8 +285,6 @@ func (m *Model) confirm() {
 	case Agents:
 		m.saved.Hidden = maps.Clone(m.chosen.Hidden)
 		m.preselect = false
-	case Layout:
-		m.saved.FullLayout = m.chosen.FullLayout
 	case Density:
 		m.saved.Comfortable = m.chosen.Comfortable
 	case Theme:
@@ -304,8 +298,6 @@ func (m *Model) move(delta int) {
 		if count := len(m.agents); count > 0 {
 			m.agentCursor = (m.agentCursor + delta + count) % count
 		}
-	case Layout:
-		m.chosen.FullLayout = delta > 0
 	case Density:
 		m.chosen.Comfortable = delta > 0
 	case Theme:

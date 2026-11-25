@@ -11,7 +11,6 @@ import (
 	"github.com/Doremi203/aghelm/internal/store"
 	"github.com/Doremi203/aghelm/internal/testfixture"
 	"github.com/Doremi203/aghelm/internal/tmux"
-	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
 	sessiondialogs "github.com/Doremi203/aghelm/internal/ui/session/dialogs"
 	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	tea "github.com/charmbracelet/bubbletea"
@@ -575,37 +574,6 @@ func TestStatusFilterEmptyState(t *testing.T) {
 	}
 }
 
-func TestStatusFilterGroupRosterMatchesCount(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	if err := m.services.store.CreateGroup("fleet", ""); err != nil {
-		t.Fatalf("create group: %v", err)
-	}
-	for _, sess := range []store.Session{
-		{ID: "w", Name: "needs-you", Tool: "claude", Cwd: "/tmp", Group: "fleet", Status: status.Waiting},
-		{ID: "busy", Name: "grinding", Tool: "claude", Cwd: "/tmp", Group: "fleet", Status: status.Working},
-		{ID: "rest", Name: "quiet", Tool: "claude", Cwd: "/tmp", Group: "fleet", Status: status.Idle},
-	} {
-		if err := m.services.store.CreateSession(sess); err != nil {
-			t.Fatalf("create session %q: %v", sess.ID, err)
-		}
-	}
-	loadStoredRows(t, m)
-	m.rail.SetFilteringAttention(true)
-	m.rebuildRows()
-
-	if got := uirail.GroupSessionCount(m.railAgents(), "fleet"); got != 1 {
-		t.Fatalf("group count under attention = %d want 1", got)
-	}
-	roster := ansi.Strip(m.viewGroupAgents("fleet", 60, 20))
-	if !strings.Contains(roster, "needs-you") {
-		t.Fatalf("roster missing waiting session:\n%s", roster)
-	}
-	if strings.Contains(roster, "grinding") || strings.Contains(roster, "quiet") {
-		t.Fatalf("roster should only list attention sessions:\n%s", roster)
-	}
-}
-
 func TestBulkActionsRespectStatusFilter(t *testing.T) {
 	m := buildModel(t)
 	for _, sess := range []store.Session{
@@ -808,7 +776,7 @@ func TestRootMenuOpensSettings(t *testing.T) {
 	m := buildModel(t)
 	m.rebuildRows()
 	preparedView(m)
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	m.handleMouse(tea.MouseMsg{X: 2, Y: y0, Action: tea.MouseActionPress, Button: tea.MouseButtonRight})
 	m.View()
 	settings := menuEntry(t, m, "Settings")
@@ -828,7 +796,7 @@ func TestAMenuEntryRunsOnTheRelease(t *testing.T) {
 	m := buildModel(t)
 	m.rebuildRows()
 	preparedView(m)
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	m.handleMouse(tea.MouseMsg{X: 2, Y: y0, Action: tea.MouseActionPress, Button: tea.MouseButtonRight})
 	m.View()
 	settings, other := menuEntry(t, m, "Settings"), menuEntry(t, m, "New session")
@@ -854,7 +822,7 @@ func TestMenuStaysOpenAfterTheDotsRelease(t *testing.T) {
 	createSession(t, m, "alpha", t.TempDir(), "")
 	m.selectSessionRow(t, "alpha")
 	frame := strings.Split(ansi.Strip(preparedView(m)), "\n")
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	y := y0 + paintedRailLines(t, m, "alpha")[0]
 	if !strings.Contains(frame[y], "[…]") {
 		t.Fatalf("the selected row should paint its menu button: %q", frame[y])
@@ -916,22 +884,6 @@ func TestRowMenuClosesOnEscAndOutsideClick(t *testing.T) {
 	}
 }
 
-func TestRightClickOnTheRailWhileFocusedOpensTheMenu(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	createSession(t, m, "alpha", t.TempDir(), "")
-	createSession(t, m, "beta", t.TempDir(), "")
-	m.selectSessionRow(t, "alpha")
-	updated, _ := m.focusSelected()
-	m = updated.(*Model)
-	m.drainEffects(t)
-
-	m = railMouse(t, m, "beta", tea.MouseActionPress, tea.MouseButtonRight)
-	if !m.onList() || !m.rail.MenuOpen() {
-		t.Fatalf("right click on the rail should leave focus and open the menu, screen = %v menu = %v", m.screenID(), m.rail.MenuOpen())
-	}
-}
-
 func TestGroupMenuCreatesAndNeverAttaches(t *testing.T) {
 	t.Parallel()
 	m := buildModel(t)
@@ -987,7 +939,7 @@ func TestDotsOnAnUnselectedRowOpenItsMenuAtOnce(t *testing.T) {
 	createSession(t, m, "alpha", t.TempDir(), "")
 	createSession(t, m, "beta", t.TempDir(), "")
 	m.selectSessionRow(t, "alpha")
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	y := y0 + paintedRailLines(t, m, "beta")[0]
 	updated, _ := m.handleMouse(tea.MouseMsg{X: m.layout.displayedRail.Width, Y: y, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft})
 	m = updated.(*Model)
@@ -1000,7 +952,7 @@ func TestMenuPicksTheEntryAPressIsReleasedOn(t *testing.T) {
 	t.Parallel()
 	m := buildModel(t)
 	createSession(t, m, "alpha", t.TempDir(), "")
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	y := y0 + paintedRailLines(t, m, "alpha")[0]
 	updated, _ := m.handleMouse(tea.MouseMsg{X: m.layout.displayedRail.Width, Y: y, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft})
 	m = updated.(*Model)
@@ -1025,7 +977,7 @@ func TestMenuHighlightsTheEntryUnderAHover(t *testing.T) {
 	t.Parallel()
 	m := buildModel(t)
 	createSession(t, m, "alpha", t.TempDir(), "")
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	y := y0 + paintedRailLines(t, m, "alpha")[0]
 	updated, _ := m.handleMouse(tea.MouseMsg{X: m.layout.displayedRail.Width, Y: y, Action: tea.MouseActionPress, Button: tea.MouseButtonLeft})
 	m = updated.(*Model)
@@ -1049,7 +1001,7 @@ func TestMenuHighlightsTheEntryUnderAHover(t *testing.T) {
 
 func railMouseAtLine(t *testing.T, m *Model, line int, action tea.MouseAction, button tea.MouseButton) *Model {
 	t.Helper()
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	updated, _ := m.handleMouse(tea.MouseMsg{X: 2, Y: y0 + line, Action: action, Button: button})
 	return updated.(*Model)
 }
@@ -1065,7 +1017,7 @@ func TestAPendingEndOffersItsCancelInTheMenuAndTheFooter(t *testing.T) {
 	m.selectSessionRow(t, "alpha")
 
 	frame := ansi.Strip(preparedView(m))
-	for _, want := range []string{"alpha ↓", "archives when this turn ends", "c cancel archive"} {
+	for _, want := range []string{"alpha ↓", "c cancel archive"} {
 		if !strings.Contains(frame, want) {
 			t.Fatalf("the frame does not show %q:\n%s", want, frame)
 		}

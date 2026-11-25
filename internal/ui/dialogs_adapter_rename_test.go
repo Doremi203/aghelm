@@ -424,7 +424,7 @@ func TestRenameThenSharedSessionKeepsSpawnPath(t *testing.T) {
 	forked := stored
 	forked.ID = "shared-fork"
 	forked.Name = "child fork"
-	if err := m.services.tmux.Create(forked.ID, forked.Cwd, "cat", nil, m.previewPaneWidth(), m.previewPaneHeight()); err != nil {
+	if err := m.services.tmux.Create(forked.ID, forked.Cwd, "cat", nil, paneWidth(m), paneHeight(m)); err != nil {
 		t.Fatal(err)
 	}
 	if err := m.services.store.CreateSession(forked); err != nil {

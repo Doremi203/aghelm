@@ -431,9 +431,6 @@ func TestQuickModelSheetFitsTheColumn(t *testing.T) {
 	setQuickTool(m, slices.Index(quickTools(m), "claude"))
 	m.quick().RestartChoice(m.spawnHost())
 	m.handleQuickKey(tea.KeyMsg{Type: tea.KeyCtrlL})
-	if m.fullRows() {
-		t.Fatal("80 columns should give the split")
-	}
 	view := ansi.Strip(preparedView(m))
 	for _, want := range []string{"model for work", "cli default", "⎇ "} {
 		if !strings.Contains(view, want) {

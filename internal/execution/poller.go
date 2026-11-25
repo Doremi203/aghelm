@@ -49,7 +49,6 @@ type Runner struct {
 
 	mu              sync.Mutex
 	includeArchived bool
-	selectedID      string
 	// captureErr holds a background id-capture failure to surface on the
 	// next poll, since that work no longer runs inline.
 	captureErr error
@@ -175,9 +174,9 @@ type transcriptTailCache struct {
 	reply   string
 }
 
-func (p *Runner) SetInput(includeArchived bool, selectedID string) {
+func (p *Runner) SetInput(includeArchived bool) {
 	p.mu.Lock()
-	p.includeArchived, p.selectedID = includeArchived, selectedID
+	p.includeArchived = includeArchived
 	p.mu.Unlock()
 }
 
@@ -255,28 +254,6 @@ func ignoreDeletedSession(err error) error {
 	return err
 }
 
-// storedPreview serves a session's saved pane snapshot, which is what the
-// preview shows for any session with no window left to capture, however it
-// lost it. It backfills from a still-live tmux window for sessions archived
-// before snapshots existed.
-func StoredPreview(st *store.Store, driver *tmux.Driver, sessID string) (string, error) {
-	snapshot, err := st.Snapshot(sessID)
-	if err != nil || snapshot != "" {
-		return snapshot, err
-	}
-	if !driver.Exists(sessID) {
-		return "", nil
-	}
-	pane, err := driver.CapturePane(sessID)
-	if err != nil || pane == "" {
-		return "", nil
-	}
-	if err := ignoreDeletedSession(st.SetSnapshot(sessID, pane)); err != nil {
-		return "", err
-	}
-	return pane, nil
-}
-
 // refreshOnce polls every live session's pane, derives and stores status,
 // and samples system stats. Liveness and pane pids come from one tmux
 // call, and every process tree from one ps pass with a second scoped to
@@ -293,7 +270,6 @@ func (p *Runner) step(ctx context.Context) Result {
 	}
 	p.mu.Lock()
 	includeArchived := p.includeArchived
-	selectedID := p.selectedID
 	captureErr := p.captureErr
 	p.captureErr = nil
 	p.mu.Unlock()
@@ -365,8 +341,6 @@ func (p *Runner) step(ctx context.Context) Result {
 	haveDelta := !p.prevTreeAt.IsZero() && elapsed > 0.05
 	nextTreeCPU := make(map[int]float64, len(livePIDs))
 
-	preview := ""
-	var proc sysstat.ProcStat
 	var agents AgentStats
 	var cpuSecDelta float64
 	paneHashes := make(map[string]uint64, len(sessions))
@@ -443,9 +417,6 @@ func (p *Runner) step(ctx context.Context) Result {
 					// First sample: fleet CPU still uses pcpu sum path below.
 					agents.CPU += stat.PCPU
 				}
-				if sess.ID == selectedID {
-					proc = stat
-				}
 				if err := p.applyRelaunchedTool(&sessions[i], stat.Children); err != nil {
 					return Result{Err: err}
 				}
@@ -515,9 +486,6 @@ func (p *Runner) step(ctx context.Context) Result {
 					}
 					sessions[i].Acked = false
 				}
-				if sess.ID == selectedID {
-					preview = pane
-				}
 			}
 		}
 		// A row claimed on this pass is written even when the status did not
@@ -549,18 +517,6 @@ func (p *Runner) step(ctx context.Context) Result {
 			}
 			if due {
 				turnsEnded = append(turnsEnded, sess.ID)
-			}
-		}
-	}
-	if preview == "" && selectedID != "" {
-		for _, sess := range sessions {
-			if sess.ID == selectedID && (sess.Archived || panes[sess.ID].PID == 0) {
-				snapshot, err := StoredPreview(p.store, p.tmux, sess.ID)
-				if err != nil {
-					return Result{Err: err}
-				}
-				preview = snapshot
-				break
 			}
 		}
 	}
@@ -635,9 +591,6 @@ func (p *Runner) step(ctx context.Context) Result {
 		EnvProfiles:    envNames,
 		EnvKeys:        envKeys,
 		ArchivedGroups: archivedGroups,
-		Proc:           proc,
-		ProcFor:        selectedID,
-		Preview:        preview,
 		Agents:         agents,
 		QueuedMessages: queued,
 		PaneLines:      paneLastLines,

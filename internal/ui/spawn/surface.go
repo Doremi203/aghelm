@@ -81,8 +81,6 @@ func (s *Surface) View(surface.Host, string) string { return s.root.FormView() }
 // Footer is empty: the card names its own keys.
 func (s *Surface) Footer() [][2]string { return nil }
 
-func (s *Surface) Owner() surface.Owner { return surface.Manager }
-
 // Dismissible: the name, directory and prompt are a draft, so a stray
 // click keeps them.
 func (s *Surface) Dismissible() bool { return false }

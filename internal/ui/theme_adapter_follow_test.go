@@ -101,7 +101,7 @@ func TestSetupFollowsTheReportedScheme(t *testing.T) {
 	if got := uitheme.Current().Name; got != "catppuccin latte" {
 		t.Fatalf("after a key the theme = %q, want catppuccin latte", got)
 	}
-	pressKeys(m, enterKey, enterKey, enterKey, enterKey)
+	pressKeys(m, enterKey, enterKey, enterKey)
 	m.drainEffects(t)
 	if step := setupState(t, m).Step(); step != uionboarding.QuickPrompt {
 		t.Fatalf("setup stopped at %v, want it past the theme step", step)

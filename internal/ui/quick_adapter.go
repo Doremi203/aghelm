@@ -10,7 +10,6 @@ import (
 	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
 	uiframe "github.com/Doremi203/aghelm/internal/ui/frame"
 	uiinstall "github.com/Doremi203/aghelm/internal/ui/launchhint/install"
-	uipreview "github.com/Doremi203/aghelm/internal/ui/preview"
 	uiquick "github.com/Doremi203/aghelm/internal/ui/quick"
 	uiquicksend "github.com/Doremi203/aghelm/internal/ui/quick/send"
 	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
@@ -207,7 +206,7 @@ const (
 )
 
 func (m *Model) viewQuickBar(width, maxRows int) string {
-	facts := uiquick.Facts{WorktreeOn: m.quickWorktreeOn(), LabelWidth: uipreview.DetailLabelWidth, Styles: m.spawnStyles()}
+	facts := uiquick.Facts{WorktreeOn: m.quickWorktreeOn(), LabelWidth: uiframe.LabelWidth, Styles: m.spawnStyles()}
 	facts.WorktreeCapable, facts.WorktreeKnown = m.cachedWorktreeCapability(m.quickTargetDir())
 	if entry, ok := m.selectedRow(); ok {
 		if entry.isGroup {
@@ -223,11 +222,11 @@ func (m *Model) viewQuickBar(width, maxRows int) string {
 // quickAnswerRow names the session an answer goes to, with its state and
 // tool where the width has room.
 func (m *Model) quickAnswerRow(entry treeRow, name string, width int) string {
-	label := uitheme.LabelStyle().Render(padRight("answer", uipreview.DetailLabelWidth)) + uitheme.SubtleStyle().Render("│ ")
+	label := uitheme.LabelStyle().Render(padRight("answer", uiframe.LabelWidth)) + uitheme.SubtleStyle().Render("│ ")
 	sess := entry.sess
 	state := lipgloss.NewStyle().Foreground(statusColor(sess.Status)).
 		Render(m.glyphs().StatusGlyph(sess.Status) + " " + statusLabel(sess.Status))
-	return uipreview.FitColumns(
+	return uiframe.FitColumns(
 		[]string{label + lipgloss.NewStyle().Foreground(uitheme.ColorBright()).Bold(true).Render(name)},
 		[]string{state + " " + uitheme.ChipStyle().Render(sess.Tool), state, ""}, width)
 }

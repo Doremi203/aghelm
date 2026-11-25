@@ -18,7 +18,6 @@ import (
 	"github.com/Doremi203/aghelm/internal/ui/presentation"
 	uireview "github.com/Doremi203/aghelm/internal/ui/review"
 	uireviewsource "github.com/Doremi203/aghelm/internal/ui/review/source"
-	uisurface "github.com/Doremi203/aghelm/internal/ui/surface"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/ansi"
 )
@@ -1104,7 +1103,7 @@ func TestReviewPickerOpensOnItsKey(t *testing.T) {
 	if !strings.Contains(frame, "Review repo") || !strings.Contains(frame, "two") {
 		t.Fatalf("the frame should show the picker and its rows:\n%s", frame)
 	}
-	if top, _ := m.top(); top.Owner() != uisurface.Manager || len(top.Footer()) == 0 {
+	if top, _ := m.top(); len(top.Footer()) == 0 {
 		t.Fatal("the picker should keep the keyboard on the manager and name its keys")
 	}
 }

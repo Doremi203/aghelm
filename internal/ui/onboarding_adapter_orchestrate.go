@@ -33,20 +33,6 @@ var helpers = []helper{
 	{name: "load test", group: "checkout/tests", working: "Ramping 200 carts a second"},
 }
 
-// leadLog is what the lead says while it coordinates, from the beat of the
-// coordinating scene each line comes in on.
-var leadLog = []struct {
-	at          int
-	state, text string
-}{
-	{0, status.Finished, "Planned 7 tasks across api, web and tests."},
-	{12, status.Finished, "order schema is done. Sent its types to cart page."},
-	{16, status.Waiting, "address form asks which countries we ship to."},
-	{28, status.Finished, "Told address form: EU and US."},
-	{36, status.Finished, "payment intents is done. load test is on it now."},
-	{56, status.Finished, "cart page is done. 3 of 7 finished."},
-}
-
 const (
 	previewLead = "preview-lead"
 	// helperArrival is the beats between two helpers opening.
@@ -65,20 +51,16 @@ func (m *Model) orchestrateScene(scene *previewScene, p uionboarding.Preview, wi
 	scene.selected = sessionSelection(previewLead, "")
 	target := lipgloss.NewStyle().Foreground(uitheme.ColorBright()).Render("checkout lead")
 	ask := uionboarding.OrchestrateAsk
-	log := []contentLine{{}, m.promptLine(lead.Prompt, false), m.stepLine("Ready.")}
 	sent := p.Scene > 0 || p.Frame >= len([]rune(ask))+10
 	if !sent {
 		scene.foot = m.previewBar(width, "answer", target, "", typedOut(ask, p.Frame-3))
-		scene.content = log
 		return
 	}
 	scene.foot = m.previewBar(width, "answer", target, "", "")
 	scene.sessions[0].Status, scene.sessions[0].PaneLine = status.Working, "Coordinating 7 agents"
-	log = append(log, contentLine{}, m.promptLine(ask, false))
 	switch p.Scene {
 	case 0:
 		scene.sessions[0].PaneLine = "Reading the checkout code"
-		log = append(log, m.stateLine(status.Working, "Reading the checkout code…"))
 	case 1:
 		for i, h := range helpers {
 			age := p.Frame - i*helperArrival
@@ -86,19 +68,12 @@ func (m *Model) orchestrateScene(scene *previewScene, p uionboarding.Preview, wi
 				break
 			}
 			scene.sessions = append(scene.sessions, h.session(p.Agents, i, age < helperStarting, -1, now))
-			log = append(log, m.stepLine("Started "+h.name+" in "+h.group+"."))
 		}
 	default:
 		for i, h := range helpers {
 			scene.sessions = append(scene.sessions, h.session(p.Agents, i, false, p.Frame, now))
 		}
-		for _, line := range leadLog {
-			if p.Frame >= line.at {
-				log = append(log, m.stateLine(line.state, line.text))
-			}
-		}
 	}
-	scene.content = log
 }
 
 // session is the helper's row: starting while it opens, then working,

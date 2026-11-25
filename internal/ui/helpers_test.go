@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"slices"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -24,11 +23,11 @@ import (
 	"github.com/Doremi203/aghelm/internal/tmux"
 	uidialogs "github.com/Doremi203/aghelm/internal/ui/dialogs"
 	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
-	uifocus "github.com/Doremi203/aghelm/internal/ui/focus"
-	uigeometry "github.com/Doremi203/aghelm/internal/ui/geometry"
+	uilifecycle "github.com/Doremi203/aghelm/internal/ui/session/lifecycle"
 	uilaunch "github.com/Doremi203/aghelm/internal/ui/spawn/launch"
 	uiworkspace "github.com/Doremi203/aghelm/internal/ui/workspace"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/x/ansi"
 )
 
 // buildModel gives the test a model on a tmux server and store of its own,
@@ -306,10 +305,7 @@ func (m *Model) drainEffects(t *testing.T) {
 	t.Helper()
 	for count := 0; count < 100; count++ {
 		m.nextEffectCmd()
-		job := m.effects.Input.Active
-		if job == nil {
-			job = m.effects.Main.Active
-		}
+		job := m.effects.Main.Active
 		if job == nil {
 			job = m.effects.Remote.Active
 		}
@@ -489,6 +485,8 @@ func createSession(t *testing.T, m *Model, name, dir, group string) {
 	requireSpawned(t, m, name)
 }
 
+func (m *Model) onList() bool { return m.base == baseList }
+
 // requireSpawned fails unless the submit closed the form and landed name's
 // row: a spawn that errors leaves the form up on a list base.
 func requireSpawned(t *testing.T, m *Model, name string) {
@@ -550,19 +548,6 @@ func createWorktreeSession(t *testing.T, m *Model, name, repo string) store.Sess
 	}
 	t.Fatalf("session %q missing after spawn", name)
 	return store.Session{}
-}
-
-func windowWidth(t *testing.T, id string) int {
-	t.Helper()
-	out, err := tmuxCmd(t, "display-message", "-p", "-t", "am_"+id, "#{window_width}").CombinedOutput()
-	if err != nil {
-		t.Fatalf("display-message: %v: %s", err, out)
-	}
-	w, err := strconv.Atoi(strings.TrimSpace(string(out)))
-	if err != nil {
-		t.Fatalf("parse width %q: %v", out, err)
-	}
-	return w
 }
 
 func sessionNames(m *Model) []string {
@@ -650,7 +635,6 @@ func (m *Model) spawnSession(toolName, name, dir, group, prompt string, autoName
 	}
 	services := effectServices{
 		store: m.services.store, driver: m.services.tmux, gitDrv: m.services.gitDrv, cfg: m.services.cfg,
-		watch: m.focus.runtime.Watch,
 	}
 	if m.poller != nil {
 		services.runner = m.poller.runner
@@ -663,18 +647,24 @@ func (m *Model) spawnSession(toolName, name, dir, group, prompt string, autoName
 	return err
 }
 
-// waitForPreview refreshes until the selected session's pane has drawn:
+// waitForPaneDrawn waits until the selected session's pane has drawn:
 // psmux's PowerShell takes a moment to start, and a blank pane paints no
 // box to click.
-func waitForPreview(t *testing.T, m *Model) {
+func waitForPaneDrawn(t *testing.T, m *Model) {
 	t.Helper()
+	sess, ok := m.selected()
+	if !ok {
+		t.Fatal("no session is selected")
+	}
 	deadline := time.Now().Add(10 * time.Second)
-	for !paneBooted(m.workspace.preview) {
+	for {
+		if pane, err := m.services.tmux.CapturePane(sess.ID); err == nil && strings.TrimSpace(ansi.Strip(pane)) != "" {
+			return
+		}
 		if time.Now().After(deadline) {
 			t.Fatal("the selected pane never drew")
 		}
 		time.Sleep(50 * time.Millisecond)
-		m.applyCmd(t, m.refreshCmd())
 	}
 }
 
@@ -721,14 +711,6 @@ func reloadModel(t *testing.T, m *Model) *Model {
 	return loaded
 }
 
-// useSessionKeys swaps the session key table the model and its driver
-// read, the way the keys Settings stored would.
-func useSessionKeys(t *testing.T, m *Model, detach, review, editor []string) {
-	t.Helper()
-	m.services.keys = sessionOf(t, detach, review, editor)
-	m.services.tmux.SetSessionKeys(m.services.keys)
-}
-
 func sessionOf(t *testing.T, detach, review, editor []string) keybind.Table {
 	t.Helper()
 	return keybind.DefaultSession().
@@ -752,7 +734,7 @@ func bindingOf(t *testing.T, specs ...string) keybind.Binding {
 
 func railMouse(t *testing.T, m *Model, name string, action tea.MouseAction, button tea.MouseButton) *Model {
 	t.Helper()
-	y0, _ := m.bodyYRange()
+	y0 := m.listChromeRows()
 	line := paintedRailLines(t, m, name)[0]
 	updated, _ := m.handleMouse(tea.MouseMsg{X: 2, Y: y0 + line, Action: action, Button: button})
 	m = updated.(*Model)
@@ -806,7 +788,6 @@ func shotModel() *Model {
 		layout: layoutState{
 			width:  120,
 			height: 34,
-			split:  uigeometry.Gesture{Ratio: uigeometry.DefaultSplitRatio},
 		},
 		services: services{
 			keys:     keybind.DefaultSession(),
@@ -824,26 +805,11 @@ func shotModel() *Model {
 				DiskOK: true, DiskPercent: 88, DiskUsed: 400_000_000_000, DiskAvailable: 100_000_000_000, DiskTotal: 500_000_000_000,
 				CPUTempOK: true, CPUTemp: 61, GPUTempOK: true, GPUTemp: 55,
 			},
-			preview: previewSample,
-			proc:    sysstat.ProcStat{OK: true, CPUPercent: 4.2, RamPercent: 3.6, RSS: 612_000_000},
-			procFor: "add-rate-limiting",
 		},
 		rail: railModelFromRows(rows, 4),
 	}
 	return m
 }
-
-const previewSample = "\x1b[38;5;110m◆\x1b[0m claude \x1b[38;5;240m·\x1b[0m add-rate-limiting\n" +
-	"\n" +
-	"\x1b[38;5;250m❯ Add a token bucket limiter to the public API\x1b[0m\n" +
-	"\n" +
-	"\x1b[38;5;240m●\x1b[0m Read(internal/api/router.go)\n" +
-	"  \x1b[38;5;240m└\x1b[0m 214 lines\n" +
-	"\n" +
-	"\x1b[38;5;240m●\x1b[0m Edit(internal/api/limiter.go)\n" +
-	"  \x1b[38;5;240m└\x1b[0m +48 −3\n" +
-	"\n" +
-	"\x1b[38;5;214m✳\x1b[0m Running tests… (14s · esc to interrupt)\n"
 
 // foregroundTestCmd separates finite background effect completions from the
 // editor/terminal command a wiring test is inspecting. It never runs ExecMsg.
@@ -894,8 +860,23 @@ func gitOutput(t *testing.T, dir string, args ...string) string {
 	return strings.TrimSpace(string(out))
 }
 
-// savedListOpen reports the saved prompts list on the surface stack.
-func (m *Model) savedListOpen() bool {
-	_, ok := surfaceOf[*uifocus.Saved](m)
-	return ok
+// attachQueued names the session an attach waits for on the main lane, or
+// "" when none does.
+func attachQueued(t *testing.T, m *Model) string {
+	t.Helper()
+	jobs := append([]*uieffects.Job{m.effects.Main.Active}, m.effects.Main.Pending...)
+	for _, job := range jobs {
+		if job == nil {
+			continue
+		}
+		if request, ok := job.Request.(uilifecycle.AttachRequest); ok {
+			for _, sess := range m.workspace.sessions {
+				if sess.ID == request.ID {
+					return sess.Name
+				}
+			}
+			t.Fatalf("attach queued for %s, which no row lists", request.ID)
+		}
+	}
+	return ""
 }

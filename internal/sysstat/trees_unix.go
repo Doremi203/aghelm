@@ -72,7 +72,7 @@ func nextField(line string) (string, string) {
 //
 // CPUSeconds is cumulative CPU time for interval host-share math. PCPU is
 // the raw ps %cpu sum (fallback). Callers convert to host % via
-// HostCPUFromDelta between polls, or ScaleToHost for a one-shot sample.
+// HostCPUFromDelta between polls, or HostCPUPercent for a one-shot sample.
 func Trees(rootPIDs []int) map[int]ProcStat {
 	stats := make(map[int]ProcStat, len(rootPIDs))
 	if len(rootPIDs) == 0 {

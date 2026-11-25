@@ -145,7 +145,7 @@ func TestSlowLifecycleDoesNotBlockWindowUpdateAndKeepsSnapshotWriter(t *testing.
 	m.selectSessionRow(t, "slow")
 	// Archive writes a snapshot only from a pane that has drawn, and a
 	// fresh psmux pane can still be blank.
-	waitForPreview(t, m)
+	waitForPaneDrawn(t, m)
 	started := make(chan struct{})
 	release := make(chan struct{})
 	original := m.services.setSnapshot

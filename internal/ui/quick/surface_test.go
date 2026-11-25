@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/Doremi203/aghelm/internal/ui/composer"
-	"github.com/Doremi203/aghelm/internal/ui/surface"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -40,9 +39,6 @@ func TestSurfaceTakesKeysAndTheListsMouse(t *testing.T) {
 	}
 	if s.Dismissible() {
 		t.Fatal("the bar holds a draft and must not close on a click")
-	}
-	if s.Owner() != surface.Manager {
-		t.Fatalf("owner = %v, want the manager", s.Owner())
 	}
 	if below := "frame"; s.View(nil, below) != below {
 		t.Fatal("the bar must leave the frame to the list footer")

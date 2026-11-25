@@ -162,14 +162,6 @@ func subcommands() map[string]func(args []string) error {
 		"follow-telemetry": withConfigDir(func(args []string, _ func() string, configDir string) error {
 			return sessioncmd.FollowTelemetry(configDir, args)
 		}),
-		// An attached ← runs this on every press and reads its exit status.
-		sessioncmd.PromptHeadCommand: withConfigDir(func(args []string, _ func() string, configDir string) error {
-			driver, err := tmux.New()
-			if err != nil {
-				return err
-			}
-			return app.PromptHead(configDir, driver, args)
-		}),
 	}
 	for name := range cli.Commands(ui.SettingSpecs) {
 		table[name] = withConfigDir(func(args []string, caller func() string, configDir string) error {
@@ -328,16 +320,9 @@ func sessionFromAncestry() (id string, seen bool) {
 	return id, seen
 }
 
-// programFilter resets the pointer while the screen that showed the hand is
-// still up, since kitty keeps one per screen and an interrupt skips Update,
-// and reads the modified keys and scheme reports Bubble Tea leaves
-// undecoded.
+// programFilter reads the scheme reports Bubble Tea leaves undecoded.
 func programFilter(_ tea.Model, msg tea.Msg) tea.Msg {
-	switch msg.(type) {
-	case tea.QuitMsg, tea.InterruptMsg:
-		ui.ResetPointer()
-	}
-	return ui.ReadColorScheme(ui.ReadExtendedKey(msg))
+	return ui.ReadColorScheme(msg)
 }
 
 func run() (resultErr error) {
@@ -411,7 +396,6 @@ func run() (resultErr error) {
 	_, runErr := program.Run()
 	catalog.StopAll()
 	ui.ResetTerminalColors()
-	ui.ResetPointer()
 	runErr = errors.Join(runErr, ui.DisableColorSchemeReports())
 	stopRuntime()
 	if abandoned := model.AbandonedEffects(); len(abandoned) > 0 && runErr == nil {

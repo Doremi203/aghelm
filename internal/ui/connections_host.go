@@ -1,9 +1,6 @@
 package ui
 
 import (
-	"strings"
-
-	"github.com/Doremi203/aghelm/internal/keybind"
 	"github.com/Doremi203/aghelm/internal/remote"
 	"github.com/Doremi203/aghelm/internal/store"
 	uiconnections "github.com/Doremi203/aghelm/internal/ui/connections"
@@ -26,8 +23,6 @@ import (
 type linkRoot struct{ *Model }
 
 func (r linkRoot) RebuildRows() { r.rebuildRows() }
-
-func (r linkRoot) SyncPreview() tea.Cmd { return r.syncRemotePreview() }
 
 func (r linkRoot) RailConnection(change uilink.RailChange) {
 	switch {
@@ -138,20 +133,6 @@ func (m *Model) openConnectionDialog(editing remote.Connection) {
 	m.clearErr()
 }
 
-// syncRemotePreview follows the selection: a remote session or terminal it
-// has not read yet gets a fresh read, anything else clears it.
-func (m *Model) syncRemotePreview() tea.Cmd {
-	row, ok := m.remoteRow()
-	return m.ssh.Follow(row, ok)
-}
-
-// tickRemotePreview re-reads the selected remote screen, following the
-// cursor first when it has moved to another remote row since.
-func (m *Model) tickRemotePreview() tea.Cmd {
-	row, ok := m.remoteRow()
-	return m.ssh.Tick(row, ok)
-}
-
 // remoteRow is the connection row the rail's cursor names.
 func (m *Model) remoteRow() (uiconnections.Row, bool) {
 	return m.ssh.Selected(m.railSelection())
@@ -161,35 +142,6 @@ func (m *Model) remoteRow() (uiconnections.Row, bool) {
 func (m *Model) railSelection() uirail.Selection {
 	selection, _ := m.rail.Selected()
 	return selection
-}
-
-// remoteContentLines fills the content column for a remote selection: a
-// connection's facts, a remote group's roster, or a remote screen.
-func (m *Model) remoteContentLines(width, height int) ([]contentLine, bool) {
-	row, ok := m.remoteRow()
-	if !ok {
-		return nil, false
-	}
-	lines, ok := m.ssh.Content(row, width, height, uiconnections.Look{
-		StatusGlyph: m.glyphs().StatusGlyph,
-		Prompt:      func() string { return m.listGlyph(keybind.Prompt) },
-	})
-	if !ok {
-		return nil, false
-	}
-	gutter := strings.Repeat(" ", uiconnections.Gutter)
-	out := make([]contentLine, len(lines))
-	for i, line := range lines {
-		switch {
-		case line.Rule:
-			out[i] = contentLine{Rule: true}
-		case line.Text == "":
-			out[i] = contentLine{}
-		default:
-			out[i] = contentLine{Text: gutter + line.Text}
-		}
-	}
-	return out, true
 }
 
 // remoteRowLegend is the footer tier for a connection's rows.

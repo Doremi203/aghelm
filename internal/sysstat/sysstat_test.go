@@ -365,24 +365,6 @@ func TestHostCPUFromDelta(t *testing.T) {
 	}
 }
 
-func TestScaleToHost(t *testing.T) {
-	raw := ProcStat{OK: true, PCPU: 200, RSS: 1024}
-	scaled := raw.ScaleToHost(4, 4096)
-	if scaled.CPUPercent != 50 {
-		t.Fatalf("cpu = %v, want 50", scaled.CPUPercent)
-	}
-	if scaled.RamPercent != 25 {
-		t.Fatalf("ram = %v, want 25", scaled.RamPercent)
-	}
-	if scaled.RSS != 1024 {
-		t.Fatalf("rss must stay absolute, got %d", scaled.RSS)
-	}
-	dead := ProcStat{PCPU: 99, RSS: 1}.ScaleToHost(2, 100)
-	if dead.OK || dead.PCPU != 99 {
-		t.Fatal("ScaleToHost must leave non-OK stats alone")
-	}
-}
-
 func TestLogicalCPUs(t *testing.T) {
 	if n := LogicalCPUs(); n < 1 {
 		t.Fatalf("LogicalCPUs = %d, want >= 1", n)

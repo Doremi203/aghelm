@@ -5,8 +5,8 @@ package surface
 
 import tea "github.com/charmbracelet/bubbletea"
 
-// Surface is a layer over the base screen that takes input before it:
-// focus, and the cards over the list, Review or a focused session. The root
+// Surface is a layer over the base screen that takes input before it: the
+// cards over the list or Review. The root
 // walks the stack from the top for keys, mouse, frame and footer, so no
 // other code asks which overlay is open. See docs/architecture.md.
 //
@@ -21,9 +21,7 @@ type Surface interface {
 	View(h Host, below string) string
 	// Footer is the hint pairs the surface adds ahead of the layer's own.
 	Footer() [][2]string
-	Owner() Owner
-	// Dismissible is whether esc and a click off the card close it, and
-	// whether ctrl+c does where the pane under the card is the agent's.
+	// Dismissible is whether esc and a click off the card close it.
 	// A surface holding typed input says no, so a stray click keeps a draft.
 	Dismissible() bool
 	// Leave runs once when the surface comes off the stack, by pop or by
@@ -39,10 +37,3 @@ type Host interface {
 	Size() (width, height int)
 	Pop()
 }
-
-type Owner uint8
-
-const (
-	Manager Owner = iota
-	Agent
-)

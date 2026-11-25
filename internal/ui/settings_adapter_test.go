@@ -1084,28 +1084,6 @@ func TestLaterSuccessfulSettingsSaveReappliesCommittedPrefs(t *testing.T) {
 	}
 }
 
-func TestFailedSettingsSavePreservesUnsetDefaults(t *testing.T) {
-	m := buildModel(t)
-	m.openSettings()
-	if !m.prefs.focusOnEnter || !m.prefs.arrowStep {
-		t.Fatal("fixture does not start with enabled defaults")
-	}
-	m.settingsCard().State().Field = uisettings.FieldDensity
-	m.cycleThemeSettled(t)
-	_, _ = m.closeSettings()
-	job := m.effects.Main.Active
-	request := job.Request.(uipersist.SaveRequest)
-	writer := &settingsScriptWriter{failOn: uisettings.ListDensitySetting, values: map[string]string{}}
-	result, err := uipersist.RunSave(request, writer)
-	if err == nil {
-		t.Fatal("expected failed save")
-	}
-	m.settings.ApplySave(settingsSaveHost{m}, request, result, err)
-	if !m.prefs.focusOnEnter || !m.prefs.arrowStep {
-		t.Fatalf("failed density save changed unrelated defaults, focus=%v arrows=%v", m.prefs.focusOnEnter, m.prefs.arrowStep)
-	}
-}
-
 // cycleSetting steps the focused row as ← or → would.
 func (m *Model) cycleSetting(step int) tea.Cmd {
 	return m.runSettingsResult(m.settingsCard().State(), m.settingsCard().State().Cycle(step))
@@ -1639,7 +1617,6 @@ func TestSettingKeysMatchTheStore(t *testing.T) {
 		uisettings.CoordinationSetting: store.CoordinationSetting,
 		uisettings.EditorSetting:       store.EditorSetting,
 		uisettings.HiddenToolsSetting:  store.HiddenToolsSetting,
-		uisettings.ArrowStepSetting:    store.ArrowStepSetting,
 	} {
 		if got != want {
 			t.Errorf("settings key %q, store reads %q", got, want)
@@ -1736,17 +1713,14 @@ func TestSettingSpecsDefaultsAreValues(t *testing.T) {
 func TestOpenSettingsReadsWhatTheShellChanged(t *testing.T) {
 	m := buildModel(t)
 	changed := map[string]string{
-		uisettings.GlyphModeSetting:     "basic",
-		uisettings.ListDensitySetting:   "comfortable",
-		uisettings.SessionLayoutSetting: "full",
-		uisettings.HideHeaderSetting:    "on",
-		uisettings.HideStatsSetting:     "on",
-		uisettings.MouseSetting:         "off",
-		uisettings.ArrowStepSetting:     "off",
-		uisettings.FocusKeySetting:      "attach",
-		uisettings.BaseFetchSetting:     "off",
-		uisettings.BackgroundSetting:    "terminal",
-		uisettings.ThemeSetting:         "nord",
+		uisettings.GlyphModeSetting:   "basic",
+		uisettings.ListDensitySetting: "comfortable",
+		uisettings.HideHeaderSetting:  "on",
+		uisettings.HideStatsSetting:   "on",
+		uisettings.MouseSetting:       "off",
+		uisettings.BaseFetchSetting:   "off",
+		uisettings.BackgroundSetting:  "terminal",
+		uisettings.ThemeSetting:       "nord",
 	}
 	for key, value := range changed {
 		if err := m.services.store.SetSetting(key, value); err != nil {
@@ -1776,7 +1750,7 @@ func TestOpenSettingsReadsWhatTheShellChanged(t *testing.T) {
 			t.Errorf("esc wrote %s=%q over the shell's %q", key, got, want)
 		}
 	}
-	if p := m.prefs; !p.comfortableRows || !p.fullLayout || !p.hideHeader || !p.hideStats || !p.mouseDisabled || p.arrowStep || p.focusOnEnter || !p.baseFetchOff || !p.terminalBackground {
+	if p := m.prefs; !p.comfortableRows || !p.hideHeader || !p.hideStats || !p.mouseDisabled || !p.baseFetchOff || !p.terminalBackground {
 		t.Fatal("esc did not apply the shell's values to the running manager")
 	}
 }

@@ -14,7 +14,6 @@ import (
 	"github.com/Doremi203/aghelm/internal/store"
 	uiconnections "github.com/Doremi203/aghelm/internal/ui/connections"
 	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
-	tea "github.com/charmbracelet/bubbletea"
 )
 
 // ssh stands in for ssh: it answers as the remote CLI would and records the
@@ -76,7 +75,6 @@ func listedState(t *testing.T, fake *ssh) State {
 // recorder is the root as a routed result reaches it.
 type recorder struct {
 	rebuilt  int
-	synced   int
 	rail     []RailChange
 	answered []bool
 	closed   []Asker
@@ -86,8 +84,6 @@ type recorder struct {
 }
 
 func (r *recorder) RebuildRows() { r.rebuilt++ }
-
-func (r *recorder) SyncPreview() tea.Cmd { r.synced++; return nil }
 
 func (r *recorder) RailConnection(change RailChange) { r.rail = append(r.rail, change) }
 
@@ -118,8 +114,8 @@ func TestPollHostRunsOffTheUpdatePathAndLandsTheRefresh(t *testing.T) {
 	if _, ok := state.Route(root, cmd()); !ok {
 		t.Fatal("a refresh result went unrouted")
 	}
-	if root.rebuilt != 1 || root.synced != 1 {
-		t.Fatalf("rebuilt %d, synced %d, want one each", root.rebuilt, root.synced)
+	if root.rebuilt != 1 {
+		t.Fatalf("rebuilt %d, want one", root.rebuilt)
 	}
 	if hosts := state.RailHosts(); len(hosts) != 1 || hosts[0].State != uirail.HostOnline || len(hosts[0].Sessions) != 1 {
 		t.Fatalf("rail hosts = %+v", hosts)
@@ -152,39 +148,6 @@ func TestRailHostsNameTheTrouble(t *testing.T) {
 	}
 	if host.Err == "" {
 		t.Fatal("the host's error was dropped")
-	}
-}
-
-func TestPreviewReadsTheTrackedRowAndDropsAStaleRead(t *testing.T) {
-	fake := &ssh{screen: "building api"}
-	state := listedState(t, fake)
-	state.Refreshed("box", state.Gen(), Facts(remote.HostState{OK: true, Snapshot: sessioncmd.Snapshot{
-		Sessions: []sessioncmd.Session{{ID: "s1", Name: "api", Status: "idle"}},
-	}}))
-	row, ok := state.Row(uirail.Selection{Kind: uirail.SessionRow, Host: "box", SessionID: "s1"})
-	if !ok {
-		t.Fatal("the session has no row")
-	}
-	root := &recorder{}
-	cmd := state.Follow(row, true)
-	if cmd == nil {
-		t.Fatal("the selected session got no read")
-	}
-	if state.Follow(row, true) != nil {
-		t.Fatal("a second read started for the same row")
-	}
-	state.Route(root, cmd())
-	if lines := state.Preview.Screen(40, 4, screenView()); !slices.Equal(lines, []string{"building api"}) {
-		t.Fatalf("screen = %q", lines)
-	}
-	stale, ok := state.StartRead()
-	if !ok {
-		t.Fatal("the tracked row refused a read")
-	}
-	state.Preview.Follow(row, false)
-	state.Route(root, PreviewMsg{Read: stale, Text: "old screen"})
-	if lines := state.Preview.Screen(40, 4, screenView()); slices.Contains(lines, "old screen") {
-		t.Fatalf("a read for the row before the selection moved landed: %q", lines)
 	}
 }
 
@@ -232,12 +195,6 @@ func TestAttachEndingNamesWhy(t *testing.T) {
 			}
 		})
 	}
-}
-
-// screenView is the preview's painter with the tab expansion the root
-// supplies.
-func screenView() uiconnections.ScreenView {
-	return uiconnections.ScreenView{ExpandTabs: func(line string, width int) string { return line }}
 }
 
 type exitStatus int

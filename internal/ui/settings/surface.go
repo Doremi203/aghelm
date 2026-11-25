@@ -71,8 +71,6 @@ func (s *Surface) View(surface.Host, string) string { return s.root.Paint(&s.sta
 // Footer is empty: the card paints its own hints.
 func (s *Surface) Footer() [][2]string { return nil }
 
-func (s *Surface) Owner() surface.Owner { return surface.Manager }
-
 // Dismissible: a command or a prompt being typed is a draft, so a stray
 // click or ctrl+c keeps it.
 func (s *Surface) Dismissible() bool {

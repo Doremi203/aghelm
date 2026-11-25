@@ -44,33 +44,6 @@ func reviewScopeLabel(name string) string {
 	return name
 }
 
-// The ←→ row's stored values, in the order the row steps them.
-const (
-	ArrowStepFocus  = "on"
-	ArrowStepAttach = "attach"
-	ArrowStepOff    = "off"
-)
-
-var arrowSteps = []string{ArrowStepFocus, ArrowStepAttach, ArrowStepOff}
-
-// ArrowStep reads a stored ←→ value, falling back to the first.
-func ArrowStep(stored string) string {
-	if slices.Contains(arrowSteps, stored) {
-		return stored
-	}
-	return arrowSteps[0]
-}
-
-func arrowStepLabel(step string) string {
-	switch step {
-	case ArrowStepFocus:
-		return "→ focus"
-	case ArrowStepAttach:
-		return "→ attach"
-	}
-	return step
-}
-
 // table is every key Settings keeps, in the order settings list prints them.
 var table = []Setting{
 	{Spec: Spec{Key: DefaultToolSetting, Row: "default tool"}, Field: FieldTool},
@@ -82,8 +55,6 @@ var table = []Setting{
 		Flag: func(s *State) *bool { return &s.TerminalBackground }, True: "terminal", False: "theme"},
 	{Spec: Spec{Key: ListDensitySetting, Values: []string{"compact", "comfortable"}, Default: "compact", Row: "list density"}, Field: FieldDensity,
 		Flag: func(s *State) *bool { return &s.ComfortableRows }, True: "comfortable", False: "compact"},
-	{Spec: Spec{Key: SessionLayoutSetting, Values: []string{"split", "full"}, Default: "split", Row: "sessions layout"}, Field: FieldSessionLayout,
-		Flag: func(s *State) *bool { return &s.FullLayout }, True: "full", False: "split", TrueLabel: "full screen"},
 	{Spec: Spec{Key: HideHeaderSetting, Values: onOff, Default: "off", Row: "header"}, Field: FieldHeader,
 		Flag: func(s *State) *bool { return &s.HideHeader }, True: "on", False: "off", TrueLabel: "hide", FalseLabel: "show"},
 	{Spec: Spec{Key: HideStatsSetting, Values: onOff, Default: "off", Row: "computer stats"}, Field: FieldStats,
@@ -93,9 +64,6 @@ var table = []Setting{
 	{Spec: Spec{Key: ReviewScopeSetting, Values: ReviewScopes, Default: ReviewScopes[0], Row: "review scope"}, Field: FieldReviewScope},
 	{Spec: Spec{Key: QuickCloseSetting, Values: []string{"stay", "close"}, Default: "stay", Row: "after quick prompt"}, Field: FieldQuickClose,
 		Flag: func(s *State) *bool { return &s.QuickCloseSend }, True: "close", False: "stay", FalseLabel: "stay open"},
-	{Spec: Spec{Key: FocusKeySetting, Values: []string{"focus", "attach"}, Default: "focus", Row: "session keys"}, Field: FieldFocusKey,
-		Flag: func(s *State) *bool { return &s.EnterFocuses }, True: "focus", False: "attach", TrueLabel: "↵ focus · A attach", FalseLabel: "↵ attach · A focus"},
-	{Spec: Spec{Key: ArrowStepSetting, Values: arrowSteps, Default: arrowSteps[0], Row: "←→ step in/out"}, Field: FieldArrowStep},
 	{Spec: Spec{Key: MouseSetting, Values: onOff, Default: "on", Row: "mouse"}, Field: FieldMouse,
 		Flag: func(s *State) *bool { return &s.MouseDisabled }, True: "off", False: "on"},
 	{Spec: Spec{Key: WorktreeSetting, Values: onOff, Default: "off", Row: "spawn in worktree"}, Field: FieldWorktree,

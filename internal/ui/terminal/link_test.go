@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"slices"
-	"strings"
 	"testing"
 )
 
@@ -112,35 +111,6 @@ func TestOpenLinkOverSSHShowsThePage(t *testing.T) {
 	msg := OpenLink(target, seams)()
 	if msg != (LinkPageMsg{URL: target}) {
 		t.Fatalf("OpenLink() = %#v, want the page for %q", msg, target)
-	}
-}
-
-func TestOpenLinkCmdOverSSHShowsThePage(t *testing.T) {
-	seams := Seams{
-		Opener: func(string) error { t.Fatal("the remote host opened a browser"); return nil },
-		Remote: func() bool { return true },
-	}
-	msg := OpenLinkCmd("https://example.com/docs", seams)()
-	if msg != (LinkPageMsg{URL: "https://example.com/docs"}) {
-		t.Fatalf("OpenLinkCmd() = %#v, want the page", msg)
-	}
-}
-
-func TestOpenLinkCmdFailureDropsTheURL(t *testing.T) {
-	seams := Seams{
-		Opener: func(string) error { return errors.New("no opener") },
-		Remote: func() bool { return false },
-	}
-	msg := OpenLinkCmd("https://example.com/docs?token=secret", seams)()
-	failure, ok := msg.(LinkOpenErrMsg)
-	if !ok {
-		t.Fatalf("OpenLinkCmd returned %T, want LinkOpenErrMsg", msg)
-	}
-	if !strings.Contains(failure.Err.Error(), "no opener") {
-		t.Fatalf("the opener's reason was dropped: %v", failure.Err)
-	}
-	if strings.Contains(failure.Err.Error(), "token=secret") {
-		t.Fatalf("the error repeats the URL: %v", failure.Err)
 	}
 }
 

@@ -67,7 +67,6 @@ func (s *Surface) Wheel(_ surface.Host, arrow tea.KeyMsg) tea.Cmd {
 }
 func (s *Surface) View(surface.Host, string) string { return s.root.Paint(s) }
 func (s *Surface) Footer() [][2]string              { return nil }
-func (s *Surface) Owner() surface.Owner             { return surface.Manager }
 func (s *Surface) Dismissible() bool                { return false }
 func (s *Surface) Leave(surface.Host)               { s.ticking = false }
 func (s *Surface) KeepAnimating() tea.Cmd {

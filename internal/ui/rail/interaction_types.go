@@ -66,7 +66,6 @@ type ActionKind uint8
 const (
 	NoAction ActionKind = iota
 	Quit
-	Focus
 	Attach
 	NewSession
 	NewGroup
@@ -83,7 +82,6 @@ const (
 	Prompt
 	CopyReply
 	OpenSettings
-	Resize
 	NewTerminal
 	OpenEditor
 	RenameAction
@@ -139,16 +137,10 @@ type AutoScrollTick struct {
 }
 
 type KeyContext struct {
-	ListKeys       keybind.Table
-	ArrowStep      bool
-	StepInAttaches bool
-	EnterFocuses   bool
+	ListKeys keybind.Table
 }
 
 type MouseContext struct {
 	BodyOriginY int
-	DividerX    int
-	FullWidth   bool
-	FullLayout  bool
 	Now         time.Time
 }

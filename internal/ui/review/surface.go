@@ -68,8 +68,6 @@ func (s *Surface) View(h surface.Host, _ string) string {
 
 func (s *Surface) Footer() [][2]string { return s.picker.Hints(s.render.GlyphMode) }
 
-func (s *Surface) Owner() surface.Owner { return surface.Manager }
-
 // Dismissible: the filter is a search, not a draft, so a stray click closes
 // the picker the way esc does.
 func (s *Surface) Dismissible() bool { return true }

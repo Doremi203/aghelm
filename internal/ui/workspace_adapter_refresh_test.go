@@ -15,8 +15,6 @@ import (
 	"github.com/Doremi203/aghelm/internal/sysstat"
 	"github.com/Doremi203/aghelm/internal/testfixture"
 	uiframe "github.com/Doremi203/aghelm/internal/ui/frame"
-	"github.com/Doremi203/aghelm/internal/ui/presentation"
-	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/ansi"
 )
@@ -33,34 +31,6 @@ func TestRefreshCarriesTheSocketItReadPanesFrom(t *testing.T) {
 		if !m.workspace.leadingManager {
 			t.Fatal("the poll's hold on the store should reach the model")
 		}
-	}
-}
-
-func TestRefreshWithStaleSelectionFetchesPreview(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	createSession(t, m, "fresh-one", t.TempDir(), "")
-	m.selectSessionRow(t, "fresh-one")
-	sess := m.sessionRows()[0]
-
-	_, cmd := m.Update(refreshMsg{sessions: m.workspace.sessions, procFor: ""})
-	if cmd == nil {
-		t.Fatal("stale refresh should schedule an immediate preview fetch")
-	}
-	m.applyCmd(t, cmd)
-	// A fresh pane may not have drawn anything yet (psmux is slower to
-	// print a prompt), so check the fetch landed for the selection rather
-	// than that it carried text.
-	if m.workspace.procFor != sess.ID {
-		t.Fatalf("scheduled selection refresh landed for %q, want %q", m.workspace.procFor, sess.ID)
-	}
-
-	m.workspace.preview = "existing"
-	if _, cmd := m.Update(refreshMsg{sessions: m.workspace.sessions, procFor: sess.ID, preview: "pane text"}); cmd != nil {
-		t.Fatal("matching refresh should not schedule extra work")
-	}
-	if m.workspace.preview != "pane text" {
-		t.Fatalf("preview = %q want %q", m.workspace.preview, "pane text")
 	}
 }
 
@@ -96,82 +66,33 @@ func TestRefreshSelectsSessionNamedByClickedNotification(t *testing.T) {
 	}
 }
 
-// The keyboard is inside a pane in focus mode, so moving the cursor under
-// it would leave every keystroke going to the session the user left.
-func TestClickedNotificationLeavesFocusBeforeSelecting(t *testing.T) {
+// A banner outlives its session: the row can be gone by the time the user
+// clicks it, and that must cost neither the cursor nor the screen.
+func TestClickedNotificationForAGoneSessionChangesNothing(t *testing.T) {
 	t.Parallel()
 	m := buildModel(t)
-	createSessionOn(t, m, "typing", "quietchat", t.TempDir())
-	createSessionOn(t, m, "waiting", "quietchat", t.TempDir())
-	m.selectSessionRow(t, "typing")
-	var other store.Session
-	for _, sess := range m.sessionRows() {
-		if sess.Name == "waiting" {
-			other = sess
-		}
+	createSessionOn(t, m, "still-here", "quietchat", t.TempDir())
+	m.selectSessionRow(t, "still-here")
+	before, ok := m.selected()
+	if !ok {
+		t.Fatal("nothing selected")
 	}
-	if other.ID == "" {
-		t.Fatal("waiting session missing")
-	}
-	m.push(newFocusSurface(m))
+	want := m.screenID()
 	served := false
 	m.poller.dependencies.TakeFocus = func() (string, bool) {
 		if served {
 			return "", false
 		}
 		served = true
-		return other.ID, true
+		return "sess-long-gone", true
 	}
 	resetExecution(m)
 	m.applyCmd(t, m.refreshCmd())
-	if !m.onList() {
-		t.Fatalf("screen = %v, want the list", m.screenID())
+	if m.screenID() != want {
+		t.Fatalf("screen = %v, want %v", m.screenID(), want)
 	}
-	if sess, ok := m.selected(); !ok || sess.ID != other.ID {
-		t.Fatalf("cursor is on %+v, want the session the banner named", sess)
-	}
-}
-
-// A banner outlives its session: the row can be gone by the time the user
-// clicks it, and that must cost neither the cursor nor the focused pane.
-func TestClickedNotificationForAGoneSessionChangesNothing(t *testing.T) {
-	t.Parallel()
-	for _, test := range []struct {
-		name  string
-		focus bool
-	}{
-		{"list", false},
-		{"focus", true},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			m := buildModel(t)
-			createSessionOn(t, m, "still-here", "quietchat", t.TempDir())
-			m.selectSessionRow(t, "still-here")
-			before, ok := m.selected()
-			if !ok {
-				t.Fatal("nothing selected")
-			}
-			if test.focus {
-				m.push(newFocusSurface(m))
-			}
-			want := m.screenID()
-			served := false
-			m.poller.dependencies.TakeFocus = func() (string, bool) {
-				if served {
-					return "", false
-				}
-				served = true
-				return "sess-long-gone", true
-			}
-			resetExecution(m)
-			m.applyCmd(t, m.refreshCmd())
-			if m.screenID() != want {
-				t.Fatalf("screen = %v, want %v", m.screenID(), want)
-			}
-			if sess, ok := m.selected(); !ok || sess.ID != before.ID {
-				t.Fatalf("cursor moved to %+v, want it left on %s", sess, before.Name)
-			}
-		})
+	if sess, ok := m.selected(); !ok || sess.ID != before.ID {
+		t.Fatalf("cursor moved to %+v, want it left on %s", sess, before.Name)
 	}
 }
 
@@ -616,28 +537,6 @@ func TestPollLeavesARunningRowAlone(t *testing.T) {
 	}
 }
 
-// A battery gauge colors off how empty it is, the opposite of every other
-// meter: low charge should read as alarming, a full battery as calm.
-func TestGaugeInvertFlipsTheColorRamp(t *testing.T) {
-	forceANSI256(t)
-
-	lowCharge := sgrOf(uitheme.Gauge(5, 10, true, presentation.GlyphModeAdvanced))
-	highUsage := sgrOf(uitheme.Gauge(95, 10, false, presentation.GlyphModeAdvanced))
-	if lowCharge != highUsage {
-		t.Fatalf("5%% inverted = %q, want the same alarm color as 95%% uninverted %q", lowCharge, highUsage)
-	}
-
-	highCharge := sgrOf(uitheme.Gauge(95, 10, true, presentation.GlyphModeAdvanced))
-	lowUsage := sgrOf(uitheme.Gauge(5, 10, false, presentation.GlyphModeAdvanced))
-	if highCharge != lowUsage {
-		t.Fatalf("95%% inverted = %q, want the same calm color as 5%% uninverted %q", highCharge, lowUsage)
-	}
-
-	if lowCharge == highCharge {
-		t.Fatal("low and high battery charge rendered the same color")
-	}
-}
-
 func TestDiskBytes(t *testing.T) {
 	for _, tc := range []struct {
 		bytes uint64
@@ -659,20 +558,17 @@ func TestDiskBytes(t *testing.T) {
 // The foot is the machine readings alone: a notice floats over the frame
 // rather than taking a row here.
 func TestRailFootOnlyShowsComputerStats(t *testing.T) {
-	for _, full := range []bool{false, true} {
-		for _, width := range []int{34, 70, 120} {
-			m := footModel(t)
-			m.prefs.fullLayout = full
-			foot := strings.Join(m.railFootLines(width), "\n")
-			if !strings.Contains(ansi.Strip(foot), "cpu") || strings.Contains(ansi.Strip(foot), "messages") {
-				t.Fatalf("full=%v width=%d: stats foot contains messages or loses readings:\n%s", full, width, ansi.Strip(foot))
-			}
-			for _, n := range m.activeNotices() {
-				m.dismissNotice(n.ID)
-			}
-			if got := strings.Join(m.railFootLines(width), "\n"); got != foot {
-				t.Fatalf("full=%v width=%d: notices changed the stats foot", full, width)
-			}
+	for _, width := range []int{34, 70, 120} {
+		m := footModel(t)
+		foot := strings.Join(m.railFootLines(width), "\n")
+		if !strings.Contains(ansi.Strip(foot), "cpu") || strings.Contains(ansi.Strip(foot), "messages") {
+			t.Fatalf("width=%d: stats foot contains messages or loses readings:\n%s", width, ansi.Strip(foot))
+		}
+		for _, n := range m.activeNotices() {
+			m.dismissNotice(n.ID)
+		}
+		if got := strings.Join(m.railFootLines(width), "\n"); got != foot {
+			t.Fatalf("width=%d: notices changed the stats foot", width)
 		}
 	}
 }
@@ -689,41 +585,29 @@ func TestRailFootLinesFitWidth(t *testing.T) {
 	}
 }
 
-func TestLayoutsCanHideStats(t *testing.T) {
-	for _, tc := range []struct {
-		name  string
-		full  bool
-		width int
-	}{
-		{name: "split", width: 36},
-		{name: "full", full: true, width: 119},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			m := footModel(t)
-			m.layout.width, m.layout.height = 120, 34
-			m.prefs.fullLayout = tc.full
-			m.prefs.hideStats = true
-			if foot := m.railFootLines(tc.width); len(foot) > 0 {
-				t.Fatalf("hidden stats still paint %d lines:\n%s", len(foot), ansi.Strip(strings.Join(foot, "\n")))
-			}
-			rail := m.railLines(tc.width, m.listBodyHeight())
-			if len(rail) != m.listBodyHeight() {
-				t.Fatalf("footerless rail = %d rows, body is %d", len(rail), m.listBodyHeight())
-			}
-			for _, line := range rail {
-				if line.Rule {
-					t.Fatal("hidden stats left their separator behind")
-				}
-			}
-		})
+func TestListCanHideStats(t *testing.T) {
+	m := footModel(t)
+	m.layout.width, m.layout.height = 120, 34
+	m.prefs.hideStats = true
+	if foot := m.railFootLines(119); len(foot) > 0 {
+		t.Fatalf("hidden stats still paint %d lines:\n%s", len(foot), ansi.Strip(strings.Join(foot, "\n")))
+	}
+	rail := m.railLines(119, m.listBodyHeight())
+	if len(rail) != m.listBodyHeight() {
+		t.Fatalf("footerless rail = %d rows, body is %d", len(rail), m.listBodyHeight())
+	}
+	for _, line := range rail {
+		if line.Rule {
+			t.Fatal("hidden stats left their separator behind")
+		}
 	}
 }
 
-func TestFullFootDiskAvailable(t *testing.T) {
+func TestRailFootDiskAvailable(t *testing.T) {
 	m := &Model{workspace: workspace{snap: sysstat.Snapshot{
 		DiskOK: true, DiskPercent: 66, DiskAvailable: 167_950_000_000,
 	}}}
-	line := ansi.Strip(strings.Join(m.fullFootLine(200), "\n"))
+	line := ansi.Strip(strings.Join(m.railFootLines(200), "\n"))
 	if !strings.Contains(line, "disk 66% 167.9GB available") {
 		t.Fatalf("disk reading = %q", line)
 	}

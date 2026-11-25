@@ -33,6 +33,6 @@ func (AfterTurnRequest) EffectName() string { return "after-turn archive or kill
 
 func (r AfterTurnRequest) Run(s Services) (uieffects.Result, error) { return RunAfterTurn(s, r) }
 
-func (AttachRequest) EffectName() string { return "focus or attach" }
+func (AttachRequest) EffectName() string { return "attach" }
 
 func (r AttachRequest) Run(s Services) (uieffects.Result, error) { return RunAttach(s, r) }

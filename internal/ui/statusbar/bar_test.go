@@ -44,47 +44,6 @@ func TestPaintWarnsInItsOwnTone(t *testing.T) {
 	}
 }
 
-// An error outranks a scrolled pane: the reader must not lose a failure
-// report to a view notice.
-func TestLineOutranksFocusNotices(t *testing.T) {
-	tones := testTones()
-	got := Line(Message{Report: "git not found in PATH", Focused: true, ScrolledBack: true, ScrollOffset: 12}, testGlyphs(), tones)
-	if !strings.Contains(ansi.Strip(got), "git not found in PATH") {
-		t.Fatalf("error was hidden behind the scroll notice: %q", ansi.Strip(got))
-	}
-	if strings.Contains(ansi.Strip(got), "lines back") {
-		t.Fatalf("the scroll notice should not sit beside the error: %q", ansi.Strip(got))
-	}
-}
-
-// A hovered link shows where a click goes, since a label can hide its target,
-// with the agent's control bytes escaped, and an error still outranks it.
-func TestLineNamesTheHoveredLink(t *testing.T) {
-	tones := testTones()
-	plain := ansi.Strip(Line(Message{Focused: true, ScrolledBack: true, Link: "https://example.com/\x1b[2Jx"}, testGlyphs(), tones))
-	if plain != "link https://example.com/^[[2Jx" {
-		t.Fatalf("hovered link line = %q", plain)
-	}
-	failed := ansi.Strip(Line(Message{Focused: true, Report: "open link: no opener", Link: "https://example.com/"}, testGlyphs(), tones))
-	if strings.Contains(failed, "example.com") {
-		t.Fatalf("the hovered link hid an error: %q", failed)
-	}
-}
-
-// The scroll notice names the catch-up keys the session actually has: a
-// session whose scrollback tmux holds also answers a page key.
-func TestLineNamesTheCatchUpKeys(t *testing.T) {
-	tones := testTones()
-	plain := ansi.Strip(Line(Message{ScrolledBack: true, ScrollOffset: 12}, testGlyphs(), tones))
-	if !strings.Contains(plain, "12 lines back · wheel down or type to catch up") {
-		t.Fatalf("scroll notice = %q", plain)
-	}
-	paged := ansi.Strip(Line(Message{ScrolledBack: true, ScrollOffset: 12, PagesScrollback: true}, testGlyphs(), tones))
-	if !strings.Contains(paged, "wheel down, pgdn or type to catch up") {
-		t.Fatalf("scroll notice = %q", paged)
-	}
-}
-
 // The three states a message can be in read in three tones, and a failure is
 // what a message reads as by default.
 func TestLinePaintsWhatItSays(t *testing.T) {

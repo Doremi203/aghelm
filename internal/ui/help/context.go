@@ -2,14 +2,10 @@ package help
 
 import "github.com/Doremi203/aghelm/internal/keybind"
 
-// Tables are the copied key tables the key map lists, whether the ←→ pair
-// is on, whether its → attaches, and whether ← comes back from an attach.
+// Tables are the copied key tables the key map lists.
 type Tables struct {
-	Session      keybind.Table
-	List         keybind.Table
-	ArrowStep    bool
-	ArrowAttach  bool
-	AttachedBack bool
+	Session keybind.Table
+	List    keybind.Table
 }
 
 // Reads is what building the key map's context asks the root: the copied
@@ -29,9 +25,6 @@ func ContextFor(reads Reads, width int) Context {
 	return Context{
 		SessionKeys:  tables.Session,
 		ListKeys:     tables.List,
-		ArrowStep:    tables.ArrowStep,
-		ArrowAttach:  tables.ArrowAttach,
-		AttachedBack: tables.AttachedBack,
 		Width:        width,
 		Glyphs:       reads.Glyphs(),
 		QuickKeys:    reads.QuickKeys(),

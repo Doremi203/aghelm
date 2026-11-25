@@ -55,8 +55,6 @@ func (s *ForkSurface) View(surface.Host, string) string { return s.root.Paint(&s
 
 func (s *ForkSurface) Footer() [][2]string { return [][2]string{{"↵", "create"}, {"esc", "cancel"}} }
 
-func (s *ForkSurface) Owner() surface.Owner { return surface.Manager }
-
 // Dismissible: the name is a draft, so a stray click or ctrl+c keeps it.
 func (s *ForkSurface) Dismissible() bool { return false }
 

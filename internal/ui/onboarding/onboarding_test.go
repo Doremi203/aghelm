@@ -53,12 +53,13 @@ func TestConfirmingAStepSavesItsChoiceAlone(t *testing.T) {
 		t.Fatalf("back saved = %+v", out)
 	}
 	m.Key(press("enter"))
-	if m.Step() != Layout {
+	if m.Step() != Density {
 		t.Fatalf("enter from agents went to %v", m.Step())
 	}
+	m.Key(press("down"))
 	out := m.Key(press("enter"))
-	if out.Action != Save || !out.Choices.FullLayout || !out.Choices.Hidden["codex"] {
-		t.Fatalf("enter on the layout step = %+v", out)
+	if out.Action != Save || !out.Choices.Comfortable || !out.Choices.Hidden["codex"] {
+		t.Fatalf("enter on the density step = %+v", out)
 	}
 }
 
@@ -66,19 +67,19 @@ func TestConfirmingAStepSavesItsChoiceAlone(t *testing.T) {
 // saved.
 func TestLeavingAsksAndKeepsTheConfirmedSteps(t *testing.T) {
 	m := New(agents, defaults(), false)
-	walkTo(t, &m, Layout)
+	walkTo(t, &m, Density)
 	m.Key(press("down"))
 	if out := m.Key(press("esc")); out.Action != Stay || !m.Leaving() {
 		t.Fatalf("esc on a choice = %+v, leaving %v", out, m.Leaving())
 	}
-	if out := m.Key(press("n")); out.Action != Stay || m.Leaving() || m.Step() != Layout {
+	if out := m.Key(press("n")); out.Action != Stay || m.Leaving() || m.Step() != Density {
 		t.Fatalf("n = %+v on %v, leaving %v", out, m.Step(), m.Leaving())
 	}
 	m.Key(press("enter"))
 	walkTo(t, &m, Sessions)
 	m.Key(press("esc"))
 	out := m.Key(press("enter"))
-	if out.Action != Close || !out.Choices.FullLayout || out.Choices.Theme != uitheme.Palettes[0].Name {
+	if out.Action != Close || !out.Choices.Comfortable || out.Choices.Theme != uitheme.Palettes[0].Name {
 		t.Fatalf("enter on the question = %+v", out)
 	}
 }
@@ -187,7 +188,7 @@ func TestTheLastStepNeedsAnImport(t *testing.T) {
 			saves++
 		}
 	}
-	if saves != 4 || m.Step() != Steps[len(Steps)-1] {
+	if saves != 3 || m.Step() != Steps[len(Steps)-1] {
 		t.Fatalf("walked to %v with %d saves", m.Step(), saves)
 	}
 	for _, key := range []string{"enter", "right", "tab"} {

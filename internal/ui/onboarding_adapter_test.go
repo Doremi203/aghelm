@@ -84,12 +84,11 @@ var (
 // running manager takes it at once.
 func TestSetupWritesWhatSettingsWrites(t *testing.T) {
 	m := setupModel(t)
-	pressKeys(m, enterKey, downKey, enterKey, downKey, enterKey, downKey, downKey, enterKey)
+	pressKeys(m, enterKey, downKey, enterKey, downKey, downKey, enterKey)
 	m.drainEffects(t)
 	for key, want := range map[string]string{
-		uisettings.SessionLayoutSetting: "full",
-		uisettings.ListDensitySetting:   "comfortable",
-		uisettings.ThemeSetting:         uitheme.Palettes[2].Name,
+		uisettings.ListDensitySetting: "comfortable",
+		uisettings.ThemeSetting:       uitheme.Palettes[2].Name,
 	} {
 		if got := storedSetting(t, m, key); got != want {
 			t.Errorf("%s = %q, want %q", key, got, want)
@@ -101,9 +100,9 @@ func TestSetupWritesWhatSettingsWrites(t *testing.T) {
 			t.Errorf("%s hidden = %v, want %v", name, hidden[name], want)
 		}
 	}
-	if !m.prefs.fullLayout || !m.prefs.comfortableRows || uitheme.Current().Name != uitheme.Palettes[2].Name {
-		t.Fatalf("the running manager did not take the choices: full=%v comfortable=%v theme=%s",
-			m.prefs.fullLayout, m.prefs.comfortableRows, uitheme.Current().Name)
+	if !m.prefs.comfortableRows || uitheme.Current().Name != uitheme.Palettes[2].Name {
+		t.Fatalf("the running manager did not take the choices: comfortable=%v theme=%s",
+			m.prefs.comfortableRows, uitheme.Current().Name)
 	}
 	if !m.setupOpen() || setupState(t, m).Step() != uionboarding.QuickPrompt {
 		t.Fatalf("the setup moved on to %v in mode %v", setupState(t, m).Step(), m.screenID())
@@ -126,7 +125,7 @@ func TestSkippingFromTheWelcomeWritesNothing(t *testing.T) {
 	if !m.listClear() {
 		t.Fatalf("a click on leave left mode %v", m.screenID())
 	}
-	for _, key := range []string{uisettings.ThemeSetting, uisettings.SessionLayoutSetting, uisettings.ListDensitySetting, uisettings.HiddenToolsSetting} {
+	for _, key := range []string{uisettings.ThemeSetting, uisettings.ListDensitySetting, uisettings.HiddenToolsSetting} {
 		if got := storedSetting(t, m, key); got != "" {
 			t.Errorf("skipping wrote %s = %q", key, got)
 		}
@@ -138,7 +137,7 @@ func TestSkippingFromTheWelcomeWritesNothing(t *testing.T) {
 func TestCancellingTheQuestionKeepsTheStep(t *testing.T) {
 	m := setupModel(t)
 	before := uitheme.Current().Name
-	pressKeys(m, enterKey, enterKey, enterKey, downKey, downKey, escKey, escKey)
+	pressKeys(m, enterKey, enterKey, downKey, downKey, escKey, escKey)
 	if !m.setupOpen() || setupState(t, m).Step() != uionboarding.Theme || uitheme.Current().Name == before {
 		t.Fatalf("esc twice on the theme step left %v in mode %v painting %s", setupState(t, m).Step(), m.screenID(), uitheme.Current().Name)
 	}
@@ -149,20 +148,6 @@ func TestCancellingTheQuestionKeepsTheStep(t *testing.T) {
 	m.drainEffects(t)
 	if got := storedSetting(t, m, uisettings.ThemeSetting); got != "" {
 		t.Errorf("an unconfirmed theme was written: %q", got)
-	}
-}
-
-// The guide names the arrow keys for focusing and coming back while the
-// ←→ pair is on, and the enter and detach keys once it is off.
-func TestSessionsCardNamesTheArrowKeys(t *testing.T) {
-	m := setupModel(t)
-	m.prefs.arrowStep = true
-	if keys := m.setupKeys(); keys.Focus != "→" || keys.Back != "←" || keys.OtherFocus != "↵" || keys.OtherBack != "ctrl+q" {
-		t.Fatalf("with the pair on: %+v", keys)
-	}
-	m.prefs.arrowStep = false
-	if keys := m.setupKeys(); keys.Focus != "↵" || keys.Back != "ctrl+q" || keys.OtherFocus != "" || keys.OtherBack != "" {
-		t.Fatalf("with the pair off: %+v", keys)
 	}
 }
 
@@ -191,15 +176,15 @@ func TestSetupTakesTheMouse(t *testing.T) {
 		t.Fatalf("a click on quietchat left it unchecked:\n%s", ansi.Strip(m.View()))
 	}
 	clickSetup(t, m, "↵ next")
-	if setupState(t, m).Step() != uionboarding.Layout {
+	if setupState(t, m).Step() != uionboarding.Density {
 		t.Fatalf("a click on ↵ next went to %v", setupState(t, m).Step())
 	}
 	wheelDown := tea.MouseMsg{X: 10, Y: 10, Button: tea.MouseButtonWheelDown, Action: tea.MouseActionPress}
 	_, wheelCmd := m.handleMouse(wheelDown)
 	applySetupCommand(m, wheelCmd)
 	m.drainEffects(t)
-	if !strings.Contains(ansi.Strip(preparedView(m)), "❯ ● Full screen") {
-		t.Fatalf("the wheel did not move the layout choice:\n%s", ansi.Strip(m.View()))
+	if !strings.Contains(ansi.Strip(preparedView(m)), "❯ ● Comfortable") {
+		t.Fatalf("the wheel did not move the density choice:\n%s", ansi.Strip(m.View()))
 	}
 }
 
@@ -355,9 +340,8 @@ func TestSetupFirstRunDefersProbeUntilInit(t *testing.T) {
 func TestCompatibleSetupUsesPortableKeysAndFooter(t *testing.T) {
 	m := setupModel(t)
 	m.prefs.glyphMode = presentation.GlyphModeBasic
-	m.prefs.arrowStep = true
 	keys := m.setupKeys()
-	if keys.Focus != "right" || keys.Back != "left" || keys.OtherFocus != "enter" {
+	if keys.Attach != "enter" || keys.Back != "ctrl+q" {
 		t.Fatalf("Compatible setup keys: %+v", keys)
 	}
 	view := ansi.Strip(m.viewSetup(setupState(t, m)))

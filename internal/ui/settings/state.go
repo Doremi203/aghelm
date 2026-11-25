@@ -20,21 +20,15 @@ const (
 	// ReviewScopeSetting is the scope review opens a session in when it
 	// has none of its own stored.
 	ReviewScopeSetting = "review_scope"
-	// SessionLayoutSetting is the list's shape: "full" gives the rail the
-	// whole width, anything else keeps the split with the preview beside it.
-	SessionLayoutSetting = "layout"
-	ListDensitySetting   = "list_density"
-	HideHeaderSetting    = "hide_header"
-	HideStatsSetting     = "hide_stats"
+	ListDensitySetting = "list_density"
+	HideHeaderSetting  = "hide_header"
+	HideStatsSetting   = "hide_stats"
 	// BackgroundSetting is what fills the backdrop's cells: "terminal"
 	// leaves the terminal's own colors, anything else paints the theme's.
 	BackgroundSetting = "background"
-	FocusKeySetting   = "focus_key"
-	// ArrowStepSetting is the ←→ step in/out pair.
-	ArrowStepSetting = "arrow_step_keys"
-	// MouseSetting is app-wide mouse reporting: "off" gives the rail and
-	// content column back to the terminal's own click-drag text selection,
-	// anything else leaves it on (the default).
+	// MouseSetting is app-wide mouse reporting: "off" gives the list back
+	// to the terminal's own click-drag text selection, anything else leaves
+	// it on (the default).
 	MouseSetting      = "mouse_mode"
 	QuickCloseSetting = "quick_prompt_close"
 	WorktreeSetting   = "worktree_default"
@@ -62,14 +56,11 @@ const (
 	FieldBackground
 	FieldGlyphs
 	FieldDensity
-	FieldSessionLayout
 	FieldHeader
 	FieldStats
 	FieldLayout
 	FieldReviewScope
 	FieldQuickClose
-	FieldFocusKey
-	FieldArrowStep
 	FieldMouse
 	FieldWorktree
 	FieldBaseFetch
@@ -99,10 +90,7 @@ type State struct {
 	LayoutSplit     bool
 	ReviewScope     string
 	QuickCloseSend  bool
-	EnterFocuses    bool
-	ArrowStep       string
 	ComfortableRows bool
-	FullLayout      bool
 	HideHeader      bool
 	HideStats       bool
 	MouseDisabled   bool
@@ -208,7 +196,6 @@ func FromSnapshot(s Snapshot) State {
 	state := State{
 		GlyphMode:   presentation.GlyphMode(value(GlyphModeSetting)),
 		ReviewScope: reviewScope(value(ReviewScopeSetting)),
-		ArrowStep:   ArrowStep(value(ArrowStepSetting)),
 		ToolNames:   names,
 		ToolIndex:   ToolIndex(names, value(DefaultToolSetting)),
 		ThemeIndex:  uitheme.Index(s.Theme),

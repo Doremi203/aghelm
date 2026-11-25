@@ -170,7 +170,6 @@ type Model struct {
 	lifts           int
 	listClickAt     time.Time
 	listClickKey    string
-	clickFocusKey   string
 	showArchived    bool
 	hideEmptyGroups bool
 	filter          statusFilter

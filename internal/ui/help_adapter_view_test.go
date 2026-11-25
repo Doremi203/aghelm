@@ -9,14 +9,11 @@ import (
 	"github.com/Doremi203/aghelm/internal/diff"
 	"github.com/Doremi203/aghelm/internal/git"
 	"github.com/Doremi203/aghelm/internal/keybind"
-	"github.com/Doremi203/aghelm/internal/tmux"
 	uiframe "github.com/Doremi203/aghelm/internal/ui/frame"
 	uihelp "github.com/Doremi203/aghelm/internal/ui/help"
 	"github.com/Doremi203/aghelm/internal/ui/presentation"
-	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
 	uireview "github.com/Doremi203/aghelm/internal/ui/review"
 	uistartup "github.com/Doremi203/aghelm/internal/ui/startup"
-	uisurface "github.com/Doremi203/aghelm/internal/ui/surface"
 	uiterminal "github.com/Doremi203/aghelm/internal/ui/terminal"
 	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 
@@ -33,64 +30,6 @@ func typeHelpSearch(m *Model, query string, finish bool) {
 	}
 	if finish {
 		m.handleKey(namedKey(tea.KeyEnter))
-	}
-}
-
-// The arrow-step rows reach the map from the Model's own preference, not
-// only from a context a test builds by hand.
-func TestHelpArrowStepRowsFollowSetting(t *testing.T) {
-	hasRow := func(lines []string, title, key string) bool {
-		inSection := false
-		for _, line := range lines {
-			plain := ansi.Strip(line)
-			if heading, ok := strings.CutPrefix(plain, "▍"); ok {
-				inSection = strings.HasPrefix(heading, title+" ")
-				continue
-			}
-			if inSection && strings.HasPrefix(plain, key+" ") {
-				return true
-			}
-		}
-		return false
-	}
-
-	for _, enabled := range []bool{true, false} {
-		m := helpModel()
-		m.prefs.arrowStep = enabled
-		lines := helpSurfaceOf(m).State().Content(uihelp.ContextFor(helpHost{m}, 84)).Lines
-		for _, row := range []struct{ title, key string }{
-			{"list", "→"},
-			{"list", "←"},
-			{"inside a session (attached or focused)", "←"},
-		} {
-			if got := hasRow(lines, row.title, row.key); got != enabled {
-				t.Errorf("arrow step enabled = %v: %q in %q = %v", enabled, row.key, row.title, got)
-			}
-		}
-	}
-}
-
-// The attached ← row follows the host the selected row attaches on, so a
-// Windows manager names it for a session on a Linux or macOS host.
-func TestHelpAttachedBackFollowsTheSelectedRowsHost(t *testing.T) {
-	m := connectedModel(t, &fakeSSH{})
-	m.prefs.arrowStep, m.prefs.arrowAttach = true, true
-	host := helpHost{m}
-	m.rail.Focus(boxSession("s1"))
-	if !host.KeyTables().AttachedBack {
-		t.Error("a remote row should name the attached ←")
-	}
-	m.rail.Focus(uirail.Selection{Kind: uirail.GroupRow})
-	if selection, _ := m.rail.Selected(); selection.Remote() {
-		t.Fatalf("selection %+v, want a local row", selection)
-	}
-	if got := host.KeyTables().AttachedBack; got != tmux.AttachedPromptHead {
-		t.Errorf("local row AttachedBack = %v, want this platform's %v", got, tmux.AttachedPromptHead)
-	}
-	m.prefs.arrowAttach = false
-	m.rail.Focus(boxSession("s1"))
-	if host.KeyTables().AttachedBack {
-		t.Error("→ focus should keep ← to focus on a remote row too")
 	}
 }
 
@@ -168,7 +107,7 @@ func TestHelpContentAndLayout(t *testing.T) {
 		{name: "search_ime_compatible", model: helpModel(), assertCursor: true},
 	}
 	tests[1].model.layout.width, tests[1].model.layout.height = 100, 28
-	tests[1].model.focus.imeCursor = &uiframe.CursorAnchor{}
+	tests[1].model.layout.imeCursor = &uiframe.CursorAnchor{}
 	typeHelpSearch(tests[1].model, "中文", false)
 	*helpSurfaceOf(tests[2].model).State() = uihelp.New(uihelp.Review)
 	tests[3].model.layout.width, tests[3].model.layout.height = 60, 14
@@ -178,7 +117,7 @@ func TestHelpContentAndLayout(t *testing.T) {
 	tests[4].model.prefs.glyphMode = presentation.GlyphModeBasic
 	tests[5].model.prefs.glyphMode = presentation.GlyphModeBasic
 	tests[5].model.layout.width, tests[5].model.layout.height = 100, 28
-	tests[5].model.focus.imeCursor = &uiframe.CursorAnchor{}
+	tests[5].model.layout.imeCursor = &uiframe.CursorAnchor{}
 	typeHelpSearch(tests[5].model, "中文", false)
 
 	for _, test := range tests {
@@ -193,7 +132,7 @@ func TestHelpContentAndLayout(t *testing.T) {
 				t.Fatalf("help content and layout changed:\nwant:\n%s\n\ngot:\n%s", want, got)
 			}
 			if test.assertCursor {
-				if _, _, ok := test.model.focus.imeCursor.Get(); !ok {
+				if _, _, ok := test.model.layout.imeCursor.Get(); !ok {
 					t.Fatal("search frame did not publish its IME cursor")
 				}
 			}
@@ -517,8 +456,8 @@ func TestHelpSurfaceOverReviewScopesToReviewAndPopsBack(t *testing.T) {
 
 func TestHelpSurfaceHoldsTheScopeItWasOpenedWith(t *testing.T) {
 	s := uihelp.NewSurface(helpHost{helpModel()}, uihelp.Review)
-	if !s.Dismissible() || s.Owner() != uisurface.Manager {
-		t.Fatal("help must be a dismissible manager-owned card")
+	if !s.Dismissible() {
+		t.Fatal("help must be a dismissible card")
 	}
 }
 
@@ -565,9 +504,6 @@ func helpModel() *Model {
 		services: services{
 			keys:     keybind.DefaultSession(),
 			listKeys: keybind.DefaultList(),
-		},
-		prefs: preferences{
-			arrowStep: true,
 		},
 	}
 	m.openHelp()

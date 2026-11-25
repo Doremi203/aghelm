@@ -97,8 +97,6 @@ func (s *LaunchHintSurface) droppedRows(h surface.Host, card Card) int {
 
 func (s *LaunchHintSurface) Footer() [][2]string { return s.prompt().Hints() }
 
-func (s *LaunchHintSurface) Owner() surface.Owner { return surface.Manager }
-
 // Dismissible: there is no draft, so a click off the card and ctrl+c close
 // it the way esc does.
 func (s *LaunchHintSurface) Dismissible() bool { return true }

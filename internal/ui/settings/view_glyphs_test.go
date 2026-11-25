@@ -29,7 +29,7 @@ func TestCompatibleSettingsKeepEditorTextAndFormatActionKeys(t *testing.T) {
 			t.Fatalf("settings choice missing: %s", body)
 		}
 		mark := presentation.KeyLabel(mode, "↵")
-		if !strings.Contains(body, mark+" open the docs") || !strings.Contains(body, mark+" focus · A attach") {
+		if !strings.Contains(body, mark+" open the docs") {
 			t.Fatalf("settings labels missing in %s: %s", mode, body)
 		}
 		s.CLIPicker = true
@@ -58,16 +58,6 @@ func TestNavigationSettingsLabelAndOverflowKeepLiteralNames(t *testing.T) {
 		}
 		if !strings.Contains(body, more) {
 			t.Fatalf("overflow missing %q: %s", more, body)
-		}
-		main := openState(testContext())
-		ctx.Height = 100
-		text := ansi.Strip(main.View(ctx).Body)
-		label := "←→ step in/out"
-		if mode == presentation.GlyphModeBasic {
-			label = "arrow step in/out"
-		}
-		if !strings.Contains(text, label) {
-			t.Fatalf("settings label missing: %s", text)
 		}
 	}
 }

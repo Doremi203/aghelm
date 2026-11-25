@@ -5,6 +5,7 @@ import (
 	uieffects "github.com/Doremi203/aghelm/internal/ui/effects"
 	uinotices "github.com/Doremi203/aghelm/internal/ui/notices"
 	"github.com/Doremi203/aghelm/internal/ui/presentation"
+	uiterminal "github.com/Doremi203/aghelm/internal/ui/terminal"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -191,9 +192,15 @@ func (r noticesRoot) TakeForeground() { r.takeForeground() }
 func (r noticesRoot) OpenLink(url string) tea.Cmd { return openLink(url) }
 
 func (m *Model) routeNoticesMsg(msg tea.Msg) (tea.Model, tea.Cmd, bool) {
-	if msg, ok := msg.(browserOpenMsg); ok {
+	switch msg := msg.(type) {
+	case browserOpenMsg:
 		m.handleBrowserOpen(msg)
 		return routed(m, nil)
+	case linkOpenErrMsg:
+		m.reportErr(msg.err.Error())
+		return routed(m, nil)
+	case linkPageMsg:
+		return routed(m, uiterminal.ShowLinkPage(msg.url))
 	}
 	return nil, nil, false
 }

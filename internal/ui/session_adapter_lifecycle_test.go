@@ -293,7 +293,7 @@ func TestArchiveAbortsWhenSnapshotFails(t *testing.T) {
 
 	m.selectSessionRow(t, "alpha")
 	// Archive snapshots only a pane that has drawn.
-	waitForPreview(t, m)
+	waitForPaneDrawn(t, m)
 	m.archiveSelected()
 	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("y")})
 	m.drainEffects(t)
@@ -417,8 +417,7 @@ func TestArchiveGroupKeepsEmptyGroupInArchivedView(t *testing.T) {
 	}
 }
 
-// Archiving must freeze the pane as a stored snapshot, and the poller must
-// keep serving it instead of wiping the preview on the next tick.
+// Archiving must freeze the pane as a stored snapshot.
 func TestArchivedSessionKeepsPaneSnapshot(t *testing.T) {
 	t.Parallel()
 	m := buildModel(t)
@@ -455,30 +454,6 @@ func TestArchivedSessionKeepsPaneSnapshot(t *testing.T) {
 	}
 	if m.services.tmux.Exists(sess.ID) {
 		t.Fatal("archive should kill the tmux session")
-	}
-
-	m.rail.SetArchived(true)
-	m.applyCmd(t, nil)
-	m.selectSessionRow(t, "frozen")
-	m.applyCmd(t, nil)
-	if !strings.Contains(m.workspace.preview, "snapshot-marker") {
-		t.Fatalf("archived preview should survive the poll tick, preview = %q", m.workspace.preview)
-	}
-
-	if err := m.services.tmux.Kill(sess.ID); err != nil {
-		t.Fatalf("kill: %v", err)
-	}
-	m.workspace.preview = ""
-	m.applyCmd(t, nil)
-	if !strings.Contains(m.workspace.preview, "snapshot-marker") {
-		t.Fatalf("archived preview should show the snapshot after tmux is gone, preview = %q", m.workspace.preview)
-	}
-
-	m.workspace.preview = ""
-	gen := m.focus.pane.MovePreview()
-	m.applyCmd(t, m.previewCmd(railSelectedSession(m), gen))
-	if !strings.Contains(m.workspace.preview, "snapshot-marker") {
-		t.Fatalf("previewCmd should serve the snapshot for an archived session, preview = %q", m.workspace.preview)
 	}
 }
 
@@ -990,7 +965,7 @@ func TestDeleteKeepsWorktreeUntilLastSharingSession(t *testing.T) {
 		WorktreeRepo:   owner.WorktreeRepo,
 		WorktreeBranch: owner.WorktreeBranch,
 	}
-	if err := m.services.tmux.Create(forked.ID, forked.Cwd, "cat", nil, m.previewPaneWidth(), m.previewPaneHeight()); err != nil {
+	if err := m.services.tmux.Create(forked.ID, forked.Cwd, "cat", nil, paneWidth(m), paneHeight(m)); err != nil {
 		t.Fatal(err)
 	}
 	if err := m.services.store.CreateSession(forked); err != nil {
@@ -1160,11 +1135,6 @@ func TestKillEndsTheSessionAndKeepsItRevivable(t *testing.T) {
 	}
 	if !strings.Contains(snapshot, "kill-marker") {
 		t.Fatalf("kill should freeze the pane, snapshot = %q", snapshot)
-	}
-	m.workspace.preview = ""
-	m.applyCmd(t, nil)
-	if !strings.Contains(m.workspace.preview, "kill-marker") {
-		t.Fatalf("a killed session should still preview its last output, preview = %q", m.workspace.preview)
 	}
 
 	m.selectSessionRow(t, "hungry")
@@ -1584,7 +1554,6 @@ func TestReviveRecreatesDeadSession(t *testing.T) {
 	if err := m.services.store.SetAcked(sess.ID, true); err != nil {
 		t.Fatalf("set acked: %v", err)
 	}
-	m.workspace.preview = "old pane from last life\n"
 
 	m.reviveSelected()
 	m.drainEffects(t)
@@ -1616,13 +1585,6 @@ func TestReviveRecreatesDeadSession(t *testing.T) {
 	row := m.sessionRows()[0]
 	if row.Status != status.Starting {
 		t.Fatalf("row status = %q want %q", row.Status, status.Starting)
-	}
-	gotPreview := previewText(m)
-	if !strings.Contains(gotPreview, "starting up") {
-		t.Fatalf("revived preview should carry the launch loader, got %q", gotPreview)
-	}
-	if strings.Contains(gotPreview, "old pane from last life") {
-		t.Fatalf("stale pane should not survive revive, got %q", gotPreview)
 	}
 	args := readWhenWritten(t, argsFile)
 	if !strings.Contains(args, "--resume") || !strings.Contains(args, "kept-conversation") {

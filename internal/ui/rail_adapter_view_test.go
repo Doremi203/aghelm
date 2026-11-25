@@ -12,7 +12,6 @@ import (
 	"github.com/Doremi203/aghelm/internal/keybind"
 	"github.com/Doremi203/aghelm/internal/status"
 	"github.com/Doremi203/aghelm/internal/store"
-	uigeometry "github.com/Doremi203/aghelm/internal/ui/geometry"
 	"github.com/Doremi203/aghelm/internal/ui/presentation"
 	uiquick "github.com/Doremi203/aghelm/internal/ui/quick"
 	uirail "github.com/Doremi203/aghelm/internal/ui/rail"
@@ -239,31 +238,6 @@ func sgrOf(rendered string) string {
 	return code
 }
 
-// A content separator stops at the pane's edge instead of crossing the seam.
-func TestContentRuleStopsAtSeam(t *testing.T) {
-	m := shotModel()
-	leftWidth, _ := m.splitWidths()
-	rows := strings.Split(preparedView(m), "\n")
-	start, end := m.bodyYRange()
-
-	crossings := 0
-	for i := start; i < end; i++ {
-		row := []rune(ansi.Strip(rows[i]))
-		contentRule := row[leftWidth+2] == '─'
-		railRule := row[leftWidth-2] == '─'
-		if contentRule && !railRule && row[leftWidth] == '─' {
-			t.Fatalf("row %d: content rule crosses the seam:\n%s", i, string(row))
-		}
-		if railRule && row[leftWidth] == '─' {
-			crossings++
-		}
-	}
-	// The rail's own rule still runs the width of its pane, seam included.
-	if crossings == 0 {
-		t.Fatal("no rail rule crossed the seam; the pane's own rules should")
-	}
-}
-
 // Whatever the cursor is on has to be on screen. A window that reserves
 // room for one overflow indicator but paints two loses a row at the bottom,
 // and the row it loses is the one the cursor just moved to.
@@ -286,7 +260,6 @@ func TestRailCursorAlwaysPainted(t *testing.T) {
 				layout: layoutState{
 					width:  size.w,
 					height: size.h,
-					split:  uigeometry.Gesture{Ratio: uigeometry.DefaultSplitRatio},
 				},
 				workspace: workspace{sessions: sessions},
 				rail:      railModelFromRows(rows, cursor),
@@ -394,7 +367,6 @@ func TestHideEmptyBadgeBelongsToTheActiveRail(t *testing.T) {
 func TestRailTopCarriesBetweenFrames(t *testing.T) {
 	m := shotModel()
 	m.prefs.comfortableRows = true
-	m.prefs.fullLayout = true
 	m.workspace.sessions = nil
 	m.workspace.groups = nil
 	for i := 0; i < 30; i++ {
@@ -442,34 +414,32 @@ func TestRailTopCarriesBetweenFrames(t *testing.T) {
 }
 
 func TestHiddenStatsReturnRowsToSessions(t *testing.T) {
-	for _, full := range []bool{false, true} {
-		m := footModel(t)
-		m.layout.width, m.layout.height, m.prefs.fullLayout = 120, 34, full
-		for i := 0; i < 50; i++ {
-			name := fmt.Sprintf("session-%02d", i)
-			m.workspace.sessions = append(m.workspace.sessions, store.Session{ID: name, Name: name, Tool: "claude", Status: status.Idle})
-		}
-		m.rebuildRows()
-		const height = 25
-		visibleRows := func() int {
-			m.railLines(70, height)
-			count := 0
-			for _, line := range m.layout.displayedRail.Lines {
-				if line.HitOK && line.Hit.Kind == uirail.SessionRow {
-					count++
-				}
+	m := footModel(t)
+	m.layout.width, m.layout.height = 120, 34
+	for i := 0; i < 50; i++ {
+		name := fmt.Sprintf("session-%02d", i)
+		m.workspace.sessions = append(m.workspace.sessions, store.Session{ID: name, Name: name, Tool: "claude", Status: status.Idle})
+	}
+	m.rebuildRows()
+	const height = 25
+	visibleRows := func() int {
+		m.railLines(70, height)
+		count := 0
+		for _, line := range m.layout.displayedRail.Lines {
+			if line.HitOK && line.Hit.Kind == uirail.SessionRow {
+				count++
 			}
-			return count
 		}
-		footRows := len(m.railFootLines(70)) + 1
-		shown := visibleRows()
-		m.prefs.hideStats = true
-		if got := visibleRows(); got != shown+footRows {
-			t.Fatalf("full=%v: hidden stats expose %d sessions, want %d", full, got, shown+footRows)
-		}
-		if len(m.activeNotices()) == 0 {
-			t.Fatal("hiding stats must retain unread notices")
-		}
+		return count
+	}
+	footRows := len(m.railFootLines(70)) + 1
+	shown := visibleRows()
+	m.prefs.hideStats = true
+	if got := visibleRows(); got != shown+footRows {
+		t.Fatalf("hidden stats expose %d sessions, want %d", got, shown+footRows)
+	}
+	if len(m.activeNotices()) == 0 {
+		t.Fatal("hiding stats must retain unread notices")
 	}
 }
 
@@ -574,40 +544,6 @@ func TestSearchFieldSurvivesTightRails(t *testing.T) {
 				t.Errorf("height %d: rail line is %d wide: %q", height, got, ansi.Strip(line))
 			}
 		}
-	}
-}
-
-func TestGroupRowRendersGroupPane(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	dir := t.TempDir()
-	if err := m.services.store.CreateGroup("backend", dir); err != nil {
-		t.Fatalf("create group: %v", err)
-	}
-	m.applyCmd(t, m.refreshCmd())
-	createSession(t, m, "api-agent", dir, "backend")
-	for i, row := range railRows(m) {
-		if row.isGroup && row.group == "backend" {
-			setRailCursor(m, i)
-		}
-	}
-
-	detail := ansi.Strip(m.viewDetail(112))
-	if !strings.Contains(detail, dir) {
-		t.Fatalf("group detail missing path %q:\n%s", dir, detail)
-	}
-	if !strings.Contains(detail, "1 agent") {
-		t.Fatalf("group detail missing agent count:\n%s", detail)
-	}
-
-	agents := ansi.Strip(m.viewGroupAgents("backend", 112, 10))
-	if !strings.Contains(agents, "api-agent") {
-		t.Fatalf("agents list missing session:\n%s", agents)
-	}
-
-	inherited := ansi.Strip(m.viewGroupDetail("backend/sub", 112))
-	if !strings.Contains(inherited, dir) || !strings.Contains(inherited, "inherited") {
-		t.Fatalf("subgroup should inherit the ancestor path:\n%s", inherited)
 	}
 }
 
@@ -986,9 +922,8 @@ func TestSessionRowStandsInForAnAwaitedName(t *testing.T) {
 	}
 }
 
-// The rail row is not the only place a name is printed, and the roster sits
-// beside it in the same frame, so every reading of a session stands in for
-// the awaited name together.
+// The rail row is not the only place a name is printed, so every reading
+// of a session stands in for the awaited name together.
 func TestEveryReadingOfASessionStandsInForAnAwaitedName(t *testing.T) {
 	t.Parallel()
 	m := buildModel(t)
@@ -1003,12 +938,9 @@ func TestEveryReadingOfASessionStandsInForAnAwaitedName(t *testing.T) {
 	}
 
 	type reading struct{ where, text string }
-	m.selectGroupRow(t, "backend")
-	readings := []reading{{"roster", ansi.Strip(m.viewGroupAgents("backend", 112, 10))}}
 	m.selectSessionRow(t, generated)
-	readings = append(readings, reading{"detail", strings.Split(ansi.Strip(m.viewDetail(112)), "\n")[0]})
 	m.openQuickMode()
-	readings = append(readings, reading{"quick bar", ansi.Strip(m.viewQuickBar(112, uiquick.BarMaxRows))})
+	readings := []reading{{"quick bar", ansi.Strip(m.viewQuickBar(112, uiquick.BarMaxRows))}}
 
 	// The prompt the spawn was given is what every reading wears until the
 	// agent answers with a name of its own.
@@ -1019,30 +951,6 @@ func TestEveryReadingOfASessionStandsInForAnAwaitedName(t *testing.T) {
 		}
 		if !strings.Contains(shown.text, standIn) {
 			t.Errorf("%s does not stand in for the awaited name:\n%s", shown.where, shown.text)
-		}
-	}
-}
-
-// Every filter the list is under names itself over the list, beside the key
-// that lifts it, and the header stops repeating them.
-// A focused session nested three groups deep at the narrowest split rail
-// keeps its inbox badge: the name goes first, then the focus badge, since
-// the pane beside the rail already shows what is focused.
-func TestInboxBadgeOutlivesTheNameAndTheFocusBadge(t *testing.T) {
-	t.Parallel()
-	for _, width := range []int{29, 27} {
-		m := buildModel(t)
-		m.workspace.groupPaths = map[string]string{"a/b/c": "/tmp"}
-		m.workspace.sessions = []store.Session{{ID: "x", Name: "some-long-session-name", Tool: "claude", Group: "a/b/c"}}
-		m.rebuildRows()
-		setRailCursor(m, len(railRows(m))-1)
-		m.push(newFocusSurface(m))
-		m.workspace.queuedMessages = map[string]int{"x": 2}
-
-		rows := railTextAt(m, width)
-		row := rows[lineWith(t, rows, "✉2")]
-		if strings.Contains(row, "FOCUS") {
-			t.Errorf("width %d: the focus badge outlived the name: %q", width, row)
 		}
 	}
 }
@@ -1070,13 +978,14 @@ func TestRowMarksSessionsOnAnotherServer(t *testing.T) {
 				layout: layoutState{
 					width:  120,
 					height: 40,
-					split:  uigeometry.Gesture{Ratio: uigeometry.DefaultSplitRatio},
 				},
 				workspace: workspace{sessions: []store.Session{sess},
 
 					tmuxSocket: here, leadingManager: tc.leading},
 				rail: railModelFromRows([]treeRow{{sess: sess}}, 0),
 			}
+			// The marker sits on the row, so the rail reads it from the listing.
+			m.rebuildRows()
 			view := ansi.Strip(preparedView(m))
 			if strings.Contains(view, "elsewhere") != tc.elsewise {
 				t.Fatalf("elsewhere marker = %v, want %v:\n%s", !tc.elsewise, tc.elsewise, view)
@@ -1097,7 +1006,6 @@ func TestRowsAreUnmarkedBeforeTheFirstPoll(t *testing.T) {
 		layout: layoutState{
 			width:  120,
 			height: 40,
-			split:  uigeometry.Gesture{Ratio: uigeometry.DefaultSplitRatio},
 		},
 		workspace: workspace{sessions: []store.Session{sess}},
 		rail:      railModelFromRows([]treeRow{{sess: sess}}, 0),
@@ -1113,7 +1021,6 @@ func TestRowsAreUnmarkedBeforeTheFirstPoll(t *testing.T) {
 // layout.
 func TestRowHeightsFollowDensity(t *testing.T) {
 	m := shotModel()
-	m.prefs.fullLayout = true
 	m.workspace.paneLines = map[string]string{"add-rate-limiting": "Running tests… (14s · esc to interrupt)"}
 	row := sessionRow(t, m, "add-rate-limiting")
 	row.sess.LastPrompt = "add a token bucket limiter to the public api"
@@ -1161,18 +1068,13 @@ func TestRowHeightsFollowDensity(t *testing.T) {
 		t.Fatalf("line 3 should carry the reply behind ↳:\n%s", reply)
 	}
 
-	// The same rhythm holds in the split layout.
-	m.prefs.fullLayout = false
-	if got := m.entryHeight(row); got != 3 {
-		t.Fatalf("split comfortable session entry height = %d, want 3", got)
-	}
 	m.prefs.comfortableRows = false
 	if got := m.entryHeight(row); got != 1 {
-		t.Fatalf("split compact session entry height = %d, want 1", got)
+		t.Fatalf("compact session entry height = %d, want 1", got)
 	}
 	narrow := uitheme.SplitLines(m.renderTreeRow(row, false, 60, 4, uitheme.PanelHex()))
 	if len(narrow) != 1 {
-		t.Fatalf("split compact row painted %d lines, want 1", len(narrow))
+		t.Fatalf("compact row painted %d lines, want 1", len(narrow))
 	}
 }
 
@@ -1182,7 +1084,6 @@ func TestRowWaitingReplyWearsTheStateColor(t *testing.T) {
 	t.Cleanup(func() { lipgloss.SetColorProfile(prev) })
 
 	m := shotModel()
-	m.prefs.fullLayout = true
 	m.prefs.comfortableRows = true
 	question := "Allow edits to router.go?"
 	m.workspace.paneLines = map[string]string{"db-migrations": question}
@@ -1201,7 +1102,6 @@ func TestRowWaitingReplyWearsTheStateColor(t *testing.T) {
 // not read as alive from inside the archive.
 func TestArchivedRowReadsDead(t *testing.T) {
 	m := shotModel()
-	m.prefs.fullLayout = true
 	row := sessionRow(t, m, "add-rate-limiting")
 	row.sess.Archived = true
 	line := ansi.Strip(m.renderTreeRow(row, false, m.layout.width-1, 4, uitheme.PanelHex()))
@@ -1567,28 +1467,6 @@ func TestRestingShellUsesCaretGlyph(t *testing.T) {
 	}
 }
 
-func TestDeadInlineShellKeepsItsStatusGlyph(t *testing.T) {
-	t.Parallel()
-	m := buildModel(t)
-	m.applyCmd(t, m.refreshCmd())
-	shell := spawnTerminal(t, m)
-	shell.Status = status.Idle
-
-	if glyph := ansi.Strip(m.sessionGlyph(shell)); glyph != m.glyphs().ShellGlyph {
-		t.Fatalf("a resting shell wears the caret, got %q", glyph)
-	}
-	for _, gone := range []string{status.Dead, status.Errored} {
-		shell.Status = gone
-		glyph := ansi.Strip(m.sessionGlyph(shell))
-		if glyph == m.glyphs().ShellGlyph {
-			t.Fatalf("a %s shell must not read as resting", gone)
-		}
-		if glyph != presentation.GlyphsFor("").StatusGlyph(gone) {
-			t.Fatalf("a %s shell should wear its own glyph, got %q", gone, glyph)
-		}
-	}
-}
-
 func TestUnnestedShellSitsInItsGroup(t *testing.T) {
 	t.Parallel()
 	m := buildModel(t)
@@ -1615,24 +1493,10 @@ func TestRollupsCountAgentsOnly(t *testing.T) {
 	groupWithShell(t, m, "backend")
 	createSession(t, m, "agent-one", t.TempDir(), "backend")
 	m.selectGroupRow(t, "backend")
-	shell := spawnTerminal(t, m)
+	spawnTerminal(t, m)
 
-	if got := uirail.GroupSessionCount(m.railAgents(), "backend"); got != 1 {
-		t.Fatalf("group count = %d, want 1 agent", got)
-	}
-	total := 0
-	for _, count := range uirail.GroupStatusCounts(m.railAgents(), "backend") {
-		total += count
-	}
-	if total != 1 {
-		t.Fatalf("group status counts total = %d, want 1", total)
-	}
 	if header := ansi.Strip(m.headerScope()); !strings.HasPrefix(header, "1 agent") {
 		t.Fatalf("header = %q, want it to count the agent alone", header)
-	}
-	roster := ansi.Strip(m.viewGroupAgents("backend", 112, 10))
-	if !strings.Contains(roster, "agent-one") || strings.Contains(roster, shell.Name) {
-		t.Fatalf("the roster should hold the agent and not the shell:\n%s", roster)
 	}
 }
 
@@ -1690,29 +1554,26 @@ func TestSelectedRowBandFillsTheWholeRow(t *testing.T) {
 		"backend":           func(m *Model) { m.selectGroupRow(t, "backend") },
 		"add-rate-limiting": func(m *Model) { m.selectSessionRow(t, "add-rate-limiting") },
 	}
-	for _, full := range []bool{false, true} {
-		for target, selectRow := range selections {
-			m := shotModel()
-			m.prefs.fullLayout = full
-			selectRow(m)
-			frame := preparedView(m)
-			railWidth := m.layout.displayedRail.Width
-			y := -1
-			for index, line := range strings.Split(frame, "\n") {
-				if strings.Contains(ansi.Strip(ansi.Cut(line, 0, 1+railWidth)), target) {
-					y = index
-					break
-				}
+	for target, selectRow := range selections {
+		m := shotModel()
+		selectRow(m)
+		frame := preparedView(m)
+		railWidth := m.layout.displayedRail.Width
+		y := -1
+		for index, line := range strings.Split(frame, "\n") {
+			if strings.Contains(ansi.Strip(ansi.Cut(line, 0, 1+railWidth)), target) {
+				y = index
+				break
 			}
-			if y < 0 {
-				t.Fatalf("full=%v: no rail row shows %q", full, target)
-			}
-			backgrounds, _ := cellColors(frame, m.layout.width, m.layout.height)
-			for x := 1; x <= railWidth; x++ {
-				if !sameColor(backgrounds[y][x], hexColor(uitheme.SelectedHex())) {
-					t.Errorf("full=%v %s: col %d background = %v, want the selected band %s",
-						full, target, x, backgrounds[y][x], uitheme.SelectedHex())
-				}
+		}
+		if y < 0 {
+			t.Fatalf("no rail row shows %q", target)
+		}
+		backgrounds, _ := cellColors(frame, m.layout.width, m.layout.height)
+		for x := 1; x <= railWidth; x++ {
+			if !sameColor(backgrounds[y][x], hexColor(uitheme.SelectedHex())) {
+				t.Errorf("%s: col %d background = %v, want the selected band %s",
+					target, x, backgrounds[y][x], uitheme.SelectedHex())
 			}
 		}
 	}

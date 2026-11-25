@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/Doremi203/aghelm/internal/sessioncmd"
 	"github.com/Doremi203/aghelm/internal/store"
@@ -15,7 +16,7 @@ import (
 // as the UI. Production handlers always return a command instead of running it.
 func (m *Model) lifecycleFixture(target confirmTarget) (uilifecycle.Result, error) {
 	w, h := m.paneTargetSize()
-	request := uilifecycle.Request{Target: target.lifecycle, Pane: sessioncmd.PaneSize{Width: w, Height: h}, Watched: m.focus.runtime.Watching()}
+	request := uilifecycle.Request{Target: target.lifecycle, Pane: sessioncmd.PaneSize{Width: w, Height: h}}
 	request.Target.Sessions = append([]store.Session(nil), target.lifecycle.Sessions...)
 	completed, err := m.bindEffect(request)()
 	result := completed.(uilifecycle.Result)
@@ -34,11 +35,6 @@ func (m *Model) archiveConfirmed() error {
 func (m *Model) restoreConfirmed() error {
 	_, err := m.lifecycleFixture(pendingConfirm(m))
 	return err
-}
-
-func (m *Model) deleteConfirmed() (sessioncmd.DeleteResult, error) {
-	result, err := m.lifecycleFixture(pendingConfirm(m))
-	return result.Deleted, err
 }
 
 func (m *Model) killSession(sess store.Session) error {
@@ -62,4 +58,9 @@ func (m *Model) reviveSession(sess store.Session) error {
 func (m *Model) persistCollapsed(paths []string) error {
 	_, err := m.bindEffect(uirailpersist.Request{Mutation: uirail.Mutation{Kind: uirail.SaveCollapsed, Collapsed: append([]string(nil), paths...)}})()
 	return err
+}
+
+// sessionGone reports that the listing no longer carries id.
+func sessionGone(sessions []store.Session, id string) bool {
+	return !slices.ContainsFunc(sessions, func(sess store.Session) bool { return sess.ID == id })
 }

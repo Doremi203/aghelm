@@ -55,12 +55,9 @@ func (m Model) ReorderInfo() ReorderInfo {
 	return info
 }
 
-func (m *Model) CancelClickFocus() { m.clickFocusKey = "" }
-
 func (m *Model) ResetClickHistory() {
 	m.listClickAt = time.Time{}
 	m.listClickKey = ""
-	m.clickFocusKey = ""
 }
 
 func (m *Model) SetSearch(query string, editing bool) {
@@ -185,37 +182,17 @@ func (m *Model) action(action string, ctx KeyContext) Decision {
 		if row, ok := m.row(); ok && row.folds() {
 			return m.toggleCollapse()
 		}
-		if ctx.EnterFocuses {
-			return m.intent(Focus)
-		}
 		return m.intent(Attach)
 	case keybind.StepIn:
-		if !ctx.ArrowStep {
-			return Decision{Consumed: true}
+		if row, ok := m.row(); ok && row.folds() && m.rowFolded(row) {
+			return m.toggleCollapse()
 		}
-		if row, ok := m.row(); ok && row.folds() {
-			if m.rowFolded(row) {
-				return m.toggleCollapse()
-			}
-			return Decision{Consumed: true}
-		}
-		if ctx.StepInAttaches {
-			return m.intent(Attach)
-		}
-		return m.intent(Focus)
+		return Decision{Consumed: true}
 	case keybind.StepOut:
-		if !ctx.ArrowStep {
-			return Decision{Consumed: true}
-		}
 		if row, ok := m.row(); ok && row.folds() && !m.rowFolded(row) {
 			return m.toggleCollapse()
 		}
 		return Decision{Consumed: true}
-	case keybind.Attach:
-		if ctx.EnterFocuses {
-			return m.intent(Attach)
-		}
-		return m.intent(Focus)
 	case keybind.NewSession:
 		return m.intent(NewSession)
 	case keybind.NewGroup:
@@ -254,8 +231,6 @@ func (m *Model) action(action string, ctx KeyContext) Decision {
 		return m.cycleFilter()
 	case keybind.Settings:
 		return m.intent(OpenSettings)
-	case keybind.Resize:
-		return m.intent(Resize)
 	case keybind.Archived:
 		return m.toggleArchived()
 	case keybind.Terminal:

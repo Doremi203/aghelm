@@ -1,8 +1,8 @@
 package ui
 
 import (
+	"github.com/Doremi203/aghelm/internal/status"
 	uiframe "github.com/Doremi203/aghelm/internal/ui/frame"
-	"github.com/Doremi203/aghelm/internal/ui/presentation"
 	uistartup "github.com/Doremi203/aghelm/internal/ui/startup"
 	uitheme "github.com/Doremi203/aghelm/internal/ui/theme"
 	tea "github.com/charmbracelet/bubbletea"
@@ -10,7 +10,7 @@ import (
 
 // startupState is the loader, the wordmark sweep and the boot ring: the
 // package owns the timing and the frame counter, the root the fields the
-// rail, preview and layout read every frame.
+// rail and layout read every frame.
 type startupState = uistartup.State
 
 func (m *Model) routeStartupMsg(msg tea.Msg) (tea.Model, tea.Cmd, bool) {
@@ -51,11 +51,18 @@ func (m *Model) viewBanner() []string {
 	return uistartup.Line(m.startup.BannerPhase, uiframe.RailGutter, m.showBanner(), uitheme.Current())
 }
 
-// startingLoader is the ring a session still booting shows in place of its
-// pane: the name of what is happening, until the pane paints something.
-func startingLoader(g presentation.GlyphSet, starting bool, preview string, width, height, phase int) []string {
-	if !starting || paneBooted(preview) {
-		return nil
+func (m *Model) reviewNeedsLoader() bool {
+	state := m.review.Snapshot()
+	if m.base != baseReview || !state.Active {
+		return false
 	}
-	return uistartup.Ring(g, width, height, "starting up", phase, uitheme.Current())
+	if state.Loading && len(state.Set.Files) == 0 {
+		return true
+	}
+	fd := m.currentFileDiff()
+	return fd != nil && !fd.Loaded() && !m.diffFileHidden(fd)
+}
+
+func (m *Model) needsLoaderTick() bool {
+	return m.startup.Booting || m.rail.HasStatus(status.Starting) || m.reviewNeedsLoader() || m.rail.HasWorkingLoader()
 }

@@ -43,7 +43,7 @@ var ReadbackKeys = func() []string {
 var saveOrder = func() []Setting {
 	named := []string{
 		DefaultToolSetting, ThemeSetting, ThemeAutoSetting, DiffLayoutSetting, QuickCloseSetting,
-		FocusKeySetting, ArrowStepSetting, ListDensitySetting, SessionLayoutSetting, HideHeaderSetting,
+		ListDensitySetting, HideHeaderSetting,
 		HideStatsSetting, BackgroundSetting, MouseSetting, WorktreeSetting, BaseFetchSetting,
 		CoordinationSetting, NotificationsSetting, NotifyFinishedSetting, EditorSetting, GlyphModeSetting,
 	}
@@ -144,8 +144,6 @@ func (s *State) Values() []Value {
 			values = append(values, Value{Key: GlyphModeSetting, Value: string(s.GlyphMode.Effective())})
 		case ReviewScopeSetting:
 			values = append(values, Value{Key: ReviewScopeSetting, Value: s.ReviewScope})
-		case ArrowStepSetting:
-			values = append(values, Value{Key: ArrowStepSetting, Value: s.ArrowStep})
 		case EditorSetting:
 			values = append(values, Value{Key: EditorSetting, Value: s.Editor.Line()})
 		default:
@@ -191,8 +189,6 @@ func (s *State) Restore(restored []Readback, hiddenRaw string, hiddenErr error, 
 			}
 		case ReviewScopeSetting:
 			s.ReviewScope = reviewScope(value.Value)
-		case ArrowStepSetting:
-			s.ArrowStep = ArrowStep(value.Value)
 		case EditorSetting:
 			s.Editor = NewEditorRow(value.Value, editors)
 		default:

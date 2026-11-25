@@ -4,7 +4,6 @@
 package statusbar
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/Doremi203/aghelm/internal/ui/presentation"
@@ -87,16 +86,6 @@ type Message struct {
 	Report    string
 	Kind      Kind
 
-	Focused         bool
-	ScrolledBack    bool
-	ScrollOffset    int
-	PagesScrollback bool
-	Copied          int
-	Link            string
-
-	ResizeMode bool
-	Dragging   bool
-
 	Notice string
 }
 
@@ -105,28 +94,6 @@ type Message struct {
 func Line(msg Message, glyphs presentation.GlyphSet, tones Tones) string {
 	marks := Marks{Fail: glyphs.ErroredGlyph, Done: glyphs.FinishedGlyph, Warn: glyphs.WarningGlyph}
 	switch {
-	// Errors outrank the focus notices: a scrolled or focused pane must not
-	// hide a failure report.
-	case msg.Focused && msg.Report != "":
-		return msg.Kind.Paint(msg.Report, marks, tones)
-	case msg.Link != "":
-		return tones.Key.Render("link ") + tones.Subtle.Render(presentation.EscapeControlsInline(msg.Link))
-	case msg.ScrolledBack:
-		catchUp := "wheel down or type"
-		if msg.PagesScrollback {
-			catchUp = "wheel down, pgdn or type"
-		}
-		return tones.Key.Render("scrolled ") +
-			tones.Subtle.Render(fmt.Sprintf("%d lines back · %s to catch up", msg.ScrollOffset, catchUp))
-	case msg.Focused && msg.Copied > 0:
-		return tones.Key.Render("copied ") +
-			tones.Subtle.Render(fmt.Sprintf("%d chars to clipboard", msg.Copied))
-	case msg.ResizeMode || msg.Dragging:
-		hint := presentation.NavigationLabel(msg.GlyphMode, "←→ resize · drag divider · enter set · esc cancel")
-		if msg.Dragging {
-			hint = "release to set · esc cancels"
-		}
-		return tones.Key.Render("resize ") + tones.Subtle.Render(hint)
 	case msg.Report != "":
 		return msg.Kind.Paint(msg.Report, marks, tones)
 	case msg.Notice != "":

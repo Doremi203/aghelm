@@ -537,7 +537,7 @@ func (m *Model) commitSpawn(request uilaunch.Request, sess store.Session) {
 			m.clearAccepted(request.ComposerGen, request.Draft, q.CloseAfterSend)
 		}
 	case uilaunch.Import:
-		reveal = m.base == baseList && !m.focused() && !m.cardOpen()
+		reveal = m.base == baseList && !m.cardOpen()
 	}
 	m.rebuildRows()
 	if reveal {
