@@ -2,7 +2,7 @@
 
 Everything you can change lives in Settings (`s` by default): the keys, the editor `o` opens, the theme, and the rest of its rows (see [Keys](usage.md#keys)). The manager stores each choice in `state.db` (SQLite) in your OS user config dir, `~/Library/Application Support/aghelm/` on macOS and `~/.config/aghelm/` on Linux, with `XDG_CONFIG_HOME` honored when set. Changes are saved as you leave Settings and take effect then, with no restart. Only the rows you changed are written, so a change another manager or the CLI made in the meantime is kept. `aghelm settings` lists, reads and writes the same keys from a shell (see [Settings from a shell](usage.md#settings-from-a-shell)).
 
-The **editor** row picks the command `o` opens a directory in (see [Opening the editor](usage.md#opening-the-editor)), and the **keybindings** row opens the [key picker](#key-bindings). Panes are polled every two seconds for status, preview, and stats.
+The **editor** row picks the command `o` opens a directory in (see [Opening the editor](usage.md#opening-the-editor)), and the **keybindings** row opens the [key picker](#key-bindings). Panes are polled every two seconds for status and stats.
 
 ## Export and import
 
@@ -70,7 +70,7 @@ The poll interval is fixed at two seconds, so a `poll_interval` line in that fil
 
 ## Saved prompts
 
-One list in Settings, shared by the new-session form, the quick prompt, a focused session, `spawn --saved`, `send --saved`, and `saved` on `create_session` and `send_session`. Names are unique, up to 60 characters, with no brackets. The text is up to 64 KiB. `aghelm prompts list`, `add` and `rm` edit the list from a shell. See [Saved prompts](usage.md#saved-prompts).
+One list in Settings, shared by the new-session form, the quick prompt, `spawn --saved`, `send --saved`, and `saved` on `create_session` and `send_session`. Names are unique, up to 60 characters, with no brackets. The text is up to 64 KiB. `aghelm prompts list`, `add` and `rm` edit the list from a shell. See [Saved prompts](usage.md#saved-prompts).
 
 ## Environment profiles
 
@@ -118,23 +118,21 @@ Only a key you moved is stored. An action at its shipped default follows that de
 
 ### Inside a session
 
-Inside a session, attached or focused, the manager keeps a few keys for itself and hands every other key to the agent. The actions are `detach` (default `ctrl+q` and `ctrl+\`, back to the manager), `review` (default `ctrl+r`, the session's diff review), `editor` (default `f3`, its directory in your editor), `saved_prompt` (default `f4`, the saved prompts list; focused only, since an attach does not bind it), `resize` (default `ctrl+]`, the split's divider, the same gesture the list has; kept by a focused session, since an attach has no split and leaves the key to the agent) and `tmux_prefix` (off by default). Moving one frees a key that collides with a key your agent uses, and turning one off hands its key to the agent like any other.
+Inside an attached session, the manager keeps a few keys for itself and hands every other key to the agent. The actions are `detach` (default `ctrl+q` and `ctrl+\`, back to the manager), `review` (default `ctrl+r`, the session's diff review), `editor` (default `f3`, its directory in your editor) and `tmux_prefix` (off by default, replaces your tmux prefix while attached). Moving one frees a key that collides with a key your agent uses, and turning one off hands its key to the agent like any other.
 
-In a focused session, PgUp/PgDn scroll the pane's tmux history when the pane is on its normal screen, has not claimed mouse input, and has history to show. Otherwise the agent gets them, and alt+PgUp/alt+PgDn always reach the agent. Hermes recalls earlier prompts with Up/Down.
-
-A session key is `ctrl+<letter>` (the symbols `@ \ ] ^ _` too), `alt+<letter or digit>`, or `f1` to `f12`. A key with no modifier is refused here, since it would take a character away from the agent, as are `ctrl+i`, `ctrl+m` and `ctrl+[`, which the terminal sends as tab, enter and escape. Bubble Tea, the framework the manager is built on, cannot read `ctrl+shift` combinations yet, so those are out for now. `detach` always keeps at least one key: it is the way back from a focused session.
+A session key is `ctrl+<letter>` (the symbols `@ \ ] ^ _` too), `alt+<letter or digit>`, or `f1` to `f12`. A key with no modifier is refused here, since it would take a character away from the agent, as are `ctrl+i`, `ctrl+m` and `ctrl+[`, which the terminal sends as tab, enter and escape. Bubble Tea, the framework the manager is built on, cannot read `ctrl+shift` combinations yet, so those are out for now. `detach` always keeps at least one key: it is the way back from an attached session.
 
 `tmux_prefix` gives managed sessions a tmux prefix of their own, one key or two for tmux's `prefix` and `prefix2`. With it set, the key your own tmux.conf uses as its prefix is free to be a session key, `detach` for one. Turned off, sessions go back to the prefix your tmux.conf sets.
 
 ### In the list
 
-Every key the list answers to is an action in the picker: `up`, `down`, `open`, `attach`, `step_in`, `step_out`, `reorder_up`, `reorder_down`, `new_session`, `terminal`, `new_group`, `fork`, `prompt`, `copy_reply`, `review`, `mark_idle`, `rename`, `move`, `editor`, `restart`, `kill`, `kill_all`, `revive`, `revive_all`, `archive`, `cancel_end`, `restore`, `delete`, `search`, `filter`, `archived`, `empty_groups`, `fold_all`, `resize`, `settings`, `messages`, `help` and `quit`.
+Every key the list answers to is an action in the picker: `up`, `down`, `open`, `step_in`, `step_out`, `reorder_up`, `reorder_down`, `new_session`, `terminal`, `new_group`, `new_connection`, `fork`, `prompt`, `copy_reply`, `review`, `mark_idle`, `rename`, `move`, `editor`, `restart`, `kill`, `kill_all`, `revive`, `revive_all`, `archive`, `cancel_end`, `restore`, `delete`, `search`, `filter`, `archived`, `empty_groups`, `fold_all`, `settings`, `messages`, `help` and `quit`.
 
-A list key is a plain character (`n`, `N`, `?`, `|`), a key name (`space`, `enter`, `tab`, `backspace`, `delete`, `up`, `down`, `left`, `right`, `home`, `end`, `pgup`, `pgdn`), `shift+` an arrow or tab, or the `ctrl+`, `alt+` and `f1` to `f12` forms above. `esc` and `ctrl+c` stay as they are. `esc` cancels everywhere. `ctrl+c` quits the manager even with `quit` turned off, and a focused session sends it to the agent. With saved prompts open over that session, `ctrl+c` closes the list. `settings` keeps at least one key, so the picker stays reachable. The footer, the `?` key map and the empty-list hints all read the table, so a moved key is named where it moved to.
+A list key is a plain character (`n`, `N`, `?`, `|`), a key name (`space`, `enter`, `tab`, `backspace`, `delete`, `up`, `down`, `left`, `right`, `home`, `end`, `pgup`, `pgdn`), `shift+` an arrow or tab, or the `ctrl+`, `alt+` and `f1` to `f12` forms above. `esc` and `ctrl+c` stay as they are. `esc` cancels everywhere. `ctrl+c` quits the manager even with `quit` turned off; inside an attached session it reaches the agent. `settings` keeps at least one key, so the picker stays reachable. The footer, the `?` key map and the empty-list hints all read the table, so a moved key is named where it moved to.
 
 ### Where the keys apply
 
-The same table drives a full-screen attach, where the keys are tmux bindings on the `aghelm` server, and focus mode, where the manager reads them itself; the session footer, the focus footer and the `?` key map all name whatever the table says. A session created from the `aghelm` CLI or by an agent through the MCP server reads the same stored table, so it carries your keys too.
+The session table drives an attach, where the keys are tmux bindings on the `aghelm` server; the session footer and the `?` key map name whatever the table says. A session created from the `aghelm` CLI or by an agent through the MCP server reads the same stored table, so it carries your keys too.
 
 ## Right-to-left text
 

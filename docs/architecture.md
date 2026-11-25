@@ -12,10 +12,11 @@ Under `internal/`:
 - `cli`, `mcpserver`: translate shell and MCP requests into `sessioncmd` commands.
 - `execution`: UI-free poller and runner: capture, delivery, mailbox, status, notifications.
 - `ui`: the Bubble Tea program. One `Model` routes messages, runs effects, composes the frame.
-- `ui/help`, `ui/review`, `ui/focus`, `ui/rail`, `ui/settings`: feature packages with private models.
+- `ui/help`, `ui/review`, `ui/rail`, `ui/settings`: feature packages with private models.
 - `ui/effects`: the effect contract (`Request`, `Runner[S]`, `Bind`, `Result`), the FIFO lanes and the quit drain's bookkeeping. It knows no request type and imports nothing from the module.
 - `ui/composer`, `ui/pathcomplete`: the prompt box that holds pasted images, and directory completion for a path field.
-- `ui/frame`, `ui/statusbar`, `ui/startup`, `ui/preview`, `ui/workspace`: pure painters and values for the card chrome and header, the status bar and its toast, the startup wordmark, the pane preview and the rail foot readings.
+- `ui/frame`, `ui/statusbar`, `ui/startup`, `ui/workspace`: pure painters and values for the card chrome and header, the status bar and its toast, the startup wordmark and the rail foot readings.
+- `ui/geometry`: the terminal box and what its chrome costs, which the body height and the pane pin read.
 - `ui/session`, `ui/terminal`: the value-only parts of the session lifecycle (editor lines, unreachable-session messages), the copy and fix a refused launch shows, and what takes over the terminal (links, child processes).
 - `ui/connections`: the SSH connections: their list and each host's last refresh, the row a selection names, the selected row's screen and the add and edit dialog. The root's `connections_adapter*.go` paints them and routes actions; see [SSH connections](ssh-connections.md).
 - `ui/connections/link`: the connections' runtime: the SSH client, the store writes that keep the list, the host polls, the screen reads and the attach. The root answers its `Root` and runs its calls on the remote lane.
@@ -24,21 +25,18 @@ Under `internal/`:
 - `ui/dialogs`: the confirm, rename, move, fork and launch fix dialogs.
 - `ui/onboarding`: first-run setup, feature-owned surface, live preview, and saved-conversation import.
 - `ui/notices`: the messages panel, its notice list and message rendering.
-- `ui/focus/watch`: the focused pane's watcher: control-mode client, polled fallback, pushed frames.
 - Runtime packages. Each holds one feature's state and the store, tmux, git and network work behind it. It answers a narrow `Root` the root adapts, and never imports `ui`:
   - `ui/settings/persist`: the cached stored values, the writes a save hands the effect lane, and the read-back a partial failure reconciles from.
   - `ui/launchhint/install`: the copy a refused launch shows, and the installer the setup-step card types into a shell tab, the status that shell records, and the launch retried once the binary is on PATH.
   - `ui/rail/persist`: the Rail's stored folds and order, and the group and session placement writes.
   - `ui/dialogs/apply`: the fork branch, the group and session renames, and the store and git writes they make.
-  - `ui/focus/runtime`: the pane watcher, the writes forwarded to the agent's pane, and the entry and detach probes.
-  - `ui/geometry/panes`: pinning each session's window to the preview box, the sizes it keeps between passes, the box it publishes for launches with no manager, and the divider ratio.
-  - `ui/preview/capture`: the preview's capture timer and settle, and the composer drafts held until their session turns working.
+  - `ui/geometry/panes`: pinning each session's window to the whole terminal body, the sizes it keeps between passes, and the box it publishes for launches with no manager.
   - `ui/review/source`: the git, store and tmux work for a Review load, draft save, comment mark, round send, base pick and picker read.
   - `ui/session/lifecycle`: archive, restore, delete, kill, restart, revive, after-turn and attach, with the ledger a stale poll is reconciled against.
   - `ui/spawn/launch`: the spawn and group creation, the catalog and worktree answers, and the base ref and its fetch.
 - `ui/theme`: the built-in palettes and color math, a leaf any UI package may import.
 - `ui/presentation`: pure text helpers shared by `ui` and its feature packages.
-- `ui/surface`: the surface stack's contract, a leaf a feature package implements to put its own screen on the root's stack. `ui/help`, `ui/review`, `ui/notices`, `ui/onboarding`, `ui/connections`, `ui/settings`, `ui/dialogs`, `ui/geometry`, `ui/focus`, `ui/spawn` and `ui/quick` do. See [Decisions](#decisions).
+- `ui/surface`: the surface stack's contract, a leaf a feature package implements to put its own screen on the root's stack. `ui/help`, `ui/review`, `ui/notices`, `ui/onboarding`, `ui/connections`, `ui/settings`, `ui/dialogs`, `ui/spawn` and `ui/quick` do. See [Decisions](#decisions).
 - `store`: SQLite state: sessions, groups, settings, inbox, tasks, reservations.
 - `tmux`: the `Driver` on the dedicated socket, the control-mode client, bindings, attach.
 - `status`: classifies pane output into agent states.
@@ -94,31 +92,27 @@ and the root queues it on a FIFO lane (`internal/ui/effects`, routed by `interna
 runs at a time per lane, workers never read `Model`, and a completion applies durable
 results before it reports an error, so a partial failure still shows what
 committed. Request generations reject stale replies, and quit drains accepted
-jobs. Raw keys, mouse and paste run on a second lane, so typing never waits behind
-a spawn or a poll-locked reflow. `View` returns a frame prepared after
+jobs. Calls to SSH connections run on a second lane, so a slow host holds up
+only its own kind of work. `View` returns a frame prepared after
 dispatch; it changes no state.
 
 **Each feature package owns its effects.** `ui/effects` holds the contract and no request type. A feature package declares its requests (`EffectName`, `EffectCopy`, `Run(Services)`), its results, and a `Services` struct of what the work needs. The root names no request. `effects_adapter_executor.go` has two switches: `bindEffect`, one `uieffects.Bind` line per package `Services`, and `applyEffect`, one type-switch case per package result that hands the result to the feature's adapter. There is no root request type or catch-all. A request with no binding fails with "binds no services", and `TestEveryPackageEffectIsBoundAndApplied` fails first.
 
 **One surface stack decides who takes input.** The screen is
 `screen{base, surfaces}`, embedded in `Model`. The base is the list or Review.
-Cards, the quick bar, a resize in progress and focus sit over it as surfaces.
+Cards and the quick bar sit over it as surfaces.
 Keys and the mouse walk the stack from the top; the frame paints from the
 bottom. There is no `mode` enum and no return mode to restore.
 
 - **Two-phase dispatch.** `routeQuit` in `keys.go` runs first: the drain
-  escape and ctrl+c. Over a manager screen ctrl+c quits, card or no card.
-  Over the agent's pane it closes a dismissible card, and otherwise stays
-  with the card, never reaching the agent behind it. Then the key walks the
+  escape and ctrl+c. ctrl+c quits from any screen, card or no card. Then the key walks the
   stack until a surface takes it. A modal surface takes every key.
 - **A surface owns its state.** Pushing one constructs it, popping drops it.
   `Pop` runs its `Leave` once, and leaving a screen pops every surface over
   it, top first (`clearSurfaces`).
-- **The top surface states its preferences.** `Owner` says who reads plain
-  keys (manager or agent), `Dismissible` whether esc and a click off the card
-  close it, `Footer` leads the legend and `View` paints. `agentOwnsKeyboard`,
-  `closesOnBackdrop`, `cardOpen`, the footer and the IME anchor all ask the
-  stack.
+- **The top surface states its preferences.** `Dismissible` says whether esc
+  and a click off the card close it, `Footer` leads the legend and `View`
+  paints. `closesOnBackdrop`, `cardOpen` and the footer ask the stack.
 - **Mouse walks the same stack.** The top surface takes card clicks and the
   wheel. Painted keys stay in `layout.keyHits` and press through the same
   router as typing. A surface that is not a card takes the mouse through the
@@ -129,8 +123,7 @@ bottom. There is no `mode` enum and no return mode to restore.
 - **Not every overlay is a surface.** A surface takes the keyboard over the
   screen below it. Rail search, the row menu and reorder belong to
   `rail.Model`, which answers `Busy()`. Review's comment box and send prompt
-  stay in `review` behind its keymap. Drag state stays with the mouse in
-  `geometry_adapter_split.go`.
+  stay in `review` behind its keymap.
 - **Bindings as data.** Review's keymap (`review/keymap.go`) lists each key
   once with its action, footer label and `?` row, and its handler switches on
   the action. The other surfaces still name their keys in `Key`, `Footer` and
@@ -146,7 +139,6 @@ type Surface interface {
 	Wheel(h Host, arrow tea.KeyMsg) tea.Cmd
 	View(h Host, below string) string
 	Footer() [][2]string
-	Owner() Owner
 	Dismissible() bool
 	Leave(h Host)
 }
@@ -159,19 +151,18 @@ type Host interface {
 ```
 
 A surface that needs more of the root than `surface.Host` declares its own
-`Root` beside it (`focus.SavedRoot` for the saved prompts list over focus)
+`Root` beside it (`dialogs.ForkRoot` for the fork dialog)
 rather than widening the shared one. The root answers it with a
 `<feature>Root` type in `<feature>_adapter*.go` or `<feature>_*_surface.go`,
 next to the opener that pushes the surface. `TestCtrlCOnEveryBase`,
 `TestCtrlCQuitsThroughEveryCardOverTheList` and `TestCtrlCIsDecidedInKeysGo`
 hold the ctrl+c rules on every screen.
 
-**Features own state behind narrow hosts, and new ones start as child packages.** A feature is a type with its state, keys and view, and it reaches the root only through a small `Root` or host interface it declares. Help, Review, Focus, Rail, Settings, Spawn, Quick, Dialogs, Notices and Connections each live in a child package whose imports `check-ui-boundaries` enforces; a new feature starts as one. The child gets copied values and returns typed requests; root adapters run the store, tmux, git and SSH work. State flows from the package to the root as returned values: `rail.Model` returns a `Decision` carrying an `Intent` and `Mutation`s, and the root applies them. A surface's `Key`, `Click`, `Wheel` and `Leave` return at most a `tea.Cmd`, and so does `send.Apply` for a finished quick send. Their `Root` therefore carries named calls, each carrying out one decision. `settings.Root.Apply` takes the `Result` the Settings state returned. `dialogs.ForkRoot.Submit` queues the fork a key built. `geometry.Root.SetGesture` stores the divider gesture, which the root holds because the mouse drags it too. `send.Root.ClearAccepted` clears the quick bar a confirmed send came from. Where the signature can return a value, new code returns it. There is no shared event bus or effect interpreter, because it would hide who owns what. Line counts and field counts do not prove a boundary; the checks above do.
+**Features own state behind narrow hosts, and new ones start as child packages.** A feature is a type with its state, keys and view, and it reaches the root only through a small `Root` or host interface it declares. Help, Review, Rail, Settings, Spawn, Quick, Dialogs, Notices and Connections each live in a child package whose imports `check-ui-boundaries` enforces; a new feature starts as one. The child gets copied values and returns typed requests; root adapters run the store, tmux, git and SSH work. State flows from the package to the root as returned values: `rail.Model` returns a `Decision` carrying an `Intent` and `Mutation`s, and the root applies them. A surface's `Key`, `Click`, `Wheel` and `Leave` return at most a `tea.Cmd`, and so does `send.Apply` for a finished quick send. Their `Root` therefore carries named calls, each carrying out one decision. `settings.Root.Apply` takes the `Result` the Settings state returned. `dialogs.ForkRoot.Submit` queues the fork a key built. `send.Root.ClearAccepted` clears the quick bar a confirmed send came from. Where the signature can return a value, new code returns it. There is no shared event bus or effect interpreter, because it would hide who owns what. Line counts and field counts do not prove a boundary; the checks above do.
 
-**Runtime resources stay with the root.** The tmux control client's mechanics
-live in `ui/focus/watch`; the root holds and closes the instance (`focus_adapter_watch.go`).
-The clipboard (`focus_adapter.go`, `composer_adapter.go`) and the IME cursor
-(`frame_adapter_ime.go`) are held and published by `internal/ui`. Feature packages
+**Runtime resources stay with the root.** The clipboard (`rail_adapter.go`,
+`terminal_adapter.go`) and the IME cursor (`frame_adapter.go`) are held and
+published by `internal/ui`. Feature packages
 see copied pane facts and hand back typed outcomes. That keeps the child packages
 testable without tmux or a terminal, and keeps one place that closes what it
 opened on quit.

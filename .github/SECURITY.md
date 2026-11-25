@@ -18,7 +18,7 @@ Keep the report private until a fix is on `main`. A vulnerability that also affe
 
 Useful context when judging whether something is a vulnerability:
 
-- **tmux sessions.** The manager creates and drives sessions on its own tmux socket, and reads the visible text of each pane to derive status and render the preview. Pane content is treated as data, not commands.
+- **tmux sessions.** The manager creates and drives sessions on its own tmux socket, and reads the visible text of each pane to derive status and show each session's last messages in the list. Pane content is treated as data, not commands.
 - **Process spawning.** Sessions launch the CLI commands built into the binary, and the editor key runs the command set in Settings. Both run as you.
 - **Local state.** Settings and state (`state.db`, SQLite) live in your OS user config directory. Session names, group paths, working directories, and review targets are stored there.
 - **Generated agent config.** Launching Claude Code, Codex, OpenCode, Grok, Gemini, Antigravity, Command Code, Muse Code, Cursor CLI, Kiro CLI, GitHub Copilot CLI, or an MCP-enabled Hermes tool writes or registers generated settings or MCP configuration so the agent gets the aghelm MCP tools. Cursor CLI's entry is written to `~/.cursor/mcp.json`. Kiro CLI's entry is added with `kiro-cli mcp add --scope global`, which writes `~/.kiro/settings/mcp.json`. GitHub Copilot CLI reads its entry from a file in the manager's own directory, passed with `--additional-mcp-config`, and loads a plugin from that directory with `--plugin-dir` whose hooks report the conversation it is on. Claude Code also gets generated hook settings that report its status.
