@@ -190,11 +190,11 @@ else's commit. Branch from `origin/main` after a fetch, not from the local
   `spawn`, `mcp`, and the rest of the workspace CLI) and boots the TUI.
 - `internal/ui` is the Bubble Tea program: one `Model` that routes messages
   and composes the frame. Each feature is a child package
-  (`internal/ui/<feature>`: help, review, focus, rail, settings, spawn, quick,
-  dialogs, notices, onboarding, connections, geometry, composer, pathcomplete, preview,
+  (`internal/ui/<feature>`: help, review, rail, settings, spawn, quick,
+  dialogs, notices, onboarding, connections, geometry, composer, pathcomplete,
   frame, statusbar, startup, session, launchhint, terminal, workspace;
-  `presentation`, `theme` and `surface` are shared). Cards, resize and
-  focus are surfaces on a stack over the base screen (list or Review), read
+  `presentation`, `theme` and `surface` are shared). Cards are surfaces
+  on a stack over the base screen (list or Review), read
   from the top for input; there is no mode enum
   ([docs/architecture.md](docs/architecture.md#decisions)). A package never imports the
   root. It changes root state by returning values (`rail.Decision`,
