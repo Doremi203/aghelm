@@ -9,7 +9,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-const discordURL = "https://discord.gg/ecS88An7pF"
+const communityURL = "https://example.com/community"
 
 // aheadOfUTC puts the viewer east of UTC, so an expiry late in the UTC day
 // reads as the next date only when it is converted to the viewer's clock.
@@ -73,17 +73,17 @@ func TestMessagePaneShowsKindChipBannerAndExpiry(t *testing.T) {
 func TestMessageCallToActionUsesTheActionOrOpenLink(t *testing.T) {
 	useTrueColor(t)
 	theme := testTheme()
-	n := Notice{Kind: KindNews, Subtitle: "aghelm has a Discord now", Title: "Join the community", Body: []string{"Ask in #help."}, URL: discordURL, Action: "Join on Discord"}
+	n := Notice{Kind: KindNews, Subtitle: "aghelm has a forum now", Title: "Join the community", Body: []string{"Ask in #help."}, URL: communityURL, Action: "Join the forum"}
 	rows := messagePane(n, 80, theme, presentation.DefaultGlyphMode)
 	plain := plainRows(rows)
 	last := strings.TrimRight(plain[len(plain)-1], " ")
-	if !strings.HasPrefix(last, "▍   ↵    Join on Discord  ") || !strings.HasSuffix(last, "  discord.gg") || lipgloss.Width(last) != 79 {
+	if !strings.HasPrefix(last, "▍   ↵    Join the forum  ") || !strings.HasSuffix(last, "  example.com") || lipgloss.Width(last) != 79 {
 		t.Fatalf("call to action = %q, want the key, the action and the host at the right", last)
 	}
 	if !strings.Contains(rows[len(rows)-1], chip(" ↵ ", theme.Accent2, theme)) {
 		t.Fatalf("the key is not on the kind's fill: %q", rows[len(rows)-1])
 	}
-	if !strings.Contains(rows[len(rows)-1], theme.Muted.Render("discord.gg")) {
+	if !strings.Contains(rows[len(rows)-1], theme.Muted.Render("example.com")) {
 		t.Fatalf("the link host is not dim: %q", rows[len(rows)-1])
 	}
 	if plain[len(plain)-2] != "" {
@@ -92,7 +92,7 @@ func TestMessageCallToActionUsesTheActionOrOpenLink(t *testing.T) {
 
 	n.Action = ""
 	got := messageText(n, 80)
-	if bar := strings.TrimRight(got[len(got)-1], " "); !strings.HasPrefix(bar, "▍   ↵    Open link  ") || !strings.HasSuffix(bar, "discord.gg") {
+	if bar := strings.TrimRight(got[len(got)-1], " "); !strings.HasPrefix(bar, "▍   ↵    Open link  ") || !strings.HasSuffix(bar, "example.com") {
 		t.Fatalf("without an action the bar reads %q, want Open link", got[len(got)-1])
 	}
 	if got := messageText(n, 30); lipgloss.Width(got[len(got)-1]) > 30 {

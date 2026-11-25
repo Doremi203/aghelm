@@ -59,7 +59,7 @@ func TestUnreadRowEndsWithTheUnreadMarkAndBoldTitle(t *testing.T) {
 		t.Fatalf("no row for %s", id)
 		return "", ""
 	}
-	bold := lipgloss.NewStyle().Foreground(theme.Bright).Bold(true).Render("Community on Discord")
+	bold := lipgloss.NewStyle().Foreground(theme.Bright).Bold(true).Render("Community discussion")
 
 	p := NewPanel(map[string]bool{}, map[string]bool{})
 	raw, plain := firstLine(inboxNotices(p), inboxNews)

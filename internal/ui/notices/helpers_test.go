@@ -111,7 +111,7 @@ func listed(p Panel, notices ...Notice) []Notice {
 }
 
 func newsNotice() Notice {
-	return Notice{ID: inboxNews, Kind: KindNews, Title: "Community on Discord", Subtitle: "#help #workflows #dev", Body: []string{"Questions, setups and every release, in one place."}, URL: "https://discord.gg/ecS88An7pF"}
+	return Notice{ID: inboxNews, Kind: KindNews, Title: "Community discussion", Subtitle: "#help #workflows #dev", Body: []string{"Questions, setups and every release, in one place."}, URL: "https://example.com/community"}
 }
 
 func headsUpNotice() Notice {
